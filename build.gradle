@@ -1,0 +1,149 @@
+// ============================================================
+// [build.gradle] 프로젝트 빌드 설정 파일 (Gradle 빌드 스크립트)
+// ============================================================
+// 역할: 프로젝트에 필요한 모든 라이브러리(의존성)를 선언하고,
+//       빌드 방식(Java 버전, 패키징 형식 등)을 설정합니다.
+//
+// 비유: 요리 레시피의 "재료 목록" — 여기에 적힌 재료(라이브러리)를
+//       Gradle이 인터넷(Maven Central 저장소)에서 자동으로 다운로드합니다.
+//
+// ★ 이 파일을 수정한 후에는 반드시 Gradle Sync(🐘 코끼리 아이콘)를 클릭하세요!
+//   단축키: Ctrl + Shift + O
+// ============================================================
+
+// ── 플러그인(Plugin) 설정 ──────────────────────────────────
+// 플러그인 = 프로젝트에 특수 기능을 추가하는 "확장팩"
+plugins {
+	id 'java'           // Java 소스 코드를 컴파일(.java → .class)하는 기능 추가
+	id 'war'            // WAR(Web Application Archive) 패키징 지원
+	// ★ JSP를 사용하려면 반드시 WAR! (JAR로 하면 JSP가 동작하지 않음)
+	id 'org.springframework.boot' version '3.4.3'           // Spring Boot 3.4.3 프레임워크 지원
+	id 'io.spring.dependency-management' version '1.1.7'    // 의존성 버전을 Spring Boot에 맞게 자동 관리
+}
+
+// ── 프로젝트 기본 정보 ──────────────────────────────────────
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+// ── Java 버전 설정 ──────────────────────────────────────────
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)  // JDK 21 사용 설정
+	}
+}
+
+// ── Lombok 설정 보조 ────────────────────────────────────────
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+// ── 저장소(Repository) 설정 ─────────────────────────────────
+repositories {
+	mavenCentral()
+}
+
+// ── 의존성(Dependencies) 목록 ───────────────────────────────
+// ★ scope 종류:
+//   implementation    = 코드 작성 + 실행 모두에 필요 (가장 일반적)
+//   compileOnly       = 코드 작성할 때만 필요 (예: Lombok)
+//   runtimeOnly       = 실행할 때만 필요 (예: DB 드라이버)
+//   annotationProcessor = 컴파일 시 어노테이션을 해석하는 도구
+//   providedRuntime   = 외부 서버가 제공하므로 WAR에서 제외
+//   testImplementation = 테스트 코드에서만 사용
+dependencies {
+
+	// ══════════════════════════════════════════════════════════
+	// ── Spring Boot 핵심 스타터 ──
+	// ══════════════════════════════════════════════════════════
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// ↑ 웹 MVC 프레임워크: @Controller, @RestController, HTTP 요청/응답 처리
+	//   내장 Tomcat 서버 포함
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// ↑ JPA: Java 객체 ↔ DB 테이블 자동 매핑 (Hibernate 포함)
+
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// ↑ Bean Validation: @NotBlank, @Email, @Size, @Min, @Max 등
+
+	// ══════════════════════════════════════════════════════════
+	// ── [Phase 1] Spring Security (보안 프레임워크) ──
+	// ══════════════════════════════════════════════════════════
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// ↑ 보안 프레임워크: 인증(Authentication)과 인가(Authorization) 처리
+	//   BCrypt 비밀번호 암호화, CSRF 방어, 세션 관리 등
+	//   비유: 건물의 통합 보안 시스템 (출입 카드 + CCTV + 금고)
+
+	// ══════════════════════════════════════════════════════════
+	// ── [Phase 4] JWT (JSON Web Token) 인증 ──
+	// ══════════════════════════════════════════════════════════
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	// ↑ JWT API: 토큰 생성/검증을 위한 인터페이스 정의
+	//   비유: 모바일 티켓의 "규격서" — 티켓 모양과 규칙을 정의
+
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	// ↑ JWT 구현체: 위 API의 실제 동작 코드
+	//   비유: 실제로 모바일 티켓을 발급하는 "발급기"
+
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+	// ↑ JWT JSON 처리: JWT 내부의 JSON 데이터를 읽고 쓰는 도구
+	//   Jackson 라이브러리를 사용하여 JWT의 claims(정보)를 처리
+
+	// ══════════════════════════════════════════════════════════
+	// ── [Phase 11] OAuth2 소셜 로그인 (카카오/네이버/구글) ──
+	// ══════════════════════════════════════════════════════════
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	// ↑ OAuth2 Client: 소셜 로그인(카카오, 네이버, 구글)을 위한 라이브러리
+	//   Spring Security OAuth2와 통합되어 소셜 인증 자동 처리
+	//   비유: 네이버/카카오 로그인 버튼을 자동으로 처리해주는 도우미
+
+	// ══════════════════════════════════════════════════════════
+	// ── JSP 관련 라이브러리 3개 ──
+	// ══════════════════════════════════════════════════════════
+	implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
+	// ↑ 내장 Tomcat에서 JSP 파일을 컴파일(해석)하는 엔진
+
+	implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api'
+	// ↑ JSTL API: <c:forEach>, <c:if> 등의 태그 인터페이스
+
+	implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl'
+	// ↑ JSTL 구현체: 위 API의 실제 동작 코드
+
+	// ══════════════════════════════════════════════════════════
+	// ── Spring Security JSP 태그 라이브러리 ──
+	// ══════════════════════════════════════════════════════════
+	implementation 'org.springframework.security:spring-security-taglibs'
+	// ↑ JSP에서 <sec:authorize> 태그를 사용하여 권한 체크 가능
+	//   예: <sec:authorize access="isAuthenticated()"> 로그인 상태에서만 보이는 메뉴
+
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	// ↑ [Phase 6] MySQL 드라이버: MySQL 데이터베이스 연결용
+	//   운영(prod) 환경에서 영구 데이터 저장을 위해 사용
+	//   비유: 메모장(H2)에서 노트북(MySQL)으로 업그레이드
+
+	// ══════════════════════════════════════════════════════════
+	// ── Lombok (코드 자동 생성 도구) ──
+	// ══════════════════════════════════════════════════════════
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// ══════════════════════════════════════════════════════════
+	// ── 테스트 라이브러리 ──
+	// ══════════════════════════════════════════════════════════
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	// ↑ Spring Security 테스트: @WithMockUser, csrf() 등 보안 테스트 도구
+
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// ══════════════════════════════════════════════════════════
+	// ── WAR 배포용 ──
+	// ══════════════════════════════════════════════════════════
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+}
+
+// ── 테스트 실행 설정 ────────────────────────────────────────
+tasks.named('test') {
+	useJUnitPlatform()
+}
