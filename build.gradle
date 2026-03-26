@@ -28,7 +28,7 @@ version = '0.0.1-SNAPSHOT'
 // ── Java 버전 설정 ──────────────────────────────────────────
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)  // JDK 21 사용 설정
+		languageVersion = JavaLanguageVersion.of(21)  // JDK 21 사용 설정
 	}
 }
 
@@ -97,18 +97,6 @@ dependencies {
 	// ↑ OAuth2 Client: 소셜 로그인(카카오, 네이버, 구글)을 위한 라이브러리
 	//   Spring Security OAuth2와 통합되어 소셜 인증 자동 처리
 	//   비유: 네이버/카카오 로그인 버튼을 자동으로 처리해주는 도우미
-
-	// ══════════════════════════════════════════════════════════
-	// ── JSP 관련 라이브러리 3개 ──
-	// ══════════════════════════════════════════════════════════
-	implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
-	// ↑ 내장 Tomcat에서 JSP 파일을 컴파일(해석)하는 엔진
-
-	implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api'
-	// ↑ JSTL API: <c:forEach>, <c:if> 등의 태그 인터페이스
-
-	implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl'
-	// ↑ JSTL 구현체: 위 API의 실제 동작 코드
 
 	// ══════════════════════════════════════════════════════════
 	// ── Spring Security JSP 태그 라이브러리 ──
