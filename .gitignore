@@ -35,3 +35,17 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# ===== 환경 설정 (비밀 정보) =====
+# DB 비밀번호, API 키 등이 들어있는 파일. 절대 올리면 안 됨!
+application-local.properties
+application-secret.properties
+.env
+
+# ===== OS 생성 파일 =====
+.DS_Store        # macOS 자동 생성
+Thumbs.db        # Windows 자동 생성
+
+# ===== 로그 파일 =====
+*.log
+logs/
