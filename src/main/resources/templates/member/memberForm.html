@@ -5,7 +5,13 @@
     <title>회원가입 테스트</title>
 </head>
 <body>
-<h2>회원가입 테스트 페이지</h2>
+
+<div th:replace="layouts/header :: header"></div>
+
+<h2>회원가입 페이지</h2>
+
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
 
 <!-- 서버에서 전달한 에러 메시지 출력 -->
 <div th:if="${errorMessage}" style="color:red;">
@@ -54,5 +60,8 @@
 
     <button type="submit">회원가입</button>
 </form>
+
+<div th:replace="layouts/footer :: footer"></div>
+
 </body>
 </html>
