@@ -1,28 +1,20 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>테스트 페이지</title>
 </head>
 <body>
 
-<h2>로그인 상태 테스트</h2>
+<h2>테스트 페이지</h2>
+<p>로그아웃 테스트용 페이지</p>
 
-<!-- 로그인 안 했을 때 -->
-<div th:if="${#authentication.name == 'anonymousUser'}">
-    <p>로그인 안된 상태</p>
-    <a href="/members/login">로그인</a>
-</div>
+<hr>
 
-<!-- 로그인 했을 때 -->
-<div th:if="${#authentication.name != 'anonymousUser'}">
-    <p>로그인 상태</p>
-    <p th:text="${#authentication.name}"></p>
-
-    <form action="/logout" method="post">
-        <button type="submit">로그아웃</button>
-    </form>
-</div>
+<form th:action="@{/logout}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    <button type="submit">로그아웃</button>
+</form>
 
 </body>
 </html>
