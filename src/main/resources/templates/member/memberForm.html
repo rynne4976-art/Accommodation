@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>회원가입 테스트</title>
+</head>
+<body>
+<h2>회원가입 테스트 페이지</h2>
+
+<form th:object="${memberFormDto}">
+    <div>
+        <label>이름</label>
+        <input type="text" th:field="*{name}">
+    </div>
+    <br>
+<x></x>
+    <div>
+        <label>이메일</label>
+        <input type="email" th:field="*{email}">
+    </div>
+    <br>
+
+    <div>
+        <label>비밀번호</label>
+        <input type="password" th:field="*{password}">
+    </div>
+    <br>
+
+    <div>
+        <label>주소</label>
+        <input type="text" th:field="*{address}">
+    </div>
+    <br>
+
+    <button type="button">테스트 버튼</button>
+</form>
+</body>
+</html>
