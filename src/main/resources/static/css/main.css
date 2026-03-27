@@ -1,0 +1,201 @@
+/* 전체 배경 */
+body{
+    margin:0;
+    font-family: Arial, Helvetica, sans-serif;
+    background:#f5f5f5;
+}
+
+
+/* HERO */
+
+.hero{
+    height:450px;
+    background:url('/images/hero.jpg') center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+}
+
+.hero::after{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.25);
+}
+
+.hero-content{
+    position:relative;
+    text-align:center;
+    color:white;
+}
+
+.hero-content h1{
+    font-size:40px;
+    margin-bottom:25px;
+}
+
+/* 검색창 */
+
+.search-box{
+    display:flex;
+    gap:10px;
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.15);
+}
+
+.search-box input{
+    padding:10px;
+    border:1px solid #ddd;
+    border-radius:5px;
+}
+
+.search-box button{
+    background:#e74c3c;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+
+/* 인기 여행지 */
+
+.popular{
+    padding:70px 10%;
+}
+
+.popular h2{
+    margin-bottom:30px;
+}
+
+.popular-container{
+    display:flex;
+    gap:40px;
+}
+
+/* 호텔 리스트 */
+
+.hotel-list{
+    flex:3;
+}
+
+.hotel-card{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    background:white;
+    padding:20px;
+    margin-bottom:20px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.hotel-card img{
+    width:200px;
+    height:130px;
+    object-fit:cover;
+    border-radius:10px;
+}
+
+.hotel-card h3{
+    margin:0;
+}
+
+.hotel-card p{
+    margin:5px 0;
+    color:#777;
+}
+
+.hotel-card span{
+    color:#e74c3c;
+    font-weight:bold;
+}
+
+.hotel-card button{
+    margin-left:auto;
+    background:#e74c3c;
+    color:white;
+    border:none;
+    padding:10px 15px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+
+/* 최근 본 숙소 */
+
+.recent{
+    flex:1;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    height:fit-content;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.recent h3{
+    margin-bottom:15px;
+}
+
+.recent-card{
+    margin-bottom:15px;
+}
+
+.recent-card img{
+    width:100%;
+    border-radius:8px;
+}
+
+.recent-card p{
+    margin:5px 0;
+}
+
+.recent-card span{
+    color:#e74c3c;
+}
+
+
+/* 명소 */
+
+.attractions{
+    padding:70px 10%;
+}
+
+.attractions h2{
+    margin-bottom:30px;
+}
+
+.attraction-list{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+}
+
+.attraction-card{
+    background:white;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.attraction-card img{
+    width:100%;
+    height:160px;
+    object-fit:cover;
+}
+
+.attraction-card h3{
+    padding:10px 15px 0 15px;
+}
+
+.attraction-card p{
+    padding:0 15px 15px 15px;
+    color:#777;
+}
