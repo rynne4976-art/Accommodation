@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title layout:title-pattern="${CONTENT_TITLE - Accommodation}">Accommodation</title>
+    <title layout:title-pattern="$CONTENT_TITLE - Accommodation">Accommodation</title>
 
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/footer.css}">
@@ -13,16 +13,11 @@
 
 <body>
 
-<!-- HEADER -->
-<div th:replace="fragments/header :: header"></div>
+<div th:replace="~{layouts/header :: header}"></div>
 
-
-<!-- PAGE CONTENT -->
 <div layout:fragment="content"></div>
 
-
-<!-- FOOTER -->
-<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="~{layouts/footer :: footer}"></div>
 
 </body>
 </html>
