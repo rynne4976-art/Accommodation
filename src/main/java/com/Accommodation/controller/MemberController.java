@@ -97,10 +97,5 @@ public class MemberController {
 
     }
 
-    @GetMapping("/test")
-    public String testPage() {
-        return "test";
-    }
-
 
 }
