@@ -94,6 +94,9 @@ dependencies {
 	// ↑ JWT API: 토큰 생성/검증을 위한 인터페이스 정의
 	//   비유: 모바일 티켓의 "규격서" — 티켓 모양과 규칙을 정의
 
+	implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
+
+
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	// ↑ JWT 구현체: 위 API의 실제 동작 코드
 	//   비유: 실제로 모바일 티켓을 발급하는 "발급기"
