@@ -1,9 +1,6 @@
 package com.Accommodation.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -22,11 +19,17 @@ public class Accom {
     @GeneratedValue
     private Long id;                // 상품 번호
 
-    private String AccomNm;          // 상품명
+    @ManyToOne
+    @JoinColumn(name = "AccomNm")
+    private NewAccom AccomNm;          // 상품명
 
-    private Integer Stars;          //등급
+    @ManyToOne
+    @JoinColumn(name = "Stars")
+    private NewAccom Stars;          //등급
 
-    private Integer price;          // 가격
+    @ManyToOne
+    @JoinColumn(name = "price")
+    private NewAccom price;          // 가격
 
     private String AccomDetail;      // 상세 설명
 
