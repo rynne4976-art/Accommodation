@@ -7,11 +7,10 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.Date;
 
+@Getter
+@Setter
 public class AccomDto {
 
-    @Getter
-    @Setter                     // getter/setter 자동 생성
-    public class ItemDto {
         private Long id;                // 상품 번호
         private String AccomNm;          // 상품명
         private Integer Stars;          //등급
@@ -27,8 +26,6 @@ public class AccomDto {
 
 
 
-
-    }
 
 
 
