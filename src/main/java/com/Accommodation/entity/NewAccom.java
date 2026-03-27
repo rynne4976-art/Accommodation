@@ -38,4 +38,6 @@ public class NewAccom {
     private String AccomImg; //건물 이미지
 
 
+
+
 }

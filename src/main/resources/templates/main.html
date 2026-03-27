@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="layouts/layout">
+<html
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+        layout:decorate="layouts/layout">
 
 <div layout:fragment="content">
 
@@ -10,7 +11,7 @@
         <!-- HERO -->
         <section class="hero">
 
-            <div class="hero-overlay">
+            <div class="hero-content">
 
                 <h1>인기 여행지로 떠나보세요!</h1>
 
@@ -19,7 +20,6 @@
                     <input type="text" placeholder="어디로 여행가세요?">
 
                     <input type="date">
-
                     <input type="date">
 
                     <button>검색</button>
@@ -41,33 +41,35 @@
                 <div class="hotel-list">
 
                     <div class="hotel-card">
-                        <img src="/images/hotel1.jpg">
+
+                        <img src="/images/room1.png">
+
                         <div>
+
                             <h3>리안드호텔</h3>
                             <p>편안한 휴식과 최고의 서비스</p>
                             <span>₩120,000~</span>
+
                         </div>
+
                         <button>상세보기</button>
+
                     </div>
 
                     <div class="hotel-card">
-                        <img src="/images/hotel2.jpg">
+
+                        <img src="/images/room2.png">
+
                         <div>
+
                             <h3>호정 스파 풀빌라</h3>
                             <p>럭셔리 힐링 숙소</p>
                             <span>₩95,000~</span>
-                        </div>
-                        <button>상세보기</button>
-                    </div>
 
-                    <div class="hotel-card">
-                        <img src="/images/hotel3.jpg">
-                        <div>
-                            <h3>도연 오션 리조트</h3>
-                            <p>바다 전망 리조트</p>
-                            <span>₩150,000~</span>
                         </div>
+
                         <button>상세보기</button>
+
                     </div>
 
                 </div>
@@ -79,15 +81,21 @@
                     <h3>최근 본 숙소</h3>
 
                     <div class="recent-card">
-                        <img src="/images/recent1.jpg">
+
+                        <img src="/images/room1.png">
+
                         <p>초경 리조트</p>
                         <span>₩120,000</span>
+
                     </div>
 
                     <div class="recent-card">
-                        <img src="/images/recent2.jpg">
+
+                        <img src="/images/room2.png">
+
                         <p>초경 풀빌라</p>
                         <span>₩95,000</span>
+
                     </div>
 
                 </div>
@@ -105,27 +113,39 @@
             <div class="attraction-list">
 
                 <div class="attraction-card">
-                    <img src="/images/seoul.jpg">
+
+                    <img src="/images/seoul.png">
+
                     <h3>N Seoul Tower</h3>
                     <p>Panoramic city views</p>
+
                 </div>
 
                 <div class="attraction-card">
-                    <img src="/images/busan.jpg">
+
+                    <img src="/images/busan.png">
+
                     <h3>Haeundae Beach</h3>
                     <p>Popular beach area</p>
+
                 </div>
 
                 <div class="attraction-card">
-                    <img src="/images/jeju.jpg">
+
+                    <img src="/images/jeju.png">
+
                     <h3>Seongsan Ilchulbong</h3>
                     <p>Scenic sunrise spot</p>
+
                 </div>
 
                 <div class="attraction-card">
-                    <img src="/images/gyeongju.jpg">
+
+                    <img src="/images/gyeongju.png">
+
                     <h3>Bulguksa Temple</h3>
                     <p>Historic buddhist temple</p>
+
                 </div>
 
             </div>
