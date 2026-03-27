@@ -61,6 +61,8 @@ dependencies {
 	// ↑ 웹 MVC 프레임워크: @Controller, @RestController, HTTP 요청/응답 처리
 	//   내장 Tomcat 서버 포함
 
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	// ↑ JPA: Java 객체 ↔ DB 테이블 자동 매핑 (Hibernate 포함)
 
@@ -70,7 +72,7 @@ dependencies {
 	// ══════════════════════════════════════════════════════════
 	// ── [Phase 1] Spring Security (보안 프레임워크) ──
 	// ══════════════════════════════════════════════════════════
-	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// implementation 'org.springframework.boot:spring-boot-starter-security'
 	// ↑ 보안 프레임워크: 인증(Authentication)과 인가(Authorization) 처리
 	//   BCrypt 비밀번호 암호화, CSRF 방어, 세션 관리 등
 	//   비유: 건물의 통합 보안 시스템 (출입 카드 + CCTV + 금고)
@@ -93,7 +95,7 @@ dependencies {
 	// ══════════════════════════════════════════════════════════
 	// ── [Phase 11] OAuth2 소셜 로그인 (카카오/네이버/구글) ──
 	// ══════════════════════════════════════════════════════════
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	// implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	// ↑ OAuth2 Client: 소셜 로그인(카카오, 네이버, 구글)을 위한 라이브러리
 	//   Spring Security OAuth2와 통합되어 소셜 인증 자동 처리
 	//   비유: 네이버/카카오 로그인 버튼을 자동으로 처리해주는 도우미
@@ -101,7 +103,7 @@ dependencies {
 	// ══════════════════════════════════════════════════════════
 	// ── Spring Security JSP 태그 라이브러리 ──
 	// ══════════════════════════════════════════════════════════
-	implementation 'org.springframework.security:spring-security-taglibs'
+	// implementation 'org.springframework.security:spring-security-taglibs'
 	// ↑ JSP에서 <sec:authorize> 태그를 사용하여 권한 체크 가능
 	//   예: <sec:authorize access="isAuthenticated()"> 로그인 상태에서만 보이는 메뉴
 
