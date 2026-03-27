@@ -14,6 +14,15 @@ import java.util.List;
 @RequestMapping("/accom")
 public class AccomController {
 
+    @PostMapping("/create/{id}")
+    public String create(){
+
+
+
+
+        return null;
+    }
+
     @GetMapping("/reserve")
     public String reserve(Model model){
         Accom accom = new Accom();
