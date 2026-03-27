@@ -51,6 +51,19 @@ public class MemberController {
     }
 
     /**
+     * 🔐 로그인 페이지 요청
+     *
+     * URL: /members/login
+     *
+     * 역할:
+     * - 로그인 화면을 사용자에게 보여줌
+     */
+    @GetMapping("/members/login")
+    public String memberLogin() {
+        return "member/memberLoginForm";
+    }
+
+    /**
      * 🛠 회원가입 처리
      *
      * URL: /members/new
@@ -83,4 +96,11 @@ public class MemberController {
         return "member/memberForm";
 
     }
+
+    @GetMapping("/test")
+    public String testPage() {
+        return "test";
+    }
+
+
 }
