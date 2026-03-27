@@ -29,11 +29,13 @@ public class NewAccom {
 
     private String reg_name; //등록자 이름
 
+    private String reg_number; //등록자 휴대폰번호
+
     private LocalDateTime reg_date; //등록일
 
-    private String location;
+    private String location; //위치
 
-    private String imgName;
+    private String AccomImg; //건물 이미지
 
 
 }
