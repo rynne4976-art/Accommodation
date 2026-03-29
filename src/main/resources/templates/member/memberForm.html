@@ -2,6 +2,10 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+
     <title>회원가입 테스트</title>
 </head>
 <body>
@@ -9,9 +13,6 @@
 <div th:replace="layouts/header :: header"></div>
 
 <h2>회원가입 페이지</h2>
-
-    <link rel="stylesheet" th:href="@{/css/header.css}">
-    <link rel="stylesheet" th:href="@{/css/footer.css}">
 
 <!-- 서버에서 전달한 에러 메시지 출력 -->
 <div th:if="${errorMessage}" style="color:red;">

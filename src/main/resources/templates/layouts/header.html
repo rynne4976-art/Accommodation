@@ -1,21 +1,10 @@
-<header class="header">
+<header th:fragment="header">
     <div class="header-container">
-
-        <div class="logo">
-            <img src="/images/logo.png" alt="logo">
-            <span>Accommodation</span>
-        </div>
-
-        <nav class="nav">
-            <a href="/">홈</a>
-            <a href="/rooms">숙소</a>
-            <a href="/map">지도</a>
-            <a href="/contact">문의</a>
+        <h1>Accommodation</h1>
+        <nav>
+            <a th:href="@{/}">홈</a>
+            <a th:href="@{/members/login}">로그인</a>
+            <a th:href="@{/members/new}">회원가입</a>
         </nav>
-
-        <div class="login">
-            <a href="/login">로그인</a>
-        </div>
-
     </div>
 </header>
