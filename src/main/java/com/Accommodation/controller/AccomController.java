@@ -6,6 +6,7 @@ import com.Accommodation.entity.NewAccom;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -13,17 +14,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/accom")
 public class AccomController {
 
-    @PostMapping("/create/{id}")
-    public String create(Model model){
+    @GetMapping("/create")
+    public String create(Model model) {
 
         NewAccom newAccom = new NewAccom();
         model.addAttribute("newAccom", newAccom);
-
-
+        return "accom/booking";
+    }
+    @PostMapping("/create")
+    public String insert(){
         return "accom/booking";
     }
 
-    @GetMapping("/booking")
+    @GetMapping("/reserve")
     public String reserve(Model model){
         Accom accom = new Accom();
         Member member = new Member();
@@ -33,12 +36,12 @@ public class AccomController {
         return "accom/bookingStatus";
     }
 
-    @GetMapping("/delete/{id}")
+    @GetMapping("/delete")
     public String delete(){
 
 
 
-        return "accom/booking";
+        return "redirect:/booking";
     }
 
 
