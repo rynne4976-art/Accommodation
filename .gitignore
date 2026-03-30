@@ -49,3 +49,6 @@ Thumbs.db        # Windows 자동 생성
 # ===== 로그 파일 =====
 *.log
 logs/
+
+# ===== Claude Code =====
+.claude/
