@@ -2,11 +2,9 @@ package com.Accommodation.controller;
 
 import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.Member;
-import com.Accommodation.entity.NewAccom;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -17,7 +15,7 @@ public class AccomController {
     @GetMapping("/create")
     public String create(Model model) {
 
-        NewAccom newAccom = new NewAccom();
+        Accom newAccom = new Accom();
         model.addAttribute("newAccom", newAccom);
         return "accom/booking";
     }

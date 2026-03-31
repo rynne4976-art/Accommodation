@@ -6,7 +6,9 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "accom")
@@ -16,38 +18,59 @@ import java.util.Date;
 public class Accom {
 
     @Id
-    @GeneratedValue
-    private Long id;                // 상품 번호
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "AccomNm")
-    private NewAccom AccomNm;          // 상품명
+    @Column(name = "accom_nm")
+    private String accomNm;
 
-    @ManyToOne
-    @JoinColumn(name = "Stars")
-    private NewAccom Stars;          //등급
+    @Column(name = "stars")
+    private Integer stars;
 
-    @ManyToOne
-    @JoinColumn(name = "price")
-    private NewAccom price;          // 가격
+    @Column(name = "price")
+    private Integer price;
 
-    private String AccomDetail;      // 상세 설명
+    @Column(name = "accom_detail")
+    private String accomDetail;
 
-    private String reserveStatCd;      // 예약 코드
+    @Column(name = "reserve_stat_cd")
+    private String reserveStatCd;
 
-    private LocalDateTime regTime;  // 등록 시간
+    @Column(name = "reg_time")
+    private LocalDateTime regTime;
 
-    private LocalDateTime updateTime; // 수정 시간
+    @Column(name = "update_time")
+    private LocalDateTime updateTime;
 
-    private Date check_In; //입실 시간
+    @Column(name = "check_in")
+    private Date checkIn;
 
-    private Date check_Out; //퇴실 시간
+    @Column(name = "check_out")
+    private Date checkOut;
 
-    private Date reserveDay; //예약날짜
+    @Column(name = "reserve_day")
+    private Date reserveDay;
 
-    private Integer StarRating;  //별점
+    @Column(name = "star_rating")
+    private Integer starRating;
 
+    // 숙소 1개가 여러 장의 이미지를 가질 수 있으므로 1:N 관계로 매핑합니다.
+    // mappedBy = "accom" 은 연관관계의 주인이 AccomImg.accom 이라는 뜻입니다.
+    // cascade = ALL 은 숙소 저장/삭제 시 이미지도 함께 반영되게 합니다.
+    // orphanRemoval = true 는 컬렉션에서 빠진 이미지를 DB에서도 삭제합니다.
+    @OneToMany(mappedBy = "accom", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<AccomImg> accomImgList = new ArrayList<>();
 
+    // 숙소에 이미지를 추가할 때 양쪽 객체의 참조를 함께 맞춰주는 편의 메서드입니다.
+    public void addAccomImg(AccomImg accomImg) {
+        accomImgList.add(accomImg);
+        accomImg.setAccom(this);
+    }
 
-
+    // 숙소에서 이미지를 제거할 때 양쪽 연관관계를 함께 끊어주는 메서드입니다.
+    public void removeAccomImg(AccomImg accomImg) {
+        accomImgList.remove(accomImg);
+        accomImg.setAccom(null);
+    }
 }
