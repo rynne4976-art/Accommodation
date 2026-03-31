@@ -12,10 +12,10 @@ import java.util.Date;
 public class AccomDto {
 
         private Long id;                // 상품 번호
-        private String AccomNm;          // 상품명
+        private String accomNm;          // 상품명
         private Integer Stars;          //등급
         private Integer price;          // 가격
-        private String AccomDetail;      // 상세 설명
+        private String accomDetail;      // 상세 설명
         private String reserveStatCd;      // 예약 코드
         private LocalDateTime regTime;  // 등록 시간
         private LocalDateTime updateTime; // 수정 시간
