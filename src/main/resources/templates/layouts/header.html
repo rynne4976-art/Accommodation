@@ -1,10 +1,32 @@
-<header th:fragment="header">
+<header th:fragment="header" xmlns:sec="http://www.w3.org/1999/xhtml">
     <div class="header-container">
-        <h1>Accommodation</h1>
-        <nav>
+
+        <h1 class="logo">
+            <a th:href="@{/}">Accommodation</a>
+        </h1>
+
+        <nav class="nav-menu">
+
             <a th:href="@{/}">홈</a>
-            <a th:href="@{/members/login}">로그인</a>
-            <a th:href="@{/members/new}">회원가입</a>
+
+            <!-- 로그인 안했을 때 -->
+            <div sec:authorize="isAnonymous()" class="menu-group">
+                <a th:href="@{/members/login}">로그인</a>
+                <a th:href="@{/members/new}">회원가입</a>
+            </div>
+
+            <!-- 로그인 했을 때 -->
+            <div sec:authorize="isAuthenticated()" class="menu-group">
+                <a th:href="@{/members/mypage}">마이페이지</a>
+                <a th:href="@{/members/logout}">로그아웃</a>
+            </div>
+
+            <!-- 관리자 -->
+            <div sec:authorize="hasRole('ADMIN')" class="menu-group">
+                <a th:href="@{/admin}">관리자</a>
+            </div>
+
         </nav>
+
     </div>
 </header>
