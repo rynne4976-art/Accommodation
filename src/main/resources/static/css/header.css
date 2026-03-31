@@ -1,37 +1,54 @@
-.header{
-    background:#d64545;
-    color:white;
+header{
+    width:100%;
+    border-bottom:1px solid #eee;
+    background:white;
 }
 
 .header-container{
+
     max-width:1200px;
+
     margin:auto;
+
     display:flex;
-    align-items:center;
+
     justify-content:space-between;
-    padding:15px 20px;
-}
 
-.logo{
-    display:flex;
     align-items:center;
-    font-size:22px;
+
+    padding:20px 10px;
+}
+
+.logo a{
+
+    font-size:28px;
+
     font-weight:bold;
-}
 
-.logo img{
-    width:35px;
-    margin-right:10px;
-}
+    color:#5b2bbf;
 
-.nav a{
-    margin:0 15px;
     text-decoration:none;
-    color:white;
-    font-weight:500;
 }
 
-.login a{
-    color:white;
+.nav-menu{
+
+    display:flex;
+
+    gap:25px;
+
+    align-items:center;
+}
+
+.nav-menu a{
+
     text-decoration:none;
+
+    color:#333;
+
+    font-size:15px;
+}
+
+.nav-menu a:hover{
+
+    color:#5b2bbf;
 }
