@@ -10,6 +10,7 @@ import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.QAccom;
 import com.Accommodation.entity.QAccomImg;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
@@ -46,6 +47,18 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
 
     private BooleanExpression notDeleted() {
         return QAccom.accom.deleted.isFalse();
+    }
+
+    private com.querydsl.jpa.JPQLQuery<Long> repImageIdSubQuery(QAccom accom) {
+        QAccomImg accomImgSub = new QAccomImg("accomImgSub");
+
+        return JPAExpressions
+                .select(accomImgSub.id.min())
+                .from(accomImgSub)
+                .where(
+                        accomImgSub.accom.eq(accom),
+                        accomImgSub.repImgYn.eq("Y")
+                );
     }
 
     @Override
@@ -100,10 +113,12 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         accom.avgRating,
                         accom.reviewCount
                 ))
-                .from(accomImg)
-                .join(accomImg.accom, accom)
+                .from(accom)
+                .join(accomImg).on(
+                        accomImg.accom.eq(accom),
+                        accomImg.id.eq(repImageIdSubQuery(accom))
+                )
                 .where(
-                        accomImg.repImgYn.eq("Y"),
                         notDeleted(),
                         accomNameLike(accomSearchDto.getSearchQuery()),
                         accomTypeEq(accomSearchDto.getAccomType()),
@@ -117,10 +132,8 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
 
         Long total = queryFactory
                 .select(accom.count())
-                .from(accomImg)
-                .join(accomImg.accom, accom)
+                .from(accom)
                 .where(
-                        accomImg.repImgYn.eq("Y"),
                         notDeleted(),
                         accomNameLike(accomSearchDto.getSearchQuery()),
                         accomTypeEq(accomSearchDto.getAccomType()),

@@ -13,25 +13,49 @@ import org.springframework.web.multipart.MultipartFile;
 @Transactional
 public class AccomImgService {
 
-    @Value("${accomImgLocation}")
-    private String accomImgLocation;
+    @Value("${uploadPath}")
+    private String uploadPath;
+
     private final AccomImgRepository accomImgRepository;
     private final FileService fileService;
 
-    public void saveAccomImg(AccomImg accomImg, MultipartFile accomImgFile) throws Exception {
+    public void saveAccomImg(AccomImg accomImg,
+                             MultipartFile accomImgFile)
+            throws Exception {
 
-        String oriImgName = accomImgFile.getOriginalFilename();
+        String oriImgName =
+                accomImgFile.getOriginalFilename();
+
         String imgName = "";
         String imgUrl = "";
 
-        if (oriImgName != null && !oriImgName.isEmpty()){
-            imgName = fileService.uploadFile(accomImgLocation, oriImgName, accomImgFile);
-            imgUrl = "/images/accom/" + imgName;
+        if (oriImgName != null
+                && !oriImgName.isEmpty()) {
+
+            String accomUploadPath =
+                    System.getProperty("user.dir")
+                            + "/"
+                            + uploadPath
+                            + "/accom";
+
+            imgName =
+                    fileService.uploadFile(
+                            accomUploadPath,
+                            oriImgName,
+                            accomImgFile
+                    );
+
+            imgUrl =
+                    "/images/accom/"
+                            + imgName;
         }
 
-        accomImg.updateAccomImg(imgName, oriImgName, imgUrl);
+        accomImg.updateAccomImg(
+                imgName,
+                oriImgName,
+                imgUrl
+        );
+
         accomImgRepository.save(accomImg);
-
-
     }
 }
