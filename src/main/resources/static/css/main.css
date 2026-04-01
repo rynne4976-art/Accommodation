@@ -1,0 +1,500 @@
+/* 기본 */
+
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f7f7f7;
+}
+
+/* HERO */
+
+.hero{
+    background:url("../images/main/hero.png") center/cover no-repeat;
+    height:420px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.hero-overlay{
+    text-align:center;
+    color:white;
+}
+
+.hero-overlay h1{
+    font-size:40px;
+    margin-bottom:25px;
+}
+
+/* 검색바 */
+
+.search-box{
+    display:flex;
+    align-items:center;
+    width:900px;
+    margin:auto;
+    background:white;
+    border-radius:14px;
+    border:4px solid #ffb700;
+}
+
+/* 기본 */
+
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f7f7f7;
+}
+
+/* HERO */
+
+.hero{
+    background:url("../images/main/hero.png") center/cover no-repeat;
+    height:420px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.hero-overlay{
+    text-align:center;
+    color:white;
+}
+
+.hero-overlay h1{
+    font-size:40px;
+    margin-bottom:25px;
+}
+
+/* 검색바 */
+
+.search-box{
+    display:flex;
+    align-items:center;
+    width:900px;
+    margin:auto;
+    background:white;
+    border-radius:14px;
+    border:4px solid #ffb700;
+    box-sizing:border-box;
+    padding:8px;
+    gap:8px;
+}
+
+.search-box input{
+    flex:1;
+    border:none;
+    min-width:0;
+    padding:0 18px;
+    height:44px;
+    font-size:15px;
+    outline:none;
+    box-sizing:border-box;
+}
+
+.search-box input:not(:last-child){
+    border-right:1px solid #eee;
+}
+
+/* 날짜 */
+
+.date-box{
+    position:relative;
+    flex:1;
+    min-width:0;
+}
+
+.calendar-popup{
+    position:absolute;
+    top:60px;
+    left:0;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    display:none;
+    gap:15px;
+    z-index:999;
+}
+
+.calendar-popup input{
+    border:1px solid #ddd;
+    padding:10px;
+    border-radius:6px;
+}
+
+/* 인원 */
+
+.guest-box-wrapper{
+    position:relative;
+    flex:1;
+    min-width:0;
+}
+
+#guestDisplay{
+    width:100%;
+    cursor:pointer;
+}
+
+.guest-popup{
+    position:absolute;
+    top:60px;
+    right:0;
+    background:white;
+    width:260px;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    display:flex;
+    z-index:999;
+}
+
+.guest-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.guest-control{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.guest-control button{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    border:1px solid #ddd;
+    background:white;
+    font-size:18px;
+    cursor:pointer;
+}
+
+/* 검색 버튼 */
+
+.search-btn{
+    background:#1677ff;
+    color:white;
+    border:none;
+    padding:16px 28px;
+    font-size:16px;
+    font-weight:bold;
+    border-radius:10px;
+    cursor:pointer;
+    flex-shrink:0;
+    align-self:stretch;
+    min-width:82px;
+}
+
+/* 인기 여행지 */
+
+.popular-area{
+    max-width:1200px;
+    margin:60px auto;
+}
+
+.area-list{
+    display:flex;
+    gap:20px;
+}
+
+.area-card{
+    flex:1;
+    position:relative;
+    overflow:hidden;
+    border-radius:12px;
+}
+
+.area-card img{
+    width:100%;
+    height:180px;
+    object-fit:cover;
+}
+
+.area-card span{
+    position:absolute;
+    bottom:15px;
+    left:15px;
+    color:white;
+    font-size:20px;
+    font-weight:bold;
+}
+
+/* 숙소 */
+
+.accommodation{
+    max-width:1200px;
+    margin:60px auto;
+}
+
+.accommodation-wrapper{
+    display:flex;
+    gap:30px;
+}
+
+.recent{
+    width:220px;
+}
+
+.recent-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:white;
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+
+.recent-item img{
+    width:70px;
+    height:55px;
+    object-fit:cover;
+    border-radius:6px;
+}
+
+.accommodation-cards{
+    flex:1;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:25px;
+}
+
+.card{
+    background:white;
+    border-radius:15px;
+    overflow:hidden;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+}
+
+.card img{
+    width:100%;
+    height:200px;
+    object-fit:cover;
+}
+
+.card-body{
+    padding:18px;
+}
+
+.rating{
+    color:orange;
+}
+
+.card-bottom{
+    display:flex;
+    justify-content:space-between;
+    margin-top:10px;
+}
+
+.reserve-btn{
+    background:#2f6fed;
+    color:black;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+/* 날짜 */
+
+.date-box{
+    position:relative;
+    flex:1;
+    min-width:0;
+}
+
+.calendar-popup{
+    position:absolute;
+    top:60px;
+    left:0;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    display:none;
+    gap:15px;
+    z-index:999;
+}
+
+.calendar-popup input{
+    border:1px solid #ddd;
+    padding:10px;
+    border-radius:6px;
+}
+
+/* 인원 */
+
+.guest-box-wrapper{
+    position:relative;
+    flex:1;
+    min-width:0;
+}
+
+#guestDisplay{
+    width:100%;
+    cursor:pointer;
+}
+
+.guest-popup{
+    position:absolute;
+    top:60px;
+    right:0;
+    background:white;
+    width:260px;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    display:none;
+    z-index:999;
+    color:#000;   /* 글자 검정 */
+}
+
+.guest-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.guest-control{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.guest-control button{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    border:1px solid #ddd;
+    background:white;
+    font-size:18px;
+    cursor:pointer;
+}
+
+/* 검색 버튼 */
+
+.search-btn{
+    background:#1677ff;
+    color:white;
+    border:none;
+    padding:16px 28px;
+    font-size:16px;
+    font-weight:bold;
+    border-radius:10px;
+    cursor:pointer;
+    flex-shrink:0;
+    align-self:stretch;
+    min-width:82px;
+}
+
+/* 인기 여행지 */
+
+.popular-area{
+    max-width:1200px;
+    margin:60px auto;
+}
+
+.area-list{
+    display:flex;
+    gap:20px;
+}
+
+.area-card{
+    flex:1;
+    position:relative;
+    overflow:hidden;
+    border-radius:12px;
+}
+
+.area-card img{
+    width:100%;
+    height:180px;
+    object-fit:cover;
+}
+
+.area-card span{
+    position:absolute;
+    bottom:15px;
+    left:15px;
+    color:white;
+    font-size:20px;
+    font-weight:bold;
+}
+
+/* 숙소 */
+
+.accommodation{
+    max-width:1200px;
+    margin:60px auto;
+}
+
+.accommodation-wrapper{
+    display:flex;
+    gap:30px;
+}
+
+.recent{
+    width:220px;
+}
+
+.recent-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:white;
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+
+.recent-item img{
+    width:70px;
+    height:55px;
+    object-fit:cover;
+    border-radius:6px;
+}
+
+.accommodation-cards{
+    flex:1;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:25px;
+}
+
+.card{
+    background:white;
+    border-radius:15px;
+    overflow:hidden;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+}
+
+.card img{
+    width:100%;
+    height:200px;
+    object-fit:cover;
+}
+
+.card-body{
+    padding:18px;
+}
+
+.rating{
+    color:orange;
+}
+
+.card-bottom{
+    display:flex;
+    justify-content:space-between;
+    margin-top:10px;
+}
+
+.reserve-btn{
+    background:#2f6fed;
+    color:black;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+}

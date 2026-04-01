@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Accommodation</title>
+
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+
+</head>
+
+<body>
+
+<!-- header -->
+<div th:replace="layouts/header :: header"></div>
+
+<!-- hero -->
+<section class="hero">
+
+    <div class="hero-overlay">
+
+        <h1>원하는 숙소를 가장 빠르게 찾아보세요</h1>
+
+        <div class="search-box">
+
+            <!-- 지역 -->
+            <input type="text" placeholder="어디로 향하시나요?">
+
+            <!-- 날짜 -->
+            <div class="date-box">
+                <input type="text" id="dateRange" placeholder="체크인 날짜 - 체크아웃 날짜" readonly>
+
+                <div class="calendar-popup" id="calendarPopup">
+
+                    <input type="date" id="checkin">
+                    <input type="date" id="checkout">
+
+                </div>
+            </div>
+
+            <!-- 인원 -->
+            <div class="guest-box-wrapper">
+
+                <input type="text" id="guestDisplay" readonly>
+
+                <div class="guest-popup" id="guestPopup">
+
+                    <div class="guest-title">
+                        <div>
+                            <strong> 🛎️ 인원</strong><br>
+                            <small>유아 및 아동도 인원수에 포함해주세요.</small>
+                        </div>
+
+                        <div class="guest-control">
+                            <button onclick="changeGuest(-1)">-</button>
+                            <span id="guestCount">0</span>
+                            <button onclick="changeGuest(1)">+</button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- 검색 -->
+            <button class="search-btn">검색</button>
+
+        </div>
+
+    </div>
+
+</section>
+
+    <section class="popular-area">
+
+        <h2>인기 여행지</h2>
+
+        <div class="area-list">
+
+            <div class="area-card">
+                <img src="../images/main/seoul.png">
+                <span>서울</span>
+            </div>
+
+            <div class="area-card">
+                <img src="../images/main/busan.png">
+                <span>부산</span>
+            </div>
+
+            <div class="area-card">
+                <img src="../images/main/gangneung.png">
+                <span>강릉</span>
+            </div>
+
+            <div class="area-card">
+                <img src="../images/main/jeju.png">
+                <span>제주</span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+<!-- 숙소 리스트 -->
+
+<section class="accommodation">
+
+    <h2>숙소 목록</h2>
+
+    <div class="accommodation-wrapper">
+
+
+        <!-- 최근 본 숙소 -->
+
+        <div class="recent">
+
+            <div class="recent-item">
+                <img src="../images/main/sample1.png">
+                <span>130,000원</span>
+            </div>
+
+            <div class="recent-item">
+                <img src="../images/main/sample2.png">
+                <span>110,000원</span>
+            </div>
+
+            <div class="recent-item">
+                <img src="../images/main/sample3.png">
+                <span>95,000원</span>
+            </div>
+
+        </div>
+
+
+        <!-- 숙소 카드 -->
+
+        <div class="accommodation-cards">
+
+
+            <div class="card">
+
+                <img src="../images/main/sample1.png">
+
+                <div class="card-body">
+
+                    <h3>서울 리조트</h3>
+
+                    <p class="rating">⭐⭐⭐⭐ (후기 210개)</p>
+
+                    <p class="desc">럭셔리한 도심 속 휴양지</p>
+
+                    <div class="card-bottom">
+
+                        <span class="price">120,000원~ / 박</span>
+
+                        <button class="reserve-btn">예약하기</button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <img src="../images/main/sample2.png">
+
+                <div class="card-body">
+
+                    <h3>해운대 오션뷰</h3>
+
+                    <p class="rating">⭐⭐⭐⭐ (후기 350개)</p>
+
+                    <p class="desc">바다가 보이는 아름다운 숙소</p>
+
+                    <div class="card-bottom">
+
+                        <span class="price">150,000원~ / 박</span>
+
+                        <button class="reserve-btn">예약하기</button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <img src="../images/main/sample3.png">
+
+                <div class="card-body">
+
+                    <h3>제주 힐링 하우스</h3>
+
+                    <p class="rating">⭐⭐⭐⭐ (후기 180개)</p>
+
+                    <p class="desc">자연 속 아늑한 휴식</p>
+
+                    <div class="card-bottom">
+
+                        <span class="price">90,000원~ / 박</span>
+
+                        <button class="reserve-btn">예약하기</button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- footer -->
+
+<div th:replace="layouts/footer :: footer"></div>
+
+
+<script>
+
+    /* 오늘 날짜 */
+
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("checkin").min = today;
+    document.getElementById("checkout").min = today;
+
+    /* 달력 */
+
+    const dateRange = document.getElementById("dateRange");
+    const calendar = document.getElementById("calendarPopup");
+
+    dateRange.addEventListener("click", () => {
+        calendar.style.display = "flex";
+    });
+
+    /* 날짜 선택 */
+
+    const checkin = document.getElementById("checkin");
+    const checkout = document.getElementById("checkout");
+
+    checkin.addEventListener("change", () => {
+        checkout.min = checkin.value;
+        updateDate();
+    });
+
+    checkout.addEventListener("change", updateDate);
+
+    function updateDate(){
+
+        if(checkin.value && checkout.value){
+            dateRange.value = checkin.value + " - " + checkout.value;
+            calendar.style.display="none";
+        }
+
+    }
+
+    /* 인원 */
+
+    let guest = 0;
+
+    const guestDisplay = document.getElementById("guestDisplay");
+    const guestPopup = document.getElementById("guestPopup");
+    const guestCount = document.getElementById("guestCount");
+
+    guestDisplay.value = "인원 0";
+
+    guestDisplay.addEventListener("click", () => {
+        guestPopup.style.display="block";
+    });
+
+    function changeGuest(num){
+
+        guest += num;
+
+        if(guest < 0) guest = 0;
+
+        guestCount.innerText = guest;
+        guestDisplay.value = "🛎️ 인원 " + guest;
+
+    }
+
+    /* 외부 클릭 */
+
+    document.addEventListener("click", (e)=>{
+
+        if(!e.target.closest(".date-box")){
+            calendar.style.display="none";
+        }
+
+        if(!e.target.closest(".guest-box-wrapper")){
+            guestPopup.style.display="none";
+        }
+
+    });
+
+</script>
+
+</body>
+
+</html>
