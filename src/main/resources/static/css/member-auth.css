@@ -1,0 +1,142 @@
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background:
+        radial-gradient(circle at top, rgba(123, 63, 242, 0.10), transparent 28%),
+        #f6f7fb;
+    color: #1f2937;
+}
+
+.auth-wrap {
+    max-width: 520px;
+    margin: 56px auto 88px;
+    padding: 0 16px;
+}
+
+.auth-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.10);
+}
+
+.auth-label {
+    display: inline-block;
+    margin-bottom: 14px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #efe7ff;
+    color: #6a35d4;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.auth-card h2 {
+    margin: 0 0 10px;
+    font-size: 32px;
+    color: #111827;
+}
+
+.auth-description {
+    margin: 0 0 28px;
+    color: #667085;
+    line-height: 1.6;
+}
+
+.auth-alert {
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.auth-alert p {
+    margin: 0;
+}
+
+.auth-alert.error {
+    background: #fff1f2;
+    color: #b42318;
+}
+
+.auth-alert.success {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #344054;
+}
+
+.form-group input {
+    height: 48px;
+    padding: 0 14px;
+    border: 1px solid #d0d5dd;
+    border-radius: 14px;
+    font-size: 15px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #7b3ff2;
+    box-shadow: 0 0 0 4px rgba(123, 63, 242, 0.12);
+}
+
+.field-error {
+    margin: 0;
+    font-size: 13px;
+    color: #c62828;
+}
+
+.auth-submit {
+    height: 50px;
+    border: 0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #7b3ff2, #5f2ccf);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.auth-links {
+    margin-top: 20px;
+    text-align: center;
+    color: #667085;
+    font-size: 14px;
+}
+
+.auth-links a {
+    color: #6a35d4;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+@media (max-width: 640px) {
+    .auth-card {
+        padding: 28px 22px;
+        border-radius: 20px;
+    }
+
+    .auth-card h2 {
+        font-size: 28px;
+    }
+}

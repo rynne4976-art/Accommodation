@@ -85,7 +85,7 @@ public class AccomController {
         model.addAttribute("accomSearchDto", accomSearchDto);
         model.addAttribute("maxPage", 5);
 
-        return "accom/accomMng";
+        return "admin/accomMng";
     }
 
     @GetMapping("/accom/{accomId}")

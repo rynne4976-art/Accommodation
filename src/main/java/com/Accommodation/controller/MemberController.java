@@ -10,6 +10,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * 🧾 MemberController (회원 컨트롤러)
@@ -61,9 +62,13 @@ public class MemberController {
      */
     @GetMapping("/members/login")
     public String memberLogin(@RequestParam(value = "error", required = false) String error,
+                              @RequestParam(value = "signupSuccess", required = false) String signupSuccess,
                               Model model) {
         if (error != null) {
             model.addAttribute("loginErrorMessage", "이메일 또는 비밀번호를 다시 확인해주세요.");
+        }
+        if (signupSuccess != null) {
+            model.addAttribute("signupSuccessMessage", "회원가입이 완료되었습니다. 로그인해주세요.");
         }
         return "member/memberLoginForm";
     }
@@ -84,7 +89,8 @@ public class MemberController {
     @PostMapping("/members/new")
     public String memberForm(@Valid MemberFormDto memberFormDto,
                              BindingResult bindingResult,
-                             Model model) {
+                             Model model,
+                             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
             return "member/memberForm";
@@ -92,13 +98,13 @@ public class MemberController {
 
         try {
             memberService.saveMember(memberFormDto);
-            model.addAttribute("successMessage", "회원가입 완료!");
         } catch (IllegalStateException e) {
             model.addAttribute("errorMessage", e.getMessage());
             return "member/memberForm";
         }
 
-        return "member/memberForm";
+        redirectAttributes.addAttribute("signupSuccess", "true");
+        return "redirect:/members/login";
 
     }
 

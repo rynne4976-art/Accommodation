@@ -2,6 +2,7 @@ package com.Accommodation.config;
 
 import com.Accommodation.controller.MainController;
 import com.Accommodation.controller.MemberController;
+import com.Accommodation.service.AccomService;
 import com.Accommodation.service.CustomUserDetailsService;
 import com.Accommodation.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
@@ -42,6 +43,9 @@ class SecurityFlowTest {
 
     @MockBean
     private MemberService memberService;
+
+    @MockBean
+    private AccomService accomService;
 
     @MockBean
     private CustomUserDetailsService customUserDetailsService;
