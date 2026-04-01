@@ -14,6 +14,10 @@
 
 <div th:replace="~{layouts/header :: header}"></div>
 
+<div th:if="${logoutMessage}" style="margin: 16px auto; width: fit-content; color: #1f6f43; font-weight: 600;">
+    <p th:text="${logoutMessage}"></p>
+</div>
+
 
 <!-- 메인 배너 -->
 <section class="hero">
