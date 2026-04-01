@@ -56,10 +56,6 @@
                     <span>최근 본 상품</span>
                 </a>
             </div>
-
-            <div sec:authorize="hasRole('ADMIN')" class="menu-group user-menu-line">
-                <a th:href="@{/admin}">관리자</a>
-            </div>
         </div>
 
     </div>
@@ -68,9 +64,9 @@
         <div class="header-bottom-inner">
             <nav class="category-menu">
                 <th:block sec:authorize="hasRole('ADMIN')">
-                    <a th:href="@{/admin}">회원 관리</a>
-                    <a th:href="@{/admin}">숙소 관리</a>
-                    <a th:href="@{/admin}">예약 관리</a>
+                    <a th:href="@{/admin/members}">회원 관리</a>
+                    <a th:href="@{/admin/accoms}">숙소 관리</a>
+                    <a th:href="@{/admin/orders}">예약 관리</a>
                 </th:block>
 
                 <th:block sec:authorize="!hasRole('ADMIN')">

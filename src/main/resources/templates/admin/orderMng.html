@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>예약 관리</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-common.css}">
+</head>
+<body>
+
+<div th:replace="~{layouts/header :: header}"></div>
+
+<main class="page-wrap">
+    <section class="page-header">
+        <div>
+            <span class="page-label">Admin Orders</span>
+            <h2>예약 관리</h2>
+            <p>예약 현황과 처리 상태를 한 번에 확인할 수 있는 관리자 전용 화면입니다.</p>
+        </div>
+        <a th:href="@{/admin}">대시보드</a>
+    </section>
+
+    <section class="table-panel">
+        <table>
+            <thead>
+            <tr>
+                <th>예약번호</th>
+                <th>회원명</th>
+                <th>이메일</th>
+                <th>예약일시</th>
+                <th>예약상태</th>
+                <th>총금액</th>
+                <th>상품수</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="empty-row" th:if="${orderPage.totalElements == 0}">
+                <td colspan="7">등록된 예약이 없습니다.</td>
+            </tr>
+            <tr th:each="order : ${orderPage.content}">
+                <td th:text="${order.id}"></td>
+                <td th:text="${order.member.name}"></td>
+                <td th:text="${order.member.email}"></td>
+                <td th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}"></td>
+                <td>
+                    <span class="status-badge" th:text="${order.orderStatus}"></span>
+                </td>
+                <td th:text="${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')} + '원'"></td>
+                <td th:text="${#lists.size(order.orderItems)}"></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="pager" th:if="${orderPage.totalPages > 0}">
+            <a th:if="${orderPage.hasPrevious()}"
+               th:href="@{/admin/orders(page=${orderPage.number - 1})}">이전</a>
+
+            <a th:each="pageNum : ${#numbers.sequence(0, orderPage.totalPages - 1)}"
+               th:href="@{/admin/orders(page=${pageNum})}"
+               th:text="${pageNum + 1}"></a>
+
+            <a th:if="${orderPage.hasNext()}"
+               th:href="@{/admin/orders(page=${orderPage.number + 1})}">다음</a>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
+
+</body>
+</html>

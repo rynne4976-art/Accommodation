@@ -47,16 +47,20 @@ public class SecurityConfig {
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
-                                "/accom/**"
+                                "/accom/**",
+                                "/review/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                 )
 
                 .formLogin(form -> form
                         .loginPage("/members/login")
                         .loginProcessingUrl("/members/login")
-                        .failureUrl("/members/login?error")
+                        .failureHandler(new FormLoginAuthenticationFailureHandler())
                         .defaultSuccessUrl("/main", true)
                         .usernameParameter("email")
                         .passwordParameter("password")

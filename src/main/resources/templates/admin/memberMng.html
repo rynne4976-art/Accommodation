@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>회원 관리</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-common.css}">
+</head>
+<body>
+
+<div th:replace="~{layouts/header :: header}"></div>
+
+<main class="page-wrap">
+    <section class="page-header">
+        <div>
+            <span class="page-label">Admin Members</span>
+            <h2>회원 관리</h2>
+            <p>가입 회원의 기본 정보와 권한 상태를 독립 화면에서 확인합니다.</p>
+        </div>
+        <a th:href="@{/admin}">대시보드</a>
+    </section>
+
+    <section class="table-panel">
+        <table>
+            <thead>
+            <tr>
+                <th>회원번호</th>
+                <th>이름</th>
+                <th>이메일</th>
+                <th>전화번호</th>
+                <th>주소</th>
+                <th>권한</th>
+                <th>가입일</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="empty-row" th:if="${memberPage.totalElements == 0}">
+                <td colspan="7">등록된 회원이 없습니다.</td>
+            </tr>
+            <tr th:each="member : ${memberPage.content}">
+                <td th:text="${member.id}"></td>
+                <td th:text="${member.name}"></td>
+                <td th:text="${member.email}"></td>
+                <td th:text="${member.number}"></td>
+                <td th:text="${member.address}"></td>
+                <td>
+                    <span class="role-badge" th:text="${member.role}"></span>
+                </td>
+                <td th:text="${#temporals.format(member.regTime, 'yyyy-MM-dd HH:mm')}"></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="pager" th:if="${memberPage.totalPages > 0}">
+            <a th:if="${memberPage.hasPrevious()}"
+               th:href="@{/admin/members(page=${memberPage.number - 1})}">이전</a>
+
+            <a th:each="pageNum : ${#numbers.sequence(0, memberPage.totalPages - 1)}"
+               th:href="@{/admin/members(page=${pageNum})}"
+               th:text="${pageNum + 1}"></a>
+
+            <a th:if="${memberPage.hasNext()}"
+               th:href="@{/admin/members(page=${memberPage.number + 1})}">다음</a>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
+
+</body>
+</html>

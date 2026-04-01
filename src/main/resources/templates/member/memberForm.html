@@ -5,64 +5,65 @@
 
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/member-auth.css}">
 
-    <title>회원가입 테스트</title>
+    <title>회원가입</title>
 </head>
 <body>
 
 <div th:replace="layouts/header :: header"></div>
 
-<h2>회원가입 페이지</h2>
+<main class="auth-wrap">
+    <section class="auth-card">
+        <span class="auth-label">Create Account</span>
+        <h2>회원가입</h2>
+        <p class="auth-description">기본 정보를 입력하고 계정을 생성하면 바로 로그인할 수 있습니다.</p>
 
-<!-- 서버에서 전달한 에러 메시지 출력 -->
-<div th:if="${errorMessage}" style="color:red;">
-    <p th:text="${errorMessage}"></p>
-</div>
+        <div class="auth-alert error" th:if="${errorMessage}">
+            <p th:text="${errorMessage}"></p>
+        </div>
 
-<form th:action="@{/members/new}" th:object="${memberFormDto}" method="post">
-    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <form class="auth-form" th:action="@{/members/new}" th:object="${memberFormDto}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
-    <div>
-        <label>이름</label>
-        <input type="text" th:field="*{name}">
-        <p th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color:red;"></p>
-    </div>
-    <br>
+            <div class="form-group">
+                <label>이름</label>
+                <input type="text" th:field="*{name}" placeholder="이름을 입력하세요">
+                <p class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
+            </div>
 
-    <div>
-        <label>이메일</label>
-        <input type="email" th:field="*{email}">
-        <p th:if="${#fields.hasErrors('email')}" th:errors="*{email}" style="color:red;"></p>
-    </div>
-    <br>
+            <div class="form-group">
+                <label>이메일</label>
+                <input type="email" th:field="*{email}" placeholder="이메일을 입력하세요">
+                <p class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
+            </div>
 
-    <div>
-        <label>비밀번호</label>
-        <input type="password" th:field="*{password}">
-        <p th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color:red;"></p>
-    </div>
-    <br>
+            <div class="form-group">
+                <label>비밀번호</label>
+                <input type="password" th:field="*{password}" placeholder="8자 이상 16자 이하">
+                <p class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></p>
+            </div>
 
-    <div>
-        <label>휴대폰 번호</label>
-        <input type="text" th:field="*{number}">
-        <p th:if="${#fields.hasErrors('number')}" th:errors="*{number}" style="color:red;"></p>
-    </div>
-    <br>
+            <div class="form-group">
+                <label>휴대폰 번호</label>
+                <input type="text" th:field="*{number}" placeholder="휴대폰 번호를 입력하세요">
+                <p class="field-error" th:if="${#fields.hasErrors('number')}" th:errors="*{number}"></p>
+            </div>
 
-    <div>
-        <label>주소</label>
-        <input type="text" th:field="*{address}">
-        <p th:if="${#fields.hasErrors('address')}" th:errors="*{address}" style="color:red;"></p>
-    </div>
-    <br>
+            <div class="form-group">
+                <label>주소</label>
+                <input type="text" th:field="*{address}" placeholder="주소를 입력하세요">
+                <p class="field-error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></p>
+            </div>
 
-    <div th:if="${successMessage}" style="color:blue;">
-        <p th:text="${successMessage}"></p>
-    </div>
+            <button class="auth-submit" type="submit">회원가입</button>
+        </form>
 
-    <button type="submit">회원가입</button>
-</form>
+        <div class="auth-links">
+            이미 계정이 있다면 <a th:href="@{/members/login}">로그인</a>
+        </div>
+    </section>
+</main>
 
 <div th:replace="layouts/footer :: footer"></div>
 
