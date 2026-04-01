@@ -24,7 +24,7 @@ public class AccomImg {
     @Column(name = "img_url")
     private String imgUrl;     //이미지 조회 경로
     @Column(name = "repimg_yn")
-    private String repimgYn;   //대표 이미지 여부 -> "Y" 인 경우 메인 페이지에서 상품을 보여줄때 사용합니다.
+    private String repImgYn;   //대표 이미지 여부 -> "Y" 인 경우 메인 페이지에서 상품을 보여줄때 사용합니다.
 
     // 여러 이미지가 하나의 숙소를 참조하므로 N:1 관계입니다.
     // accom_img 테이블의 accom_id 컬럼이 accom 테이블의 PK를 참조합니다.
@@ -51,5 +51,4 @@ public class AccomImg {
             accom.getAccomImgList().add(this);
         }
     }
-
 }

@@ -45,7 +45,7 @@ public class OrderService {
         OrderItem orderItem = new OrderItem();
         orderItem.setAccom(accom);
         orderItem.setCount(orderDto.getCount());
-        orderItem.setOrderPrice(accom.getPrice()); // price 가 Integer 로 정상화됨
+        orderItem.setOrderPrice(accom.getPricePerNight()); // price 가 Integer 로 정상화됨
 
         // 주문 생성
         Order order = new Order();
@@ -85,7 +85,7 @@ public class OrderService {
             for (OrderItem orderItem : order.getOrderItems()) {
                 // 대표 이미지(repimgYn = "Y") URL 조회
                 String imgUrl = orderItem.getAccom().getAccomImgList().stream()
-                        .filter(img -> "Y".equals(img.getRepimgYn()))
+                        .filter(img -> "Y".equals(img.getRepImgYn()))
                         .map(AccomImg::getImgUrl)
                         .findFirst()
                         .orElse("");

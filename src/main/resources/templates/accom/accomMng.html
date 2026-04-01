@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>숙소 관리</title>
+</head>
+<body>
+<h2>숙소 관리</h2>
+
+<div>
+    <a th:href="@{/admin/accom/new}">숙소 등록 페이지로 이동</a>
+</div>
+
+<form th:action="@{/admin/accoms}" method="get">
+    <input type="text"
+           name="searchQuery"
+           placeholder="숙소명을 입력하십시오."
+           th:value="${accomSearchDto.searchQuery}">
+
+    <select name="accomType">
+        <option value="">전체 유형</option>
+        <option value="HOTEL" th:selected="${accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'HOTEL'}">호텔</option>
+        <option value="MOTEL" th:selected="${accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'MOTEL'}">모텔</option>
+        <option value="PENSION" th:selected="${accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'PENSION'}">펜션</option>
+        <option value="RESORT" th:selected="${accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'RESORT'}">리조트</option>
+        <option value="GUESTHOUSE" th:selected="${accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'GUESTHOUSE'}">게스트하우스</option>
+    </select>
+
+    <select name="grade">
+        <option value="">전체 등급</option>
+        <option value="ONE" th:selected="${accomSearchDto.grade != null and accomSearchDto.grade.name() == 'ONE'}">1성급</option>
+        <option value="TWO" th:selected="${accomSearchDto.grade != null and accomSearchDto.grade.name() == 'TWO'}">2성급</option>
+        <option value="THREE" th:selected="${accomSearchDto.grade != null and accomSearchDto.grade.name() == 'THREE'}">3성급</option>
+        <option value="FOUR" th:selected="${accomSearchDto.grade != null and accomSearchDto.grade.name() == 'FOUR'}">4성급</option>
+        <option value="FIVE" th:selected="${accomSearchDto.grade != null and accomSearchDto.grade.name() == 'FIVE'}">5성급</option>
+    </select>
+
+    <select name="accomStatus">
+        <option value="">전체 상태</option>
+        <option value="OPEN" th:selected="${accomSearchDto.accomStatus != null and accomSearchDto.accomStatus.name() == 'OPEN'}">운영중</option>
+        <option value="CLOSED" th:selected="${accomSearchDto.accomStatus != null and accomSearchDto.accomStatus.name() == 'CLOSED'}">운영중지</option>
+        <option value="READY" th:selected="${accomSearchDto.accomStatus != null and accomSearchDto.accomStatus.name() == 'READY'}">준비중</option>
+    </select>
+
+    <button type="submit">조회하십시오.</button>
+</form>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>번호</th>
+        <th>숙소명</th>
+        <th>유형</th>
+        <th>등급</th>
+        <th>가격</th>
+        <th>위치</th>
+        <th>상태</th>
+        <th>수정</th>
+        <th>삭제</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:if="${accomPage.totalElements == 0}">
+        <td colspan="9">조회된 숙소가 없습니다.</td>
+    </tr>
+    <tr th:each="accom : ${accomPage.content}">
+        <td th:text="${accom.id}"></td>
+        <td>
+            <a th:href="@{/accom/{id}(id=${accom.id})}" th:text="${accom.accomName}"></a>
+        </td>
+        <td th:text="${accom.accomType}"></td>
+        <td th:text="${accom.grade}"></td>
+        <td th:text="${accom.pricePerNight}"></td>
+        <td th:text="${accom.location}"></td>
+        <td th:text="${accom.status}"></td>
+        <td>
+            <a th:href="@{/admin/accom/{id}(id=${accom.id})}">수정</a>
+        </td>
+        <td>
+            <a th:href="@{/admin/accom/delete/{id}(id=${accom.id})}"
+               onclick="return confirm('해당 숙소를 삭제하시겠습니까?');">삭제</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<div th:if="${accomPage.totalPages > 0}">
+    <span th:if="${accomPage.hasPrevious()}">
+        <a th:href="@{/admin/accoms(
+            page=${accomPage.number - 1},
+            searchQuery=${accomSearchDto.searchQuery},
+            accomType=${accomSearchDto.accomType},
+            grade=${accomSearchDto.grade},
+            accomStatus=${accomSearchDto.accomStatus}
+        )}">이전</a>
+    </span>
+
+    <span th:each="pageNum : ${#numbers.sequence(0, accomPage.totalPages - 1)}">
+        <a th:href="@{/admin/accoms(
+            page=${pageNum},
+            searchQuery=${accomSearchDto.searchQuery},
+            accomType=${accomSearchDto.accomType},
+            grade=${accomSearchDto.grade},
+            accomStatus=${accomSearchDto.accomStatus}
+        )}"
+           th:text="${pageNum + 1}"></a>
+    </span>
+
+    <span th:if="${accomPage.hasNext()}">
+        <a th:href="@{/admin/accoms(
+            page=${accomPage.number + 1},
+            searchQuery=${accomSearchDto.searchQuery},
+            accomType=${accomSearchDto.accomType},
+            grade=${accomSearchDto.grade},
+            accomStatus=${accomSearchDto.accomStatus}
+        )}">다음</a>
+    </span>
+</div>
+
+</body>
+</html>

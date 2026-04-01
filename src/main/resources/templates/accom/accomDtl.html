@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/layouts}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>숙소 상세</title>
+    <link rel="stylesheet" th:href="@{/css/review.css}">
+</head>
+
+<body>
+<div layout:fragment="content" class="review-page">
+
+    <div class="detail-container">
+        <h2 class="review-title">숙소 상세</h2>
+
+        <div class="accom-info-box">
+            <p><strong>숙소명:</strong> <span th:text="${accom.accomName}"></span></p>
+            <p><strong>가격:</strong> <span th:text="${accom.pricePerNight}"></span></p>
+            <p><strong>유형:</strong> <span th:text="${accom.accomType}"></span></p>
+            <p><strong>등급:</strong> <span th:text="${accom.grade}"></span></p>
+            <p><strong>위치:</strong> <span th:text="${accom.location}"></span></p>
+            <p><strong>평균 별점:</strong>
+                <span th:text="${#numbers.formatDecimal(accom.avgRating, 1, 1)}"></span>
+            </p>
+            <p><strong>리뷰 수:</strong> <span th:text="${accom.reviewCount}"></span></p>
+            <p><strong>상태:</strong> <span th:text="${accom.status}"></span></p>
+            <p><strong>설명:</strong> <span th:text="${accom.accomDetail}"></span></p>
+        </div>
+
+        <div class="image-section">
+            <h3>숙소 이미지</h3>
+            <div th:if="${#lists.isEmpty(accom.accomImgList)}" class="empty-box">
+                등록된 이미지가 없습니다.
+            </div>
+            <div th:each="img : ${accom.accomImgList}" class="image-box">
+                <img th:src="${img.imgUrl}" alt="숙소 이미지">
+            </div>
+        </div>
+
+        <div class="review-write-section">
+            <h3>리뷰 작성</h3>
+
+            <div th:if="${errorMessage}" class="error-box" th:text="${errorMessage}"></div>
+
+            <!-- 비로그인 상태 -->
+            <div sec:authorize="isAnonymous()" class="empty-box">
+                로그인 후 리뷰를 작성할 수 있습니다.
+            </div>
+
+            <!-- 로그인했고 이미 작성한 경우 -->
+            <div sec:authorize="isAuthenticated()" th:if="${hasMyReview}" class="empty-box">
+                이미 이 숙소에 리뷰를 작성하셨습니다.
+            </div>
+
+            <!-- 로그인했고 아직 작성하지 않은 경우 -->
+            <form sec:authorize="isAuthenticated()"
+                  th:if="${!hasMyReview}"
+                  th:action="@{/reviews/new}"
+                  th:object="${reviewFormDto}"
+                  method="post"
+                  class="review-form">
+
+                <input type="hidden" th:field="*{accomId}">
+
+                <div class="form-group">
+                    <label for="rating">별점</label>
+                    <select th:field="*{rating}" id="rating">
+                        <option value="">별점을 선택해 주세요</option>
+                        <option value="5">5점</option>
+                        <option value="4">4점</option>
+                        <option value="3">3점</option>
+                        <option value="2">2점</option>
+                        <option value="1">1점</option>
+                    </select>
+                    <p class="field-error"
+                       th:if="${#fields.hasErrors('rating')}"
+                       th:errors="*{rating}"></p>
+                </div>
+
+                <div class="form-group">
+                    <label for="content">리뷰 내용</label>
+                    <textarea th:field="*{content}"
+                              id="content"
+                              rows="6"
+                              placeholder="숙소 이용 후기를 작성해 주세요."></textarea>
+                    <p class="field-error"
+                       th:if="${#fields.hasErrors('content')}"
+                       th:errors="*{content}"></p>
+                </div>
+
+                <div class="button-group left">
+                    <button type="submit" class="btn btn-submit">리뷰 등록</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="review-list-section">
+            <h3>리뷰 목록</h3>
+
+            <div th:if="${#lists.isEmpty(reviewList)}" class="empty-box">
+                아직 등록된 리뷰가 없습니다.
+            </div>
+
+            <div th:each="review : ${reviewList}" class="review-card">
+                <p><strong>작성자:</strong> <span th:text="${review.createBy}"></span></p>
+                <p><strong>별점:</strong> <span th:text="${review.rating}"></span>점</p>
+                <p><strong>내용:</strong> <span th:text="${review.content}"></span></p>
+                <p><strong>작성일:</strong>
+                    <span th:text="${#temporals.format(review.regTime, 'yyyy-MM-dd HH:mm')}"></span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
