@@ -124,4 +124,8 @@ public class Accom {
     public void onUpdate() {
         this.updateTime = LocalDateTime.now();
     }
+
+    public String getReserveStatCd() {
+        return null;
+    }
 }
