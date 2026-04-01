@@ -11,9 +11,15 @@ public class FileService {
 
     public String uploadFile(String uploadPath, String originalFileName, MultipartFile multipartFile) throws Exception{
 
+        File uploadDir = new File(uploadPath);
+
+        if (!uploadDir.exists()){
+            uploadDir.mkdirs();
+        }
+
         UUID uuid = UUID.randomUUID();
         String savedFileName = uuid + "_" + originalFileName;
-        String fileUploadFullUrl = uploadPath + "/" + savedFileName;
+        String fileUploadFullUrl = uploadPath + File.separator + savedFileName;
 
         multipartFile.transferTo(new File(fileUploadFullUrl));
         return savedFileName;

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
@@ -18,4 +19,6 @@ public class ReviewFormDto {
 
     @NotBlank(message = "리뷰 내용을 입력해 주세요.")
     private String content;
+
+    private MultipartFile reviewImgFile;
 }

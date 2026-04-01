@@ -3,7 +3,6 @@ package com.Accommodation.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 @Entity
 @Table(
@@ -14,7 +13,6 @@ import lombok.ToString;
 )
 @Getter
 @Setter
-@ToString
 public class Review extends BaseEntity {
 
         @Id
@@ -35,4 +33,19 @@ public class Review extends BaseEntity {
 
         @Column(nullable = false, length = 1000)
         private String content;
+
+        @Column(name = "review_img_name")
+        private String reviewImgName;
+
+        @Column(name = "review_ori_img_name")
+        private String reviewOriImgName;
+
+        @Column(name = "review_img_url")
+        private String reviewImgUrl;
+
+        public void updateReviewImg(String reviewImgName, String reviewOriImgName, String reviewImgUrl) {
+                this.reviewImgName = reviewImgName;
+                this.reviewOriImgName = reviewOriImgName;
+                this.reviewImgUrl = reviewImgUrl;
+        }
 }
