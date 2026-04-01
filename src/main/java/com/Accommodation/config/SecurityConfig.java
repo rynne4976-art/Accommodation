@@ -41,18 +41,22 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/main",
+                                "/error",
                                 "/members/new",
                                 "/members/login",
                                 "/css/**",
                                 "/js/**",
+                                "/images/**",
                                 "/accom/**"
                         ).permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
 
                 .formLogin(form -> form
                         .loginPage("/members/login")
                         .loginProcessingUrl("/members/login")
+                        .failureUrl("/members/login?error")
                         .defaultSuccessUrl("/main", true)
                         .usernameParameter("email")
                         .passwordParameter("password")
@@ -60,8 +64,9 @@ public class SecurityConfig {
                 )
 
                 .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/main")
+                        .logoutUrl("/members/logout")
+                        .logoutSuccessUrl("/main?logout")
+                        .permitAll()
                 )
 
                 .build();

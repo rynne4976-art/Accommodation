@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * 🧾 MemberController (회원 컨트롤러)
@@ -59,7 +60,11 @@ public class MemberController {
      * - 로그인 화면을 사용자에게 보여줌
      */
     @GetMapping("/members/login")
-    public String memberLogin() {
+    public String memberLogin(@RequestParam(value = "error", required = false) String error,
+                              Model model) {
+        if (error != null) {
+            model.addAttribute("loginErrorMessage", "이메일 또는 비밀번호를 다시 확인해주세요.");
+        }
         return "member/memberLoginForm";
     }
 
