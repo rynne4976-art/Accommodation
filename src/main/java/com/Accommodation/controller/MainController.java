@@ -1,33 +1,37 @@
 package com.Accommodation.controller;
 
+import com.Accommodation.dto.AccomSearchDto;
+import com.Accommodation.dto.MainAccomDto;
+import com.Accommodation.service.AccomService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.ArrayList;
+import java.util.Optional;
 
 @Controller
+@RequiredArgsConstructor
 public class MainController {
 
-    @GetMapping("/")
-    public String home(@RequestParam(value = "logout", required = false) String logout,
+    private final AccomService accomService;
+
+    @GetMapping({"/", "/main"})
+    public String main(AccomSearchDto accomSearchDto,
+                       @RequestParam(value = "page") Optional<Integer> page,
                        Model model) {
-        return renderMain(logout, model);
-    }
+        Pageable pageable = PageRequest.of(page.orElse(0), 10);
+        Page<MainAccomDto> accomPage = accomService.getMainAccomPage(accomSearchDto, pageable);
 
-    @GetMapping("/main")
-    public String mainPage(@RequestParam(value = "logout", required = false) String logout,
-                           Model model) {
-        return renderMain(logout, model);
-    }
+        model.addAttribute("accomList", accomPage.getContent());
+        model.addAttribute("accomPage", accomPage);
+        model.addAttribute("accomSearchDto", accomSearchDto);
+        model.addAttribute("maxPage", 5);
 
-    private String renderMain(String logout, Model model) {
-        model.addAttribute("accomList", new ArrayList<>());
-        if (logout != null) {
-            model.addAttribute("logoutMessage", "안전하게 로그아웃되었습니다.");
-        }
-        return "/main";
+        return "main";
     }
-
 }
