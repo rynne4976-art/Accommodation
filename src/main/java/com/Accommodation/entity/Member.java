@@ -90,6 +90,7 @@ public class Member extends BaseTimeEntity {
 
         member.setName(memberFormDto.getName());
         member.setEmail(memberFormDto.getEmail());
+        member.setNumber(memberFormDto.getNumber());
         member.setAddress(memberFormDto.getAddress());
 
         // 비밀번호 암호화 후 저장

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>접근 권한 없음</title>
+</head>
+<body>
+<div th:replace="~{layouts/header :: header}"></div>
+
+<main style="max-width: 720px; margin: 80px auto; text-align: center;">
+    <h1>403</h1>
+    <p>이 요청은 현재 계정으로 처리할 수 없습니다.</p>
+    <p>로그인 상태와 권한을 확인한 뒤 다시 시도해주세요.</p>
+    <a th:href="@{/main}">메인으로 돌아가기</a>
+</main>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
+</body>
+</html>
