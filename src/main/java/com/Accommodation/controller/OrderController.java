@@ -23,7 +23,7 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    // 주문 생성 (AJAX)
+    // ── 주문 생성 (AJAX POST) ─────────────────────────────────────────────────
     @PostMapping("/order")
     @ResponseBody
     public ResponseEntity<?> order(@RequestBody @Valid OrderDto orderDto,
@@ -46,10 +46,11 @@ public class OrderController {
         return new ResponseEntity<>(orderId, HttpStatus.OK);
     }
 
-    // 주문 취소 (AJAX)
+    // ── 주문 취소 (AJAX POST) ─────────────────────────────────────────────────
     @PostMapping("/order/{orderId}/cancel")
     @ResponseBody
-    public ResponseEntity<?> cancelOrder(@PathVariable Long orderId, Principal principal) {
+    public ResponseEntity<?> cancelOrder(@PathVariable Long orderId,
+                                         Principal principal) {
         try {
             orderService.cancelOrder(orderId, principal.getName());
         } catch (Exception e) {
@@ -58,11 +59,12 @@ public class OrderController {
         return new ResponseEntity<>(orderId, HttpStatus.OK);
     }
 
-    // 주문 내역 페이지
+    // ── 주문 내역 페이지 (GET) ────────────────────────────────────────────────
     @GetMapping("/orders")
     public String orderHist(Model model, Principal principal) {
         Pageable pageable = PageRequest.of(0, 5);
-        model.addAttribute("orders", orderService.getOrderList(principal.getName(), pageable));
+        model.addAttribute("orders",
+                orderService.getOrderList(principal.getName(), pageable));
         return "order/orderHist";
     }
 }
