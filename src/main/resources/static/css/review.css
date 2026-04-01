@@ -1,0 +1,154 @@
+.review-page {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.detail-container {
+    background-color: #ffffff;
+    border-radius: 14px;
+    padding: 30px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.review-title {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 24px;
+}
+
+.accom-info-box {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.accom-info-box p {
+    margin: 10px 0;
+    font-size: 15px;
+}
+
+.image-section {
+    margin-top: 28px;
+    margin-bottom: 32px;
+}
+
+.image-section h3,
+.review-write-section h3,
+.review-list-section h3 {
+    margin-bottom: 16px;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.image-box {
+    display: inline-block;
+    margin-right: 12px;
+    margin-bottom: 12px;
+}
+
+.image-box img {
+    width: 220px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid #e5e5e5;
+}
+
+.review-write-section {
+    margin-top: 24px;
+    margin-bottom: 36px;
+    padding: 24px;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+}
+
+.review-form .form-group {
+    margin-bottom: 22px;
+}
+
+.review-form label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.review-form select,
+.review-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #dcdcdc;
+    border-radius: 10px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background-color: #ffffff;
+}
+
+.review-form textarea {
+    resize: vertical;
+}
+
+.field-error {
+    color: #d93025;
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.error-box {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    background-color: #ffe6e6;
+    color: #c62828;
+    border-radius: 10px;
+}
+
+.empty-box {
+    padding: 16px;
+    border-radius: 10px;
+    background-color: #f1f3f5;
+    color: #666666;
+    margin-bottom: 12px;
+}
+
+.button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.button-group.left {
+    justify-content: flex-start;
+}
+
+.btn {
+    display: inline-block;
+    text-decoration: none;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.btn-submit {
+    background-color: #2f6fed;
+    color: #ffffff;
+}
+
+.review-list-section {
+    margin-top: 30px;
+}
+
+.review-card {
+    padding: 16px;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    background-color: #fafafa;
+    margin-bottom: 14px;
+}
+
+.review-card p {
+    margin: 8px 0;
+}

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${accomFormDto.id == null} ? '숙소 등록' : '숙소 수정'">숙소 등록</title>
+</head>
+<body>
+
+<h2 th:text="${accomFormDto.id == null} ? '숙소 등록' : '숙소 수정'">숙소 등록</h2>
+
+<form th:object="${accomFormDto}"
+      th:action="${accomFormDto.id == null} ? @{/admin/accom/new} : @{/admin/accom/{accomId}(accomId=${accomFormDto.id})}"
+      method="post"
+      enctype="multipart/form-data">
+
+    <input type="hidden" th:field="*{id}">
+
+    <div>
+        <label>숙소명</label>
+        <input type="text" th:field="*{accomName}">
+    </div>
+
+    <div>
+        <label>1박 가격</label>
+        <input type="number" th:field="*{pricePerNight}">
+    </div>
+
+    <div>
+        <label>숙소 설명</label>
+        <textarea th:field="*{accomDetail}"></textarea>
+    </div>
+
+    <div>
+        <label>숙소 유형</label>
+        <select th:field="*{accomType}">
+            <option value="">선택하십시오.</option>
+            <option th:value="HOTEL">호텔</option>
+            <option th:value="MOTEL">모텔</option>
+            <option th:value="PENSION">펜션</option>
+            <option th:value="RESORT">리조트</option>
+            <option th:value="GUESTHOUSE">게스트하우스</option>
+        </select>
+    </div>
+
+    <div>
+        <label>숙소 등급</label>
+        <select th:field="*{grade}">
+            <option value="">선택하십시오.</option>
+            <option th:value="ONE">1성급</option>
+            <option th:value="TWO">2성급</option>
+            <option th:value="THREE">3성급</option>
+            <option th:value="FOUR">4성급</option>
+            <option th:value="FIVE">5성급</option>
+        </select>
+    </div>
+
+    <div>
+        <label>위치</label>
+        <input type="text" th:field="*{location}">
+    </div>
+
+    <div>
+        <label>숙소 상태</label>
+        <select th:field="*{status}">
+            <option th:value="OPEN">운영중</option>
+            <option th:value="CLOSED">운영중지</option>
+            <option th:value="READY">준비중</option>
+        </select>
+    </div>
+
+    <div>
+        <label>숙소 이미지</label>
+        <input type="file" name="accomImgFile" multiple>
+        <p th:if="${accomFormDto.id != null}">
+            이미지를 새로 선택하시면 기존 이미지가 교체됩니다.
+        </p>
+    </div>
+
+    <div>
+        <button type="submit"
+                th:text="${accomFormDto.id == null} ? '숙소를 등록하십시오.' : '숙소를 수정하십시오.'">
+            숙소를 등록하십시오.
+        </button>
+    </div>
+</form>
+
+<div th:if="${errorMessage}">
+    <p th:text="${errorMessage}"></p>
+</div>
+
+<div>
+    <a th:href="@{/admin/accoms}">목록으로 이동</a>
+</div>
+
+</body>
+</html>
