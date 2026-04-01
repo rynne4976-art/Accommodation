@@ -1,500 +1,626 @@
-/* 기본 */
-
-body{
-    margin:0;
-    font-family:Arial, Helvetica, sans-serif;
-    background:#f7f7f7;
+:root {
+    --bg: #f5f7fb;
+    --surface: #ffffff;
+    --surface-soft: #f8fafc;
+    --text: #172033;
+    --muted: #667085;
+    --line: #e5e7eb;
+    --primary: #7b3ff2;
+    --primary-dark: #6127cf;
+    --blue: #2f80ed;
+    --blue-dark: #1f6dd4;
+    --accent: #ffbf47;
+    --shadow: 0 18px 45px rgba(23, 32, 51, 0.10);
+    --shadow-strong: 0 20px 60px rgba(15, 23, 42, 0.18);
+    --radius-lg: 24px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(circle at top, rgba(255, 191, 71, 0.16), transparent 28%),
+        linear-gradient(180deg, #eef4ff 0%, var(--bg) 26%, #f8fafc 100%);
+}
+
+img {
+    display: block;
+    max-width: 100%;
+}
+
+.popular-area,
+.accommodation {
+    width: min(1200px, calc(100% - 32px));
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero {
+    position: relative;
+    width: 100%;
+    min-height: 460px;
+    padding: 40px 24px 56px;
+    background:
+        linear-gradient(rgba(17, 24, 39, 0.18), rgba(17, 24, 39, 0.28)),
+        url("../images/main/hero.png") center center / cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-overlay {
+    width: min(1200px, 100%);
+    color: #ffffff;
+}
+
+.hero-copy {
+    margin: 0 0 22px;
+    text-align: center;
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    font-weight: 800;
+    line-height: 1.2;
+    text-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.booking-shell {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 18px 20px 22px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: var(--shadow-strong);
+}
+
+.booking-tabs {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    padding: 2px 4px 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.booking-tab {
+    position: relative;
+    border: 0;
+    background: transparent;
+    color: #7a7f87;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 6px 0;
+    cursor: pointer;
+}
+
+.booking-tab.active {
+    color: var(--blue);
 }
 
-/* HERO */
-
-.hero{
-    background:url("../images/main/hero.png") center/cover no-repeat;
-    height:420px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+.booking-tab.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -17px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--blue);
 }
 
-.hero-overlay{
-    text-align:center;
-    color:white;
+.booking-bar {
+    display: grid;
+    grid-template-columns: 1.7fr 1.25fr 1.25fr 120px;
+    gap: 12px;
+    padding-top: 18px;
 }
 
-.hero-overlay h1{
-    font-size:40px;
-    margin-bottom:25px;
+.booking-field,
+.booking-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 54px;
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: #f3f4f6;
+    padding: 0 16px;
 }
-
-/* 검색바 */
 
-.search-box{
-    display:flex;
-    align-items:center;
-    width:900px;
-    margin:auto;
-    background:white;
-    border-radius:14px;
-    border:4px solid #ffb700;
+.booking-action {
+    color: #2a2f36;
+    font-size: 0.98rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
 }
 
-/* 기본 */
-
-body{
-    margin:0;
-    font-family:Arial, Helvetica, sans-serif;
-    background:#f7f7f7;
+.booking-field svg,
+.booking-action svg {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    fill: #b8bcc3;
 }
 
-/* HERO */
-
-.hero{
-    background:url("../images/main/hero.png") center/cover no-repeat;
-    height:420px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+.booking-input {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: #111827;
+    font-size: 0.98rem;
+    outline: none;
 }
 
-.hero-overlay{
-    text-align:center;
-    color:white;
+.booking-input::placeholder {
+    color: #9ca3af;
 }
 
-.hero-overlay h1{
-    font-size:40px;
-    margin-bottom:25px;
+.booking-action.is-placeholder {
+    color: #9ca3af;
+    font-weight: 600;
 }
-
-/* 검색바 */
 
-.search-box{
-    display:flex;
-    align-items:center;
-    width:900px;
-    margin:auto;
-    background:white;
-    border-radius:14px;
-    border:4px solid #ffb700;
-    box-sizing:border-box;
-    padding:8px;
-    gap:8px;
+.booking-action.active {
+    border-color: #111827;
+    background: #ffffff;
 }
 
-.search-box input{
-    flex:1;
-    border:none;
-    min-width:0;
-    padding:0 18px;
-    height:44px;
-    font-size:15px;
-    outline:none;
-    box-sizing:border-box;
+.booking-search {
+    border: 0;
+    border-radius: 14px;
+    background: var(--blue);
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: filter 0.2s ease, transform 0.2s ease;
 }
 
-.search-box input:not(:last-child){
-    border-right:1px solid #eee;
+.booking-search:hover {
+    filter: brightness(0.96);
+    transform: translateY(-1px);
 }
 
-/* 날짜 */
-
-.date-box{
-    position:relative;
-    flex:1;
-    min-width:0;
+.popup-panel {
+    position: absolute;
+    z-index: 30;
+    display: none;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.16);
 }
 
-.calendar-popup{
-    position:absolute;
-    top:60px;
-    left:0;
-    background:white;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.2);
-    display:none;
-    gap:15px;
-    z-index:999;
+.popup-panel.open {
+    display: block;
 }
 
-.calendar-popup input{
-    border:1px solid #ddd;
-    padding:10px;
-    border-radius:6px;
+.calendar-popup {
+    left: 50%;
+    top: calc(100% - 2px);
+    width: min(860px, calc(100vw - 32px));
+    transform: translateX(-50%);
+    padding: 18px 22px 20px;
 }
 
-/* 인원 */
-
-.guest-box-wrapper{
-    position:relative;
-    flex:1;
-    min-width:0;
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
 }
 
-#guestDisplay{
-    width:100%;
-    cursor:pointer;
+.calendar-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #111827;
+    font-size: 1.8rem;
+    cursor: pointer;
 }
 
-.guest-popup{
-    position:absolute;
-    top:60px;
-    right:0;
-    background:white;
-    width:260px;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.2);
-    display:flex;
-    z-index:999;
+.calendar-months {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px;
 }
 
-.guest-title{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+.calendar-month-title {
+    margin: 0 0 14px;
+    text-align: center;
+    color: #2a2f36;
+    font-size: 1.05rem;
+    font-weight: 800;
 }
 
-.guest-control{
-    display:flex;
-    align-items:center;
-    gap:15px;
+.calendar-weekdays,
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
 }
 
-.guest-control button{
-    width:36px;
-    height:36px;
-    border-radius:50%;
-    border:1px solid #ddd;
-    background:white;
-    font-size:18px;
-    cursor:pointer;
+.calendar-weekdays span,
+.calendar-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    font-size: 0.95rem;
 }
-
-/* 검색 버튼 */
 
-.search-btn{
-    background:#1677ff;
-    color:white;
-    border:none;
-    padding:16px 28px;
-    font-size:16px;
-    font-weight:bold;
-    border-radius:10px;
-    cursor:pointer;
-    flex-shrink:0;
-    align-self:stretch;
-    min-width:82px;
+.calendar-weekdays span {
+    color: #9ca3af;
 }
 
-/* 인기 여행지 */
-
-.popular-area{
-    max-width:1200px;
-    margin:60px auto;
+.calendar-day {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #2d3748;
+    cursor: pointer;
 }
 
-.area-list{
-    display:flex;
-    gap:20px;
+.calendar-day.muted {
+    visibility: hidden;
+    cursor: default;
 }
 
-.area-card{
-    flex:1;
-    position:relative;
-    overflow:hidden;
-    border-radius:12px;
+.calendar-day.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
 }
 
-.area-card img{
-    width:100%;
-    height:180px;
-    object-fit:cover;
+.calendar-day.sunday {
+    color: #ef4444;
 }
 
-.area-card span{
-    position:absolute;
-    bottom:15px;
-    left:15px;
-    color:white;
-    font-size:20px;
-    font-weight:bold;
+.calendar-day.saturday {
+    color: #2563eb;
 }
-
-/* 숙소 */
 
-.accommodation{
-    max-width:1200px;
-    margin:60px auto;
+.calendar-day.in-range {
+    border-radius: 12px;
+    background: #e8f1ff;
+    color: #2563eb;
 }
 
-.accommodation-wrapper{
-    display:flex;
-    gap:30px;
+.calendar-day.selected {
+    background: var(--blue);
+    color: #ffffff;
+    font-weight: 800;
 }
 
-.recent{
-    width:220px;
+.calendar-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #edf0f4;
+    color: #9ca3af;
+    font-size: 0.95rem;
 }
 
-.recent-item{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:white;
-    padding:10px;
-    border-radius:10px;
-    margin-bottom:10px;
+.calendar-reset {
+    border: 0;
+    background: transparent;
+    color: #b0b7c3;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
 }
 
-.recent-item img{
-    width:70px;
-    height:55px;
-    object-fit:cover;
-    border-radius:6px;
+.calendar-summary {
+    color: #6b7280;
+    font-weight: 700;
 }
 
-.accommodation-cards{
-    flex:1;
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:25px;
+.guest-popup {
+    right: 20px;
+    top: calc(100% - 2px);
+    width: 360px;
+    padding: 12px 0;
 }
 
-.card{
-    background:white;
-    border-radius:15px;
-    overflow:hidden;
-    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+.guest-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 22px;
 }
 
-.card img{
-    width:100%;
-    height:200px;
-    object-fit:cover;
+.guest-option + .guest-option {
+    border-top: 1px solid #edf0f4;
 }
 
-.card-body{
-    padding:18px;
+.guest-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-.rating{
-    color:orange;
+.guest-copy strong {
+    color: #111827;
+    font-size: 1.05rem;
 }
 
-.card-bottom{
-    display:flex;
-    justify-content:space-between;
-    margin-top:10px;
+.guest-copy span {
+    color: #8b949e;
+    font-size: 0.92rem;
+    line-height: 1.4;
 }
 
-.reserve-btn{
-    background:#2f6fed;
-    color:black;
-    border:none;
-    padding:8px 14px;
-    border-radius:8px;
-    cursor:pointer;
+.guest-counter {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-shrink: 0;
 }
 
-/* 날짜 */
-
-.date-box{
-    position:relative;
-    flex:1;
-    min-width:0;
+.guest-counter button {
+    width: 42px;
+    height: 42px;
+    border: 1px solid #dfe3e8;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
 }
 
-.calendar-popup{
-    position:absolute;
-    top:60px;
-    left:0;
-    background:white;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.2);
-    display:none;
-    gap:15px;
-    z-index:999;
+.guest-counter span {
+    min-width: 18px;
+    text-align: center;
+    color: #111827;
+    font-size: 1.05rem;
+    font-weight: 800;
 }
 
-.calendar-popup input{
-    border:1px solid #ddd;
-    padding:10px;
-    border-radius:6px;
+.popular-area {
+    margin-top: 56px;
 }
-
-/* 인원 */
 
-.guest-box-wrapper{
-    position:relative;
-    flex:1;
-    min-width:0;
+.popular-area h2,
+.accommodation h2 {
+    margin: 0 0 22px;
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    letter-spacing: -0.02em;
 }
 
-#guestDisplay{
-    width:100%;
-    cursor:pointer;
+.area-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
 }
 
-.guest-popup{
-    position:absolute;
-    top:60px;
-    right:0;
-    background:white;
-    width:260px;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.2);
-    display:none;
-    z-index:999;
-    color:#000;   /* 글자 검정 */
+.area-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 220px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
 }
 
-.guest-title{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+.area-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 30%, rgba(17, 24, 39, 0.72) 100%);
 }
 
-.guest-control{
-    display:flex;
-    align-items:center;
-    gap:15px;
+.area-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
 }
 
-.guest-control button{
-    width:36px;
-    height:36px;
-    border-radius:50%;
-    border:1px solid #ddd;
-    background:white;
-    font-size:18px;
-    cursor:pointer;
+.area-card:hover img {
+    transform: scale(1.05);
 }
 
-/* 검색 버튼 */
-
-.search-btn{
-    background:#1677ff;
-    color:white;
-    border:none;
-    padding:16px 28px;
-    font-size:16px;
-    font-weight:bold;
-    border-radius:10px;
-    cursor:pointer;
-    flex-shrink:0;
-    align-self:stretch;
-    min-width:82px;
+.area-card span {
+    position: absolute;
+    left: 18px;
+    bottom: 16px;
+    z-index: 1;
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 700;
 }
 
-/* 인기 여행지 */
-
-.popular-area{
-    max-width:1200px;
-    margin:60px auto;
+.accommodation {
+    margin-top: 64px;
+    margin-bottom: 72px;
 }
 
-.area-list{
-    display:flex;
-    gap:20px;
+.accom-list,
+.accommodation-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
 }
 
-.area-card{
-    flex:1;
-    position:relative;
-    overflow:hidden;
-    border-radius:12px;
+.accom-card,
+.card {
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 
-.area-card img{
-    width:100%;
-    height:180px;
-    object-fit:cover;
+.accom-card:hover,
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 42px rgba(23, 32, 51, 0.14);
 }
 
-.area-card span{
-    position:absolute;
-    bottom:15px;
-    left:15px;
-    color:white;
-    font-size:20px;
-    font-weight:bold;
+.accom-card img,
+.card img {
+    width: 100%;
+    height: 230px;
+    object-fit: cover;
+    background: #dde6f2;
 }
-
-/* 숙소 */
 
-.accommodation{
-    max-width:1200px;
-    margin:60px auto;
+.accom-info,
+.card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
 }
 
-.accommodation-wrapper{
-    display:flex;
-    gap:30px;
+.accom-info h3,
+.card-body h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    line-height: 1.35;
 }
 
-.recent{
-    width:220px;
+.rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #f59e0b;
+    font-weight: 700;
+    font-size: 0.95rem;
 }
 
-.recent-item{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:white;
-    padding:10px;
-    border-radius:10px;
-    margin-bottom:10px;
+.review {
+    color: var(--muted);
+    font-weight: 500;
 }
 
-.recent-item img{
-    width:70px;
-    height:55px;
-    object-fit:cover;
-    border-radius:6px;
+.desc {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.55;
+    font-size: 0.95rem;
 }
 
-.accommodation-cards{
-    flex:1;
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:25px;
+.card-bottom,
+.bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
 }
 
-.card{
-    background:white;
-    border-radius:15px;
-    overflow:hidden;
-    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+.price {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text);
 }
 
-.card img{
-    width:100%;
-    height:200px;
-    object-fit:cover;
+.reserve-btn,
+.reserve {
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0f5fd0, #2a84ff);
+    color: #ffffff;
+    font-weight: 700;
+    padding: 12px 18px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.card-body{
-    padding:18px;
+.reserve-btn:hover,
+.reserve:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(19, 102, 214, 0.24);
 }
 
-.rating{
-    color:orange;
+.accommodation > div:last-child p {
+    margin: 0;
+    padding: 28px 24px;
+    border: 1px dashed rgba(102, 112, 133, 0.35);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.74);
+    color: var(--muted);
+    text-align: center;
 }
+
+@media (max-width: 1024px) {
+    .booking-bar {
+        grid-template-columns: 1fr;
+    }
+
+    .calendar-popup {
+        left: 16px;
+        right: 16px;
+        width: auto;
+        transform: none;
+    }
+
+    .calendar-months {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
 
-.card-bottom{
-    display:flex;
-    justify-content:space-between;
-    margin-top:10px;
+    .guest-popup {
+        left: 16px;
+        right: 16px;
+        width: auto;
+    }
+
+    .area-list,
+    .accom-list,
+    .accommodation-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
+
+@media (max-width: 768px) {
+    .hero {
+        min-height: 400px;
+        padding: 24px 16px 40px;
+    }
+
+    .booking-shell {
+        padding: 16px;
+    }
+
+    .booking-tabs {
+        gap: 24px;
+    }
+
+    .popular-area,
+    .accommodation {
+        width: min(100% - 24px, 1200px);
+    }
+
+    .area-list,
+    .accom-list,
+    .accommodation-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .card-bottom,
+    .bottom {
+        flex-direction: column;
+        align-items: stretch;
+    }
 
-.reserve-btn{
-    background:#2f6fed;
-    color:black;
-    border:none;
-    padding:8px 14px;
-    border-radius:8px;
-    cursor:pointer;
+    .reserve-btn,
+    .reserve {
+        width: 100%;
+    }
 }

@@ -7,306 +7,393 @@
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/main.css}">
     <link rel="stylesheet" th:href="@{/css/footer.css}">
-
 </head>
 
 <body>
-
-<!-- header -->
 <div th:replace="layouts/header :: header"></div>
 
-<!-- hero -->
 <section class="hero">
-
     <div class="hero-overlay">
+        <h1 class="hero-copy">원하는 숙소를 가장 빠르게 찾아보세요</h1>
 
-        <h1>원하는 숙소를 가장 빠르게 찾아보세요</h1>
-
-        <div class="search-box">
-
-            <!-- 지역 -->
-            <input type="text" placeholder="어디로 향하시나요?">
-
-            <!-- 날짜 -->
-            <div class="date-box">
-                <input type="text" id="dateRange" placeholder="체크인 날짜 - 체크아웃 날짜" readonly>
-
-                <div class="calendar-popup" id="calendarPopup">
-
-                    <input type="date" id="checkin">
-                    <input type="date" id="checkout">
-
-                </div>
+        <div class="booking-shell">
+            <div class="booking-tabs">
+                <button class="booking-tab" type="button">국내 숙소</button>
+                <button class="booking-tab active" type="button">해외 숙소</button>
             </div>
 
-            <!-- 인원 -->
-            <div class="guest-box-wrapper">
+            <div class="booking-bar">
+                <label class="booking-field">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M10 4a6 6 0 1 0 3.874 10.582l4.272 4.272 1.414-1.414-4.272-4.272A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/>
+                    </svg>
+                    <input class="booking-input" type="text" placeholder="여행지나 숙소를 검색해보세요.">
+                </label>
 
-                <input type="text" id="guestDisplay" readonly>
+                <button class="booking-action is-placeholder" id="dateTrigger" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2Zm11 8H6v10h12V10Zm0-4H6v2h12V6Z"/>
+                    </svg>
+                    <span id="dateRangeLabel">체크인 날짜 - 체크아웃 날짜</span>
+                </button>
 
-                <div class="guest-popup" id="guestPopup">
+                <button class="booking-action is-placeholder" id="guestTrigger" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5Z"/>
+                    </svg>
+                    <span id="guestDisplay">총 인원 0, 객실 1</span>
+                </button>
 
-                    <div class="guest-title">
-                        <div>
-                            <strong> 🛎️ 인원</strong><br>
-                            <small>유아 및 아동도 인원수에 포함해주세요.</small>
+                <button class="booking-search" type="button">검색</button>
+            </div>
+
+            <div class="popup-panel calendar-popup" id="calendarPopup">
+                <div class="calendar-header">
+                    <button class="calendar-nav" id="prevMonthBtn" type="button">&lsaquo;</button>
+                    <div></div>
+                    <button class="calendar-nav" id="nextMonthBtn" type="button">&rsaquo;</button>
+                </div>
+
+                <div class="calendar-months">
+                    <div class="calendar-month">
+                        <h3 class="calendar-month-title" id="monthTitleLeft"></h3>
+                        <div class="calendar-weekdays">
+                            <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
                         </div>
-
-                        <div class="guest-control">
-                            <button onclick="changeGuest(-1)">-</button>
-                            <span id="guestCount">0</span>
-                            <button onclick="changeGuest(1)">+</button>
-                        </div>
-
+                        <div class="calendar-days" id="monthDaysLeft"></div>
                     </div>
 
+                    <div class="calendar-month">
+                        <h3 class="calendar-month-title" id="monthTitleRight"></h3>
+                        <div class="calendar-weekdays">
+                            <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                        </div>
+                        <div class="calendar-days" id="monthDaysRight"></div>
+                    </div>
                 </div>
 
+                <div class="calendar-footer">
+                    <button class="calendar-reset" id="calendarResetBtn" type="button">일정 초기화</button>
+                    <span class="calendar-summary" id="calendarSummary">체크인 날짜 - 체크아웃 날짜</span>
+                </div>
             </div>
 
-            <!-- 검색 -->
-            <button class="search-btn">검색</button>
+            <div class="popup-panel guest-popup" id="guestPopup">
+                <div class="guest-option">
+                    <div class="guest-copy">
+                        <strong>성인</strong>
+                        <span>총 성인 수</span>
+                    </div>
+                    <div class="guest-counter">
+                        <button id="adultMinusBtn" type="button">−</button>
+                        <span id="adultCount">0</span>
+                        <button id="adultPlusBtn" type="button">+</button>
+                    </div>
+                </div>
 
+                <div class="guest-option">
+                    <div class="guest-copy">
+                        <strong>아동</strong>
+                        <span>총 아동 수(만 0세 - 17세)</span>
+                    </div>
+                    <div class="guest-counter">
+                        <button id="childMinusBtn" type="button">−</button>
+                        <span id="childCount">0</span>
+                        <button id="childPlusBtn" type="button">+</button>
+                    </div>
+                </div>
+
+                <div class="guest-option">
+                    <div class="guest-copy">
+                        <strong>객실</strong>
+                        <span>총 인원이 이용할 객실 수</span>
+                    </div>
+                    <div class="guest-counter">
+                        <button id="roomMinusBtn" type="button">−</button>
+                        <span id="roomCount">1</span>
+                        <button id="roomPlusBtn" type="button">+</button>
+                    </div>
+                </div>
+            </div>
         </div>
-
     </div>
-
 </section>
 
-    <section class="popular-area">
+<section class="popular-area">
+    <h2>국내 인기 여행지</h2>
 
-        <h2>인기 여행지</h2>
-
-        <div class="area-list">
-
-            <div class="area-card">
-                <img src="../images/main/seoul.png">
-                <span>서울</span>
-            </div>
-
-            <div class="area-card">
-                <img src="../images/main/busan.png">
-                <span>부산</span>
-            </div>
-
-            <div class="area-card">
-                <img src="../images/main/gangneung.png">
-                <span>강릉</span>
-            </div>
-
-            <div class="area-card">
-                <img src="../images/main/jeju.png">
-                <span>제주</span>
-            </div>
-
+    <div class="area-list">
+        <div class="area-card">
+            <img th:src="@{/images/main/seoul.png}" alt="서울">
+            <span>서울</span>
         </div>
 
-    </section>
+        <div class="area-card">
+            <img th:src="@{/images/main/busan.png}" alt="부산">
+            <span>부산</span>
+        </div>
 
+        <div class="area-card">
+            <img th:src="@{/images/main/gangneung.png}" alt="강릉">
+            <span>강릉</span>
+        </div>
 
+        <div class="area-card">
+            <img th:src="@{/images/main/jeju.png}" alt="제주">
+            <span>제주</span>
+        </div>
+    </div>
+</section>
 
-<!-- 숙소 리스트 -->
-
-<section class="accommodation">
-
+<section class="accommodation accom-section">
     <h2>숙소 목록</h2>
 
-    <div class="accommodation-wrapper">
+    <div class="accommodation-cards accom-list" th:if="${accomList != null and !#lists.isEmpty(accomList)}">
+        <div class="card accom-card" th:each="accom : ${accomList}">
+            <img th:src="${accom.imgUrl}" alt="숙소 이미지">
 
+            <div class="card-body accom-info">
+                <h3 th:text="${accom.accomName}">숙소명</h3>
 
-        <!-- 최근 본 숙소 -->
+                <div class="rating">
+                    ★ <span th:text="${accom.avgRating}">4.5</span>
+                    <span class="review" th:text="'(후기 ' + ${accom.reviewCount} + ')'">(후기 0)</span>
+                </div>
 
-        <div class="recent">
+                <p class="desc" th:text="${accom.accomDetail}">숙소 설명</p>
+                <p class="desc" th:text="${accom.location}">숙소 위치</p>
 
-            <div class="recent-item">
-                <img src="../images/main/sample1.png">
-                <span>130,000원</span>
+                <div class="card-bottom bottom">
+                    <span class="price" th:text="${accom.pricePerNight} + '원 / 박'">120000원 / 박</span>
+                    <button class="reserve-btn reserve" type="button">예약하기</button>
+                </div>
             </div>
-
-            <div class="recent-item">
-                <img src="../images/main/sample2.png">
-                <span>110,000원</span>
-            </div>
-
-            <div class="recent-item">
-                <img src="../images/main/sample3.png">
-                <span>95,000원</span>
-            </div>
-
         </div>
-
-
-        <!-- 숙소 카드 -->
-
-        <div class="accommodation-cards">
-
-
-            <div class="card">
-
-                <img src="../images/main/sample1.png">
-
-                <div class="card-body">
-
-                    <h3>서울 리조트</h3>
-
-                    <p class="rating">⭐⭐⭐⭐ (후기 210개)</p>
-
-                    <p class="desc">럭셔리한 도심 속 휴양지</p>
-
-                    <div class="card-bottom">
-
-                        <span class="price">120,000원~ / 박</span>
-
-                        <button class="reserve-btn">예약하기</button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="card">
-
-                <img src="../images/main/sample2.png">
-
-                <div class="card-body">
-
-                    <h3>해운대 오션뷰</h3>
-
-                    <p class="rating">⭐⭐⭐⭐ (후기 350개)</p>
-
-                    <p class="desc">바다가 보이는 아름다운 숙소</p>
-
-                    <div class="card-bottom">
-
-                        <span class="price">150,000원~ / 박</span>
-
-                        <button class="reserve-btn">예약하기</button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="card">
-
-                <img src="../images/main/sample3.png">
-
-                <div class="card-body">
-
-                    <h3>제주 힐링 하우스</h3>
-
-                    <p class="rating">⭐⭐⭐⭐ (후기 180개)</p>
-
-                    <p class="desc">자연 속 아늑한 휴식</p>
-
-                    <div class="card-bottom">
-
-                        <span class="price">90,000원~ / 박</span>
-
-                        <button class="reserve-btn">예약하기</button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-        </div>
-
     </div>
 
+    <div th:if="${accomList == null or #lists.isEmpty(accomList)}">
+        <p>표시할 숙소가 없습니다.</p>
+    </div>
 </section>
-
-
-<!-- footer -->
 
 <div th:replace="layouts/footer :: footer"></div>
 
-
 <script>
-
-    /* 오늘 날짜 */
-
-    const today = new Date().toISOString().split("T")[0];
-    document.getElementById("checkin").min = today;
-    document.getElementById("checkout").min = today;
-
-    /* 달력 */
-
-    const dateRange = document.getElementById("dateRange");
-    const calendar = document.getElementById("calendarPopup");
-
-    dateRange.addEventListener("click", () => {
-        calendar.style.display = "flex";
-    });
-
-    /* 날짜 선택 */
-
-    const checkin = document.getElementById("checkin");
-    const checkout = document.getElementById("checkout");
-
-    checkin.addEventListener("change", () => {
-        checkout.min = checkin.value;
-        updateDate();
-    });
-
-    checkout.addEventListener("change", updateDate);
-
-    function updateDate(){
-
-        if(checkin.value && checkout.value){
-            dateRange.value = checkin.value + " - " + checkout.value;
-            calendar.style.display="none";
-        }
-
-    }
-
-    /* 인원 */
-
-    let guest = 0;
-
+    const dateTrigger = document.getElementById("dateTrigger");
+    const guestTrigger = document.getElementById("guestTrigger");
+    const dateRangeLabel = document.getElementById("dateRangeLabel");
     const guestDisplay = document.getElementById("guestDisplay");
     const guestPopup = document.getElementById("guestPopup");
-    const guestCount = document.getElementById("guestCount");
+    const calendarPopup = document.getElementById("calendarPopup");
+    const calendarSummary = document.getElementById("calendarSummary");
+    const prevMonthBtn = document.getElementById("prevMonthBtn");
+    const nextMonthBtn = document.getElementById("nextMonthBtn");
+    const calendarResetBtn = document.getElementById("calendarResetBtn");
+    const monthTitleLeft = document.getElementById("monthTitleLeft");
+    const monthTitleRight = document.getElementById("monthTitleRight");
+    const monthDaysLeft = document.getElementById("monthDaysLeft");
+    const monthDaysRight = document.getElementById("monthDaysRight");
+    const adultCountEl = document.getElementById("adultCount");
+    const childCountEl = document.getElementById("childCount");
+    const roomCountEl = document.getElementById("roomCount");
 
-    guestDisplay.value = "인원 0";
+    const weekdayNames = ["일", "월", "화", "수", "목", "금", "토"];
+    const today = new Date();
+    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    guestDisplay.addEventListener("click", () => {
-        guestPopup.style.display="block";
-    });
+    let adultCount = 0;
+    let childCount = 0;
+    let roomCount = 1;
+    let rangeStart = null;
+    let rangeEnd = null;
+    let currentMonth = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
 
-    function changeGuest(num){
-
-        guest += num;
-
-        if(guest < 0) guest = 0;
-
-        guestCount.innerText = guest;
-        guestDisplay.value = "🛎️ 인원 " + guest;
-
+    function addDays(baseDate, days) {
+        const date = new Date(baseDate);
+        date.setDate(date.getDate() + days);
+        return date;
     }
 
-    /* 외부 클릭 */
+    function isSameDate(first, second) {
+        return first && second
+            && first.getFullYear() === second.getFullYear()
+            && first.getMonth() === second.getMonth()
+            && first.getDate() === second.getDate();
+    }
 
-    document.addEventListener("click", (e)=>{
+    function formatShortDate(date) {
+        return `${date.getMonth() + 1}.${String(date.getDate()).padStart(2, "0")} ${weekdayNames[date.getDay()]}`;
+    }
 
-        if(!e.target.closest(".date-box")){
-            calendar.style.display="none";
+    function updateDateLabel() {
+        if (!rangeStart && !rangeEnd) {
+            dateRangeLabel.textContent = "체크인 날짜 - 체크아웃 날짜";
+            calendarSummary.textContent = "체크인 날짜 - 체크아웃 날짜";
+            dateTrigger.classList.add("is-placeholder");
+            return;
         }
 
-        if(!e.target.closest(".guest-box-wrapper")){
-            guestPopup.style.display="none";
+        if (rangeStart && !rangeEnd) {
+            const startText = `${formatShortDate(rangeStart)} - 체크아웃 날짜`;
+            dateRangeLabel.textContent = startText;
+            calendarSummary.textContent = startText;
+            dateTrigger.classList.remove("is-placeholder");
+            return;
         }
 
+        const nights = Math.round((rangeEnd - rangeStart) / (1000 * 60 * 60 * 24));
+        const label = `${formatShortDate(rangeStart)} - ${formatShortDate(rangeEnd)} (${nights}박)`;
+        dateRangeLabel.textContent = label;
+        calendarSummary.textContent = label;
+        dateTrigger.classList.remove("is-placeholder");
+    }
+
+    function updateGuestLabel() {
+        const totalGuests = adultCount + childCount;
+        adultCountEl.textContent = adultCount;
+        childCountEl.textContent = childCount;
+        roomCountEl.textContent = roomCount;
+        guestDisplay.textContent = `총 인원 ${totalGuests}, 객실 ${roomCount}`;
+        guestTrigger.classList.toggle("is-placeholder", totalGuests === 0 && roomCount === 1);
+    }
+
+    function buildMonth(container, monthDate, titleNode) {
+        container.innerHTML = "";
+        titleNode.textContent = `${monthDate.getFullYear()}년 ${monthDate.getMonth() + 1}월`;
+
+        const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+        const lastDate = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay.getDay(); i += 1) {
+            const emptyCell = document.createElement("span");
+            emptyCell.className = "calendar-day muted";
+            container.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= lastDate; day += 1) {
+            const button = document.createElement("button");
+            const value = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
+            const dayOfWeek = value.getDay();
+
+            button.type = "button";
+            button.className = "calendar-day";
+            button.textContent = String(day);
+
+            if (dayOfWeek === 0) {
+                button.classList.add("sunday");
+            } else if (dayOfWeek === 6) {
+                button.classList.add("saturday");
+            }
+
+            if (value < todayDate) {
+                button.disabled = true;
+                button.classList.add("disabled");
+            } else {
+                button.addEventListener("click", () => selectDate(value));
+            }
+
+            if (rangeStart && rangeEnd && value > rangeStart && value < rangeEnd) {
+                button.classList.add("in-range");
+            }
+
+            if (isSameDate(value, rangeStart) || isSameDate(value, rangeEnd)) {
+                button.classList.add("selected");
+            }
+
+            container.appendChild(button);
+        }
+    }
+
+    function renderCalendars() {
+        const rightMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+        buildMonth(monthDaysLeft, currentMonth, monthTitleLeft);
+        buildMonth(monthDaysRight, rightMonth, monthTitleRight);
+    }
+
+    function selectDate(date) {
+        if (!rangeStart || (rangeStart && rangeEnd)) {
+            rangeStart = date;
+            rangeEnd = null;
+        } else if (date < rangeStart) {
+            rangeStart = date;
+        } else if (isSameDate(date, rangeStart)) {
+            rangeEnd = addDays(date, 1);
+        } else {
+            rangeEnd = date;
+            calendarPopup.classList.remove("open");
+            dateTrigger.classList.remove("active");
+        }
+
+        updateDateLabel();
+        renderCalendars();
+    }
+
+    function togglePopup(target) {
+        const isCalendar = target === "calendar";
+        calendarPopup.classList.toggle("open", isCalendar && !calendarPopup.classList.contains("open"));
+        guestPopup.classList.toggle("open", !isCalendar && !guestPopup.classList.contains("open"));
+        dateTrigger.classList.toggle("active", calendarPopup.classList.contains("open"));
+        guestTrigger.classList.toggle("active", guestPopup.classList.contains("open"));
+        if (isCalendar) {
+            guestPopup.classList.remove("open");
+            guestTrigger.classList.remove("active");
+        } else {
+            calendarPopup.classList.remove("open");
+            dateTrigger.classList.remove("active");
+        }
+    }
+
+    dateTrigger.addEventListener("click", () => togglePopup("calendar"));
+    guestTrigger.addEventListener("click", () => togglePopup("guest"));
+
+    prevMonthBtn.addEventListener("click", () => {
+        currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+        renderCalendars();
     });
 
+    nextMonthBtn.addEventListener("click", () => {
+        currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+        renderCalendars();
+    });
+
+    calendarResetBtn.addEventListener("click", () => {
+        rangeStart = null;
+        rangeEnd = null;
+        currentMonth = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+        updateDateLabel();
+        renderCalendars();
+    });
+
+    function bindCounter(minusId, plusId, getter, setter, minValue) {
+        document.getElementById(minusId).addEventListener("click", () => {
+            setter(Math.max(minValue, getter() - 1));
+            updateGuestLabel();
+        });
+
+        document.getElementById(plusId).addEventListener("click", () => {
+            setter(getter() + 1);
+            updateGuestLabel();
+        });
+    }
+
+    bindCounter("adultMinusBtn", "adultPlusBtn", () => adultCount, (value) => { adultCount = value; }, 0);
+    bindCounter("childMinusBtn", "childPlusBtn", () => childCount, (value) => { childCount = value; }, 0);
+    bindCounter("roomMinusBtn", "roomPlusBtn", () => roomCount, (value) => { roomCount = value; }, 1);
+
+    document.addEventListener("click", (event) => {
+        if (!event.target.closest(".booking-shell")) {
+            calendarPopup.classList.remove("open");
+            guestPopup.classList.remove("open");
+            dateTrigger.classList.remove("active");
+            guestTrigger.classList.remove("active");
+        }
+    });
+
+    rangeStart = addDays(todayDate, 4);
+    rangeEnd = addDays(todayDate, 5);
+    updateDateLabel();
+    updateGuestLabel();
+    renderCalendars();
 </script>
-
 </body>
-
 </html>
