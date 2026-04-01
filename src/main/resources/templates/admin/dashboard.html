@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자 페이지</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f7f7f7;
+            color: #222;
+        }
+
+        .admin-wrap {
+            max-width: 1200px;
+            margin: 48px auto 80px;
+            padding: 0 16px;
+        }
+
+        .admin-header {
+            margin-bottom: 28px;
+        }
+
+        .admin-header h1 {
+            margin: 0 0 10px;
+            font-size: 34px;
+        }
+
+        .admin-header p {
+            margin: 0;
+            color: #666;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 24px;
+        }
+
+        .admin-card {
+            background: white;
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        .admin-card h2 {
+            margin: 0 0 14px;
+            font-size: 24px;
+        }
+
+        .admin-card p {
+            margin: 0 0 24px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .admin-card a {
+            display: inline-block;
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: #7b3ff2;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{layouts/header :: header}"></div>
+
+<main class="admin-wrap">
+    <section class="admin-header">
+        <h1>관리자 페이지</h1>
+        <p>회원, 숙소, 예약 관련 관리 기능을 한 곳에서 다룰 수 있습니다.</p>
+    </section>
+
+    <section class="admin-grid">
+        <article class="admin-card">
+            <h2>회원 관리</h2>
+            <p>회원 목록 확인, 회원 상태 점검, 권한 변경 등의 작업을 진행할 수 있도록 연결할 예정입니다.</p>
+            <a href="#">회원 관리로 이동</a>
+        </article>
+
+        <article class="admin-card">
+            <h2>숙소 관리</h2>
+            <p>숙소 등록, 수정, 노출 상태 관리 등 파트너 및 관리자 영역의 기능을 이곳에 연결할 예정입니다.</p>
+            <a href="#">숙소 관리로 이동</a>
+        </article>
+
+        <article class="admin-card">
+            <h2>예약 관리</h2>
+            <p>예약 현황 조회, 예약 상태 변경, 예약 관련 문의 대응 기능을 여기에 배치할 예정입니다.</p>
+            <a href="#">예약 관리로 이동</a>
+        </article>
+    </section>
+</main>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>요청을 처리할 수 없습니다</title>
+</head>
+<body>
+<div th:replace="~{layouts/header :: header}"></div>
+
+<main style="max-width: 720px; margin: 80px auto; text-align: center;">
+    <h1>요청을 처리할 수 없습니다</h1>
+    <p>입력한 주소나 요청 내용을 다시 확인해주세요.</p>
+    <a th:href="@{/main}">메인으로 돌아가기</a>
+</main>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
+</body>
+</html>

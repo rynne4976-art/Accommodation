@@ -2,7 +2,6 @@ package com.Accommodation.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -18,12 +17,9 @@ public class CsrfCookieFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        CsrfToken csrfToken = (CsrfToken) request.getAttribute("_csrf");
-
+        CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
         if (csrfToken != null) {
-            Cookie cookie = new Cookie("XSRF-TOKEN", csrfToken.getToken());
-            cookie.setPath("/");
-            response.addCookie(cookie);
+            csrfToken.getToken();
         }
 
         filterChain.doFilter(request, response);

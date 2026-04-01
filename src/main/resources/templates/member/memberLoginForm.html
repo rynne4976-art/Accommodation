@@ -7,6 +7,10 @@
 <body>
 <h2>로그인 페이지</h2>
 
+<div th:if="${loginErrorMessage}" style="color:red;">
+    <p th:text="${loginErrorMessage}"></p>
+</div>
+
 <form th:action="@{/members/login}" method="post">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
     <div>
