@@ -142,7 +142,7 @@
             <!-- 주문 상품 목록 -->
             <div th:each="item : ${order.orderItemDtos}" class="order-item">
                 <img class="order-item__img"
-                     th:src="${#strings.isEmpty(item.imgUrl)} ? '/images/no-image.png' : ${item.imgUrl}}"
+                     th:src="${#strings.isEmpty(item.imgUrl)} ? '/images/no-image.png' : ${item.imgUrl}"
                      th:alt="${item.accomName}">
                 <div class="order-item__info">
                     <div class="order-item__name" th:text="${item.accomName}">숙소명</div>
