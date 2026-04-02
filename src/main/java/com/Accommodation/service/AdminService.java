@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AdminService {
 
+    // 관리자 화면은 조회 중심이라 별도 서비스로 묶어 책임을 분리했습니다.
     private final MemberRepository memberRepository;
     private final OrderRepository orderRepository;
 

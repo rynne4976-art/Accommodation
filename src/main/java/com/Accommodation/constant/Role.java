@@ -18,6 +18,5 @@ package com.Accommodation.constant;
 
 public enum Role {
     USER,       // 일반 회원
-    PARTNER,    // 숙소 등록 가능한 회원
     ADMIN       // 관리자
 }
