@@ -36,6 +36,7 @@ public class AccomService {
                 accomFormDto.getAccomType(),
                 accomFormDto.getGrade(),
                 accomFormDto.getLocation(),
+                accomFormDto.getRoomCount(),
                 accomFormDto.getStatus()
         );
 
@@ -103,6 +104,7 @@ public class AccomService {
                 accomFormDto.getAccomType(),
                 accomFormDto.getGrade(),
                 accomFormDto.getLocation(),
+                accomFormDto.getRoomCount(),
                 accomFormDto.getStatus()
         );
 
@@ -116,7 +118,6 @@ public class AccomService {
             }
         }
 
-        // 새 이미지가 들어온 경우에만 기존 이미지를 지우고 다시 저장
         if (hasNewImage) {
             List<AccomImg> oldImgList = accomImgRepository.findByAccomIdOrderByIdAsc(accomId);
             accomImgRepository.deleteAll(oldImgList);

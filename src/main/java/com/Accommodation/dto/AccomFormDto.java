@@ -18,6 +18,7 @@ public class AccomFormDto {
     private AccomType accomType;      // 숙소 유형
     private AccomGrade grade;         // 숙소 등급
     private String location;          // 숙소 위치
+    private Integer roomCount;        // 객실 수
     private AccomStatus status;       // 운영 상태
 
     public static AccomFormDto of(Accom accom) {
@@ -29,6 +30,7 @@ public class AccomFormDto {
         dto.setAccomType(accom.getAccomType());
         dto.setGrade(accom.getGrade());
         dto.setLocation(accom.getLocation());
+        dto.setRoomCount(accom.getRoomCount());
         dto.setStatus(accom.getStatus());
         return dto;
     }

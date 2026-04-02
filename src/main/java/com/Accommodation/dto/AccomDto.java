@@ -17,6 +17,7 @@ public class AccomDto {
         private AccomType accomType;      // 숙소 유형
         private AccomGrade grade;         // 숙소 등급
         private String location;          // 숙소 위치
+        private Integer roomCount;        // 객실 수
         private Double avgRating;         // 평균 별점
         private Integer reviewCount;      // 리뷰 수
         private AccomStatus status;       // 운영 상태

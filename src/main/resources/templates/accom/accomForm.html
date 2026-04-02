@@ -1,96 +1,130 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title th:text="${accomFormDto.id == null} ? '숙소 등록' : '숙소 수정'">숙소 등록</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-common.css}">
+    <link rel="stylesheet" th:href="@{/css/accomForm.css}">
 </head>
 <body>
 
-<h2 th:text="${accomFormDto.id == null} ? '숙소 등록' : '숙소 수정'">숙소 등록</h2>
+<div th:replace="~{layouts/header :: header}"></div>
 
-<form th:object="${accomFormDto}"
-      th:action="${accomFormDto.id == null} ? @{/admin/accom/new} : @{/admin/accom/{accomId}(accomId=${accomFormDto.id})}"
-      method="post"
-      enctype="multipart/form-data">
+<main class="page-wrap accom-form-page">
+    <section class="page-header accom-form-header">
+        <div class="page-header-copy">
+            <span class="page-label">Admin Accommodations</span>
+            <h2 th:text="${accomFormDto.id == null} ? '숙소 등록' : '숙소 수정'">숙소 등록</h2>
+            <p th:text="${accomFormDto.id == null} ? '새 숙소를 등록하고 운영 정보를 입력합니다.' : '기존 숙소 정보를 수정하고 이미지와 운영 상태를 관리합니다.'">
+                숙소 관리 폼입니다.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a th:href="@{/admin/accoms}">목록으로 이동</a>
+        </div>
+    </section>
 
-    <input type="hidden" th:field="*{id}">
+    <section class="accom-form-panel">
+        <div class="accom-form-card">
+            <div th:if="${errorMessage}" class="form-alert error">
+                <p th:text="${errorMessage}"></p>
+            </div>
 
-    <div>
-        <label>숙소명</label>
-        <input type="text" th:field="*{accomName}">
-    </div>
+            <form class="accom-form"
+                  th:object="${accomFormDto}"
+                  th:action="${accomFormDto.id == null} ? @{/admin/accom/new} : @{/admin/accom/{accomId}(accomId=${accomFormDto.id})}"
+                  method="post"
+                  enctype="multipart/form-data">
 
-    <div>
-        <label>1박 가격</label>
-        <input type="number" th:field="*{pricePerNight}">
-    </div>
+                <input type="hidden" th:field="*{id}">
 
-    <div>
-        <label>숙소 설명</label>
-        <textarea th:field="*{accomDetail}"></textarea>
-    </div>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="accomName">숙소명</label>
+                        <input type="text" th:field="*{accomName}" id="accomName" placeholder="예: 해운대 오션뷰 호텔">
+                    </div>
 
-    <div>
-        <label>숙소 유형</label>
-        <select th:field="*{accomType}">
-            <option value="">선택하십시오.</option>
-            <option th:value="HOTEL">호텔</option>
-            <option th:value="MOTEL">모텔</option>
-            <option th:value="PENSION">펜션</option>
-            <option th:value="RESORT">리조트</option>
-            <option th:value="GUESTHOUSE">게스트하우스</option>
-        </select>
-    </div>
+                    <div class="form-group">
+                        <label for="pricePerNight">1박 가격</label>
+                        <input type="number" th:field="*{pricePerNight}" id="pricePerNight" placeholder="150000">
+                    </div>
 
-    <div>
-        <label>숙소 등급</label>
-        <select th:field="*{grade}">
-            <option value="">선택하십시오.</option>
-            <option th:value="FIIV">5성급</option>
-            <option th:value="FOUR">4성급</option>
-            <option th:value="THREE">3성급</option>
-            <option th:value="TWO">2성급</option>
-            <option th:value="ONE">1성급</option>
-        </select>
-    </div>
+                    <div class="form-group">
+                        <label for="roomCount">객실 수</label>
+                        <input type="number" th:field="*{roomCount}" id="roomCount" min="0" placeholder="32">
+                    </div>
 
-    <div>
-        <label>위치</label>
-        <input type="text" th:field="*{location}">
-    </div>
+                    <div class="form-group">
+                        <label for="accomType">숙소 유형</label>
+                        <select th:field="*{accomType}" id="accomType">
+                            <option value="">선택하십시오.</option>
+                            <option th:value="HOTEL">호텔</option>
+                            <option th:value="MOTEL">모텔</option>
+                            <option th:value="PENSION">펜션</option>
+                            <option th:value="RESORT">리조트</option>
+                            <option th:value="GUESTHOUSE">게스트하우스</option>
+                        </select>
+                    </div>
 
-    <div>
-        <label>숙소 상태</label>
-        <select th:field="*{status}">
-            <option th:value="OPEN">운영중</option>
-            <option th:value="CLOSED">운영중지</option>
-            <option th:value="READY">준비중</option>
-        </select>
-    </div>
+                    <div class="form-group">
+                        <label for="grade">숙소 등급</label>
+                        <select th:field="*{grade}" id="grade">
+                            <option value="">선택하십시오.</option>
+                            <option th:value="FIVE">5성급</option>
+                            <option th:value="FOUR">4성급</option>
+                            <option th:value="THREE">3성급</option>
+                            <option th:value="TWO">2성급</option>
+                            <option th:value="ONE">1성급</option>
+                        </select>
+                    </div>
 
-    <div>
-        <label>숙소 이미지</label>
-        <input type="file" name="accomImgFile" multiple>
-        <p th:if="${accomFormDto.id != null}">
-            이미지를 새로 선택하시면 기존 이미지가 교체됩니다.
-        </p>
-    </div>
+                    <div class="form-group full-width">
+                        <label for="location">위치</label>
+                        <input type="text" th:field="*{location}" id="location" placeholder="예: 부산 해운대구 달맞이길 120">
+                    </div>
 
-    <div>
-        <button type="submit"
-                th:text="${accomFormDto.id == null} ? '숙소를 등록하십시오.' : '숙소를 수정하십시오.'">
-            숙소를 등록하십시오.
-        </button>
-    </div>
-</form>
+                    <div class="form-group full-width">
+                        <label for="accomDetail">숙소 설명</label>
+                        <textarea th:field="*{accomDetail}" id="accomDetail" rows="7" placeholder="숙소 특징과 제공 서비스를 입력하십시오."></textarea>
+                    </div>
 
-<div th:if="${errorMessage}">
-    <p th:text="${errorMessage}"></p>
-</div>
+                    <div class="form-group">
+                        <label for="status">숙소 상태</label>
+                        <select th:field="*{status}" id="status">
+                            <option th:value="OPEN">운영중</option>
+                            <option th:value="CLOSED">운영중지</option>
+                            <option th:value="READY">준비중</option>
+                        </select>
+                    </div>
 
-<div>
-    <a th:href="@{/admin/accoms}">목록으로 이동</a>
-</div>
+                    <div class="form-group file-group">
+                        <label for="accomImgFile">숙소 이미지</label>
+                        <input type="file" name="accomImgFile" id="accomImgFile" multiple>
+                        <p class="field-hint" th:if="${accomFormDto.id != null}">
+                            이미지를 새로 선택하시면 기존 이미지가 교체됩니다.
+                        </p>
+                        <p class="field-hint" th:if="${accomFormDto.id == null}">
+                            대표 이미지를 포함해 여러 장을 한 번에 등록할 수 있습니다.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a class="secondary-action" th:href="@{/admin/accoms}">취소</a>
+                    <button type="submit"
+                            class="primary-action"
+                            th:text="${accomFormDto.id == null} ? '숙소 등록' : '숙소 수정'">
+                        숙소 등록
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
 
 </body>
 </html>

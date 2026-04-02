@@ -1,56 +1,618 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/layouts}">
 <head>
     <meta charset="UTF-8">
     <title>숙소 상세</title>
     <link rel="stylesheet" th:href="@{/css/accomDtl.css}">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
 </head>
 
 <div layout:fragment="content">
+    <main class="accom-detail-page">
+        <nav class="accom-detail-tab-nav" aria-label="숙소 상세 메뉴">
+            <a href="#detail-info" class="tab-nav-link">상세정보</a>
+            <a href="#review-info" class="tab-nav-link">리뷰</a>
+            <a href="#policy-info" class="tab-nav-link">이용수칙</a>
+            <a href="#option-info" class="tab-nav-link">옵션정보</a>
+        </nav>
 
-    <div class="container accom-detail-page">
-        <div class="row">
-            <div class="col-md-6">
-                <div th:if="${accom.accomImgList != null and !#lists.isEmpty(accom.accomImgList)}">
+        <section class="accom-detail-hero">
+            <div class="accom-detail-gallery">
+                <div class="accom-detail-main-visual"
+                     th:if="${accom.accomImgList != null and !#lists.isEmpty(accom.accomImgList)}">
                     <img th:src="${accom.accomImgList[0].imgUrl}"
-                         class="img-fluid accom-detail-main-image"
+                         class="accom-detail-main-image"
                          alt="숙소 대표 이미지">
+                </div>
 
-                    <div class="accom-detail-thumb-list">
-                        <img th:each="img : ${accom.accomImgList}"
-                             th:src="${img.imgUrl}"
-                             class="accom-detail-thumb"
-                             alt="숙소 이미지">
-                    </div>
+                <div class="accom-detail-empty-image"
+                     th:if="${accom.accomImgList == null or #lists.isEmpty(accom.accomImgList)}">
+                    등록된 숙소 이미지가 없습니다.
                 </div>
             </div>
 
-            <div class="col-md-6">
-                <h2 class="accom-detail-title" th:text="${accom.accomName}">숙소명</h2>
-                <div class="accom-detail-meta">
-                <p><strong>숙소 유형:</strong> <span th:text="${accom.accomType}"></span></p>
-                <p><strong>등급:</strong> <span th:text="${accom.grade}"></span></p>
-                <p><strong>위치:</strong> <span th:text="${accom.location}"></span></p>
-                <p><strong>1박 가격:</strong> <span th:text="${#numbers.formatInteger(accom.pricePerNight, 3, 'COMMA')}"></span>원</p>
-                <p><strong>상세 설명:</strong> <span th:text="${accom.accomDetail}"></span></p>
-                <p><strong>평균 별점:</strong> <span th:text="${#numbers.formatDecimal(accom.avgRating, 1, 1)}"></span></p>
-                <p><strong>리뷰 수:</strong> <span th:text="${accom.reviewCount}"></span></p>
+            <div class="accom-detail-summary">
+                <span class="accom-detail-label">Stay Detail</span>
+                <h1 class="accom-detail-title" th:text="${accom.accomName}">숙소명</h1>
+                <p class="accom-detail-description" th:text="${accom.accomDetail}">숙소 설명</p>
+
+                <div class="accom-detail-highlight">
+                    <span>숙소 유형</span>
+                    <strong th:text="${accom.accomType}"></strong>
+
+                    <span>등급</span>
+                    <strong th:text="${accom.grade}"></strong>
+
+                    <span>위치</span>
+                    <strong th:text="${accom.location}"></strong>
+
+                    <span>객실 수</span>
+                    <strong th:text="${accom.roomCount} + '개'"></strong>
+
+                    <span class="highlight-label">1박 요금</span>
+                    <strong th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원'">0원</strong>
+
+                    <span class="highlight-label">평균 별점</span>
+                    <strong th:text="${#numbers.formatDecimal(accom.avgRating, 1, 1)}">0.0</strong>
+
+                    <span class="highlight-label">리뷰 수</span>
+                    <strong th:text="${accom.reviewCount}">0</strong>
                 </div>
 
                 <div class="accom-detail-actions">
-                    <a th:href="@{/orders/accom/{accomId}(accomId=${accom.id})}" class="btn btn-primary">
+                    <a th:href="@{/orders/accom/{accomId}(accomId=${accom.id})}" class="detail-action primary">
                         예약하기
-                    </a>
-
-                    <a th:href="@{/review/accom/{accomId}(accomId=${accom.id})}" class="btn btn-outline-secondary">
-                        리뷰 보기
                     </a>
                 </div>
             </div>
+        </section>
+
+        <section id="detail-info" class="accom-detail-info-card">
+            <div class="detail-section-header">
+                <span class="accom-detail-label subtle">Overview</span>
+                <h2>상세 정보</h2>
+            </div>
+
+            <p class="section-copy" th:text="${accom.accomDetail}">
+                숙소 상세 설명
+            </p>
+
+            <div class="detail-bullet-grid">
+                <div class="detail-bullet-item">
+                    <span>숙소 유형</span>
+                    <strong th:text="${accom.accomType}">HOTEL</strong>
+                </div>
+
+                <div class="detail-bullet-item">
+                    <span>숙소 등급</span>
+                    <strong th:text="${accom.grade}">FIVE</strong>
+                </div>
+
+                <div class="detail-bullet-item">
+                    <span>위치</span>
+                    <strong th:text="${accom.location}">서울</strong>
+                </div>
+
+                <div class="detail-bullet-item">
+                    <span>객실 수</span>
+                    <strong th:text="${accom.roomCount} + '개'">0개</strong>
+                </div>
+            </div>
+        </section>
+
+        <section id="review-info" class="accom-detail-info-card">
+            <div class="detail-section-header">
+                <span class="accom-detail-label subtle">Overview</span>
+                <h2>리뷰</h2>
+            </div>
+
+            <div class="detail-section-card review-section-card">
+                <div class="review-score-box">
+                    <strong th:text="${#numbers.formatDecimal(accom.avgRating, 1, 1)}">0.0</strong>
+                    <span>평균 별점</span>
+                </div>
+
+                <div class="review-summary-copy">
+                    <p>
+                        총 <strong th:text="${accom.reviewCount}">0</strong>개의 리뷰가 등록되어 있습니다.
+                    </p>
+                    <p>실제 이용 후기를 확인하고 직접 리뷰를 남길 수 있습니다.</p>
+                </div>
+
+                <div class="review-action-buttons">
+                    <button type="button"
+                            class="detail-action secondary action-button"
+                            th:if="${!hasMyReview}"
+                            th:attr="data-logged-in=${isLoggedIn},data-has-review=${hasMyReview}"
+                            onclick="openReviewModal(this)">
+                        리뷰 작성
+                    </button>
+
+                    <button type="button"
+                            class="detail-action secondary action-button"
+                            th:if="${myReview != null}"
+                            onclick="openMyReviewModal()">
+                        내 리뷰 보기
+                    </button>
+                </div>
+            </div>
+
+            <div class="review-list-block" th:if="${reviewList != null and !#lists.isEmpty(reviewList)}">
+                <article class="detail-section-card review-list-card" th:each="review : ${reviewList}">
+                    <div class="review-card-top">
+                        <div>
+                            <p class="review-card-author" th:text="${review.member.name}">회원명</p>
+                            <p class="review-card-date"
+                               th:text="${#temporals.format(review.regTime, 'yyyy-MM-dd HH:mm')}">2026-04-02 10:00</p>
+                        </div>
+
+                        <div class="review-card-rating">
+                            <span>별점</span>
+                            <strong th:text="${review.rating} + ' / 5'">5 / 5</strong>
+                        </div>
+                    </div>
+
+                    <p class="review-card-content" th:text="${review.content}">
+                        리뷰 내용
+                    </p>
+
+                    <div class="review-card-images"
+                         th:if="${review.reviewImgList != null and !#lists.isEmpty(review.reviewImgList)}">
+                        <img th:each="img : ${review.reviewImgList}"
+                             th:src="${img.imgUrl}"
+                             alt="리뷰 이미지">
+                    </div>
+                </article>
+            </div>
+
+            <div class="detail-section-card review-empty-card"
+                 th:if="${reviewList == null or #lists.isEmpty(reviewList)}">
+                <p>아직 등록된 리뷰가 없습니다. 첫 리뷰를 남겨보세요.</p>
+            </div>
+        </section>
+
+        <section id="policy-info" class="accom-detail-info-card">
+            <div class="detail-section-header">
+                <span class="accom-detail-label subtle">Overview</span>
+                <h2>이용 수칙</h2>
+            </div>
+
+            <div class="detail-section-card">
+                <ul class="detail-rule-list">
+                    <li>체크인 및 체크아웃 시간은 숙소 운영 정책에 따라 변동될 수 있습니다.</li>
+                    <li>객실 내 흡연 및 시설 훼손 시 추가 비용이 청구될 수 있습니다.</li>
+                    <li>반려동물 동반 가능 여부와 추가 인원 정책은 예약 전 확인하십시오.</li>
+                    <li>취소 및 환불 규정은 예약 단계에서 최종 안내 기준을 따릅니다.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="option-info" class="accom-detail-info-card">
+            <div class="detail-section-header">
+                <span class="accom-detail-label subtle">Overview</span>
+                <h2>옵션 정보</h2>
+            </div>
+
+            <div class="detail-section-card">
+                <div class="option-grid">
+                    <div class="option-item">
+                        <span>기본 숙박 요금</span>
+                        <strong th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원 / 1박'">0원 / 1박</strong>
+                    </div>
+
+                    <div class="option-item">
+                        <span>운영 상태</span>
+                        <strong th:text="${accom.status}">OPEN</strong>
+                    </div>
+
+                    <div class="option-item">
+                        <span>숙소 유형</span>
+                        <strong th:text="${accom.accomType}">OPEN</strong>
+                    </div>
+
+                    <div class="option-item">
+                        <span>잔여 객실 수</span>
+                        <strong th:text="${accom.roomCount}">OPEN</strong>
+                    </div>
+
+                    <div class="option-item">
+                        <span>예약 가능 리뷰</span>
+                        <strong th:text="${accom.reviewCount} + '건 참고 가능'">0건 참고 가능</strong>
+                    </div>
+
+                    <div class="option-item">
+                        <span>추천 포인트</span>
+                        <strong>위치, 객실, 리뷰를 한 번에 확인</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 리뷰 작성 모달 -->
+    <div id="reviewModal" class="review-modal" aria-hidden="true">
+        <div class="review-modal-backdrop" onclick="closeReviewModal()"></div>
+
+        <div class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+            <button type="button" class="review-modal-close" onclick="closeReviewModal()">닫기</button>
+
+            <div class="review-modal-header">
+                <span class="accom-detail-label subtle">Write Review</span>
+                <h2 id="reviewModalTitle">리뷰 작성</h2>
+                <p>별점과 후기를 남기고 여러 장의 사진을 선택해서 등록할 수 있습니다.</p>
+            </div>
+
+            <form id="reviewModalForm"
+                  th:object="${reviewFormDto}"
+                  class="review-modal-form"
+                  enctype="multipart/form-data">
+                <input type="hidden" th:field="*{accomId}">
+                <input type="hidden" th:field="*{rating}" id="modalReviewRating">
+
+                <div class="review-modal-group">
+                    <label>별점</label>
+                    <div class="modal-star-rating" id="modalStarRating">
+                        <button type="button" onclick="setModalRating(1)">★</button>
+                        <button type="button" onclick="setModalRating(2)">★</button>
+                        <button type="button" onclick="setModalRating(3)">★</button>
+                        <button type="button" onclick="setModalRating(4)">★</button>
+                        <button type="button" onclick="setModalRating(5)">★</button>
+                    </div>
+                </div>
+
+                <div class="review-modal-group">
+                    <label for="modalReviewContent">리뷰 내용</label>
+                    <textarea th:field="*{content}"
+                              id="modalReviewContent"
+                              rows="6"
+                              placeholder="숙소 이용 후기를 작성해 주세요."></textarea>
+                </div>
+
+                <div class="review-modal-group">
+                    <label for="modalReviewImages">리뷰 이미지</label>
+                    <input type="file"
+                           th:field="*{reviewImgFileList}"
+                           id="modalReviewImages"
+                           accept="image/*"
+                           multiple
+                           onchange="handleReviewFiles(this)">
+                    <div id="modalReviewPreviewList" class="modal-preview-list"></div>
+                </div>
+
+                <div class="review-modal-actions">
+                    <button type="button" class="modal-action secondary" onclick="closeReviewModal()">취소</button>
+                    <button type="button" class="modal-action primary" onclick="submitReviewAjax()">등록하기</button>
+                </div>
+            </form>
         </div>
     </div>
 
+    <!-- 내 리뷰 보기 / 수정 / 삭제 모달 -->
+    <div id="myReviewModal" class="review-modal" aria-hidden="true">
+        <div class="review-modal-backdrop" onclick="closeMyReviewModal()"></div>
+
+        <div class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="myReviewModalTitle">
+            <button type="button" class="review-modal-close" onclick="closeMyReviewModal()">닫기</button>
+
+            <div class="review-modal-header">
+                <span class="accom-detail-label subtle">My Review</span>
+                <h2 id="myReviewModalTitle">내 리뷰 보기</h2>
+                <p>작성한 리뷰를 수정하거나 삭제할 수 있습니다.</p>
+            </div>
+
+            <form id="myReviewForm"
+                  th:action="${myReview != null} ? @{/reviews/{reviewId}/update(reviewId=${myReview.id})} : '#'"
+                  method="post"
+                  enctype="multipart/form-data"
+                  class="review-modal-form">
+
+                <div th:if="${myReview != null}">
+                    <input type="hidden" name="accomId" th:value="${accom.id}">
+                    <input type="hidden" name="rating" id="editModalReviewRating" th:value="${myReview.rating}">
+
+                    <div class="review-modal-group">
+                        <label>별점</label>
+                        <div class="modal-star-rating" id="editModalStarRating">
+                            <button type="button" onclick="setEditModalRating(1)">★</button>
+                            <button type="button" onclick="setEditModalRating(2)">★</button>
+                            <button type="button" onclick="setEditModalRating(3)">★</button>
+                            <button type="button" onclick="setEditModalRating(4)">★</button>
+                            <button type="button" onclick="setEditModalRating(5)">★</button>
+                        </div>
+                    </div>
+
+                    <div class="review-modal-group">
+                        <label for="editModalReviewContent">리뷰 내용</label>
+                        <textarea name="content"
+                                  id="editModalReviewContent"
+                                  rows="6"
+                                  placeholder="리뷰 내용을 입력해 주세요."
+                                  th:text="${myReview.content}"></textarea>
+                    </div>
+
+                    <div class="review-modal-group">
+                        <label>기존 리뷰 이미지</label>
+
+                        <div class="modal-preview-list"
+                             th:if="${myReview.reviewImgList != null and !#lists.isEmpty(myReview.reviewImgList)}">
+                            <div class="modal-preview-item"
+                                 th:each="img : ${myReview.reviewImgList}">
+                                <img th:src="${img.imgUrl}" alt="리뷰 이미지">
+                                <span th:text="${img.oriImgName}">리뷰 이미지</span>
+
+                                <button type="submit"
+                                        class="modal-preview-remove"
+                                        th:formaction="@{/reviews/{reviewId}/images/{reviewImgId}/delete(reviewId=${myReview.id},reviewImgId=${img.id})}"
+                                        formmethod="post"
+                                        onclick="return confirm('이 이미지를 삭제하시겠습니까?');">
+                                    이미지 삭제
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="detail-section-card review-empty-card"
+                             th:if="${myReview.reviewImgList == null or #lists.isEmpty(myReview.reviewImgList)}">
+                            <p>등록된 리뷰 이미지가 없습니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="review-modal-group">
+                        <label for="editModalReviewImages">리뷰 이미지 추가</label>
+                        <input type="file"
+                               name="reviewImgFileList"
+                               id="editModalReviewImages"
+                               accept="image/*"
+                               multiple
+                               onchange="handleEditReviewFiles(this)">
+                        <div id="editModalReviewPreviewList" class="modal-preview-list"></div>
+                    </div>
+
+                    <div class="review-modal-actions">
+
+                        <button type="submit" class="modal-action primary">
+                            수정하기
+                        </button>
+
+                        <button type="submit"
+                                class="modal-action secondary"
+                                th:formaction="@{/reviews/{reviewId}/delete(reviewId=${myReview.id})}"
+                                formmethod="post"
+                                onclick="return confirm('리뷰를 삭제하시겠습니까?');">
+                            삭제하기
+                        </button>
+                    </div>
+                </div>
+
+                <div th:if="${myReview == null}" class="detail-section-card review-empty-card">
+                    <p>내 리뷰 정보를 불러오지 못했습니다.</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        let selectedReviewFiles = [];
+        let selectedEditReviewFiles = [];
+
+        function getCsrfHeader() {
+            return document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+        }
+
+        function getCsrfToken() {
+            return document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        }
+
+        function openReviewModal(button) {
+            const loggedIn = button.getAttribute("data-logged-in") === "true";
+            const hasReview = button.getAttribute("data-has-review") === "true";
+
+            if (!loggedIn) {
+                alert("로그인 후 리뷰를 작성할 수 있습니다.");
+                window.location.href = "/members/login";
+                return;
+            }
+
+            if (hasReview) {
+                alert("이미 해당 숙소에 리뷰를 작성하셨습니다.");
+                return;
+            }
+
+            const modal = document.getElementById("reviewModal");
+            modal.classList.add("is-open");
+            modal.setAttribute("aria-hidden", "false");
+            document.body.classList.add("modal-open");
+        }
+
+        function closeReviewModal() {
+            const modal = document.getElementById("reviewModal");
+            modal.classList.remove("is-open");
+            modal.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("modal-open");
+        }
+
+        function setModalRating(value) {
+            document.getElementById("modalReviewRating").value = value;
+
+            document.querySelectorAll("#modalStarRating button").forEach((button, index) => {
+                button.classList.toggle("active", index < value);
+            });
+        }
+
+        function handleReviewFiles(input) {
+            selectedReviewFiles = Array.from(input.files || []);
+            syncReviewFileInput();
+            renderReviewPreview();
+        }
+
+        function removeSelectedReviewFile(index) {
+            selectedReviewFiles.splice(index, 1);
+            syncReviewFileInput();
+            renderReviewPreview();
+        }
+
+        function syncReviewFileInput() {
+            const input = document.getElementById("modalReviewImages");
+            const dataTransfer = new DataTransfer();
+
+            selectedReviewFiles.forEach(file => dataTransfer.items.add(file));
+            input.files = dataTransfer.files;
+        }
+
+        function renderReviewPreview() {
+            const previewList = document.getElementById("modalReviewPreviewList");
+            previewList.innerHTML = "";
+
+            selectedReviewFiles.forEach((file, index) => {
+                const item = document.createElement("div");
+                item.className = "modal-preview-item";
+
+                const image = document.createElement("img");
+                image.alt = "리뷰 이미지 미리보기";
+
+                const fileName = document.createElement("span");
+                fileName.textContent = file.name;
+
+                const removeButton = document.createElement("button");
+                removeButton.type = "button";
+                removeButton.className = "modal-preview-remove";
+                removeButton.textContent = "선택 삭제";
+                removeButton.onclick = function () {
+                    removeSelectedReviewFile(index);
+                };
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    image.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+
+                item.appendChild(image);
+                item.appendChild(fileName);
+                item.appendChild(removeButton);
+                previewList.appendChild(item);
+            });
+        }
+
+        async function submitReviewAjax() {
+            const form = document.getElementById("reviewModalForm");
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch("/reviews/new/ajax", {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        [getCsrfHeader()]: getCsrfToken()
+                    }
+                });
+
+                const data = await response.json();
+                alert(data.message);
+
+                if (data.success) {
+                    window.location.href = "/accom/" + data.accomId + "#review-info";
+                }
+            } catch (e) {
+                alert("리뷰 등록 중 오류가 발생했습니다.");
+            }
+        }
+
+        function openMyReviewModal() {
+            const modal = document.getElementById("myReviewModal");
+            modal.classList.add("is-open");
+            modal.setAttribute("aria-hidden", "false");
+            document.body.classList.add("modal-open");
+
+            const ratingInput = document.getElementById("editModalReviewRating");
+            if (ratingInput) {
+                const currentRating = parseInt(ratingInput.value || "0");
+                paintEditModalStars(currentRating);
+            }
+        }
+
+        function closeMyReviewModal() {
+            const modal = document.getElementById("myReviewModal");
+            modal.classList.remove("is-open");
+            modal.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("modal-open");
+        }
+
+        function setEditModalRating(value) {
+            document.getElementById("editModalReviewRating").value = value;
+            paintEditModalStars(value);
+        }
+
+        function paintEditModalStars(value) {
+            document.querySelectorAll("#editModalStarRating button").forEach((button, index) => {
+                button.classList.toggle("active", index < value);
+            });
+        }
+
+        function handleEditReviewFiles(input) {
+            selectedEditReviewFiles = Array.from(input.files || []);
+            syncEditReviewFileInput();
+            renderEditReviewPreview();
+        }
+
+        function removeSelectedEditReviewFile(index) {
+            selectedEditReviewFiles.splice(index, 1);
+            syncEditReviewFileInput();
+            renderEditReviewPreview();
+        }
+
+        function syncEditReviewFileInput() {
+            const input = document.getElementById("editModalReviewImages");
+            const dataTransfer = new DataTransfer();
+
+            selectedEditReviewFiles.forEach(file => dataTransfer.items.add(file));
+            input.files = dataTransfer.files;
+        }
+
+        function renderEditReviewPreview() {
+            const previewList = document.getElementById("editModalReviewPreviewList");
+            previewList.innerHTML = "";
+
+            selectedEditReviewFiles.forEach((file, index) => {
+                const item = document.createElement("div");
+                item.className = "modal-preview-item";
+
+                const image = document.createElement("img");
+                image.alt = "리뷰 이미지 미리보기";
+
+                const fileName = document.createElement("span");
+                fileName.textContent = file.name;
+
+                const removeButton = document.createElement("button");
+                removeButton.type = "button";
+                removeButton.className = "modal-preview-remove";
+                removeButton.textContent = "선택 삭제";
+                removeButton.onclick = function () {
+                    removeSelectedEditReviewFile(index);
+                };
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    image.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+
+                item.appendChild(image);
+                item.appendChild(fileName);
+                item.appendChild(removeButton);
+                previewList.appendChild(item);
+            });
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                closeReviewModal();
+                closeMyReviewModal();
+            }
+        });
+    </script>
 </div>
 </html>

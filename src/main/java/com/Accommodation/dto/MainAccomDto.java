@@ -16,14 +16,14 @@ public class MainAccomDto {
     private String imgUrl;            // 대표 이미지 경로
     private Integer pricePerNight;    // 1박 가격
     private String location;          // 숙소 위치
+    private Integer roomCount;        // 객실 수
     private Double avgRating;         // 평균 별점
     private Integer reviewCount;      // 리뷰 수
 
-    // Querydsl 조회 결과를 DTO로 바로 매핑하는 생성자
     @QueryProjection
     public MainAccomDto(Long id, String accomName, AccomGrade grade, String accomDetail,
                         String imgUrl, Integer pricePerNight, String location,
-                        Double avgRating, Integer reviewCount) {
+                        Integer roomCount, Double avgRating, Integer reviewCount) {
         this.id = id;
         this.accomName = accomName;
         this.grade = grade;
@@ -31,6 +31,7 @@ public class MainAccomDto {
         this.imgUrl = imgUrl;
         this.pricePerNight = pricePerNight;
         this.location = location;
+        this.roomCount = roomCount;
         this.avgRating = avgRating;
         this.reviewCount = reviewCount;
     }

@@ -110,6 +110,7 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         accomImg.imgUrl,
                         accom.pricePerNight,
                         accom.location,
+                        accom.roomCount,
                         accom.avgRating,
                         accom.reviewCount
                 ))
