@@ -60,8 +60,28 @@
 .user-status-group{
     display:inline-flex;
     align-items:center;
-    gap:18px;
+    gap:12px;
     min-height:40px;
+}
+
+.header-action-link{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    height:40px;
+    padding:0 14px;
+    border-radius:999px;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:700;
+    white-space:nowrap;
+    line-height:1;
+}
+
+.header-action-link-secondary{
+    background:#f8faff;
+    color:#1f4acc;
+    border:1px solid #c7d2fe;
 }
 
 .menu-group a{
@@ -81,20 +101,11 @@
 }
 
 .logout-button{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    height:40px;
-    padding:0 14px;
     margin:0;
     border:0;
-    border-radius:999px;
     background:#111827;
     color:#fff;
-    font-size:13px;
-    font-weight:700;
     font-family:inherit;
-    line-height:1;
     cursor:pointer;
     appearance:none;
     -webkit-appearance:none;
@@ -112,7 +123,7 @@
 .user-greeting{
     display:inline-flex;
     align-items:center;
-    line-height:40px;
+    height:40px;
     color:#333;
     white-space:nowrap;
 }
@@ -131,6 +142,8 @@
     padding:4px 0;
     display:flex;
     align-items:center;
+    justify-content:space-between;
+    gap:16px;
     min-height:42px;
 }
 
@@ -179,9 +192,14 @@
     display:flex;
     gap:30px;
     justify-content:flex-start;
+    flex-wrap:wrap;
 }
 
 .category-menu a{
     text-decoration:none;
     color:#333;
+}
+
+.header-bottom-action{
+    flex:0 0 auto;
 }

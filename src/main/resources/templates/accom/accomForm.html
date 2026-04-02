@@ -22,7 +22,7 @@
             </p>
         </div>
         <div class="header-actions">
-            <a th:href="@{/admin/accoms}">목록으로 이동</a>
+            <a th:href="@{/admin/accoms(page=${currentPage},searchQuery=${returnSearchQuery},accomType=${returnAccomType},grade=${returnGrade},accomStatus=${returnAccomStatus})}">목록으로 이동</a>
         </div>
     </section>
 
@@ -39,6 +39,11 @@
                   enctype="multipart/form-data">
 
                 <input type="hidden" th:field="*{id}">
+                <input type="hidden" name="returnPage" th:value="${currentPage}">
+                <input type="hidden" name="returnSearchQuery" th:value="${returnSearchQuery}">
+                <input type="hidden" name="returnAccomType" th:value="${returnAccomType}">
+                <input type="hidden" name="returnGrade" th:value="${returnGrade}">
+                <input type="hidden" name="returnAccomStatus" th:value="${returnAccomStatus}">
 
                 <div class="form-grid">
                     <div class="form-group full-width">
@@ -112,7 +117,8 @@
                 </div>
 
                 <div class="form-actions">
-                    <a class="secondary-action" th:href="@{/admin/accoms}">취소</a>
+                    <a class="secondary-action"
+                       th:href="@{/admin/accoms(page=${currentPage},searchQuery=${returnSearchQuery},accomType=${returnAccomType},grade=${returnGrade},accomStatus=${returnAccomStatus})}">취소</a>
                     <button type="submit"
                             class="primary-action"
                             th:text="${accomFormDto.id == null} ? '숙소 등록' : '숙소 수정'">
