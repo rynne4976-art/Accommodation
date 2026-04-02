@@ -1,9 +1,15 @@
 package com.Accommodation.controller;
 
 import com.Accommodation.dto.MemberFormDto;
+import com.Accommodation.dto.MemberUpdateDto;
+import com.Accommodation.dto.PasswordChangeDto;
+import com.Accommodation.entity.Member;
 import com.Accommodation.service.MemberService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -67,6 +73,79 @@ public class MemberController {
             model.addAttribute("signupSuccessMessage", "회원가입이 완료되었습니다. 로그인해주세요.");
         }
         return "member/memberLoginForm";
+    }
+
+    @GetMapping("/members/mypage")
+    public String myPage(@AuthenticationPrincipal UserDetails userDetails,
+                         RedirectAttributes redirectAttributes,
+                         Model model) {
+        if (userDetails == null) {
+            return "redirect:/members/login";
+        }
+
+        Member member;
+        try {
+            member = memberService.getMemberByEmail(userDetails.getUsername());
+        } catch (EntityNotFoundException e) {
+            redirectAttributes.addFlashAttribute("loginErrorMessage", "회원 정보를 다시 확인해주세요.");
+            return "redirect:/members/login";
+        }
+
+        model.addAttribute("member", member);
+        return "member/mypage";
+    }
+
+    @GetMapping("/members/mypage/edit")
+    public String editMyPage(@AuthenticationPrincipal UserDetails userDetails,
+                             Model model) {
+        Member member = memberService.getMemberByEmail(userDetails.getUsername());
+        model.addAttribute("memberUpdateDto", MemberUpdateDto.from(member));
+        return "member/mypageEdit";
+    }
+
+    @PostMapping("/members/mypage/edit")
+    public String editMyPage(@AuthenticationPrincipal UserDetails userDetails,
+                             @Valid MemberUpdateDto memberUpdateDto,
+                             BindingResult bindingResult,
+                             RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            return "member/mypageEdit";
+        }
+
+        memberService.updateMember(userDetails.getUsername(), memberUpdateDto);
+        redirectAttributes.addAttribute("profileUpdated", "true");
+        return "redirect:/members/mypage";
+    }
+
+    @GetMapping("/members/mypage/password")
+    public String changePasswordForm(Model model) {
+        model.addAttribute("passwordChangeDto", new PasswordChangeDto());
+        return "member/passwordEdit";
+    }
+
+    @PostMapping("/members/mypage/password")
+    public String changePassword(@AuthenticationPrincipal UserDetails userDetails,
+                                 @Valid PasswordChangeDto passwordChangeDto,
+                                 BindingResult bindingResult,
+                                 Model model,
+                                 RedirectAttributes redirectAttributes) {
+        if (!passwordChangeDto.getNewPassword().equals(passwordChangeDto.getConfirmPassword())) {
+            bindingResult.rejectValue("confirmPassword", "password.mismatch", "새 비밀번호 확인이 일치하지 않습니다.");
+        }
+
+        if (bindingResult.hasErrors()) {
+            return "member/passwordEdit";
+        }
+
+        try {
+            memberService.changePassword(userDetails.getUsername(), passwordChangeDto);
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "member/passwordEdit";
+        }
+
+        redirectAttributes.addAttribute("passwordUpdated", "true");
+        return "redirect:/members/mypage";
     }
 
     /**

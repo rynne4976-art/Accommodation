@@ -21,7 +21,16 @@
     </section>
 
     <section class="table-panel">
-        <table>
+        <table class="order-table">
+            <colgroup>
+                <col style="width: 10%;">
+                <col style="width: 14%;">
+                <col style="width: 24%;">
+                <col style="width: 18%;">
+                <col style="width: 12%;">
+                <col style="width: 14%;">
+                <col style="width: 8%;">
+            </colgroup>
             <thead>
             <tr>
                 <th>예약번호</th>
@@ -39,8 +48,8 @@
             </tr>
             <tr th:each="order : ${orderPage.content}">
                 <td th:text="${order.id}"></td>
-                <td th:text="${order.member.name}"></td>
-                <td th:text="${order.member.email}"></td>
+                <td th:text="${order.member.name}" th:title="${order.member.name}"></td>
+                <td th:text="${order.member.email}" th:title="${order.member.email}"></td>
                 <td th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}"></td>
                 <td>
                     <span class="status-badge" th:text="${order.orderStatus}"></span>
@@ -51,16 +60,33 @@
             </tbody>
         </table>
 
-        <div class="pager" th:if="${orderPage.totalPages > 0}">
-            <a th:if="${orderPage.hasPrevious()}"
+        <div class="pager" th:if="${orderPage.totalPages > 0}"
+             th:with="currentPage=${orderPage.number},
+                      totalPages=${orderPage.totalPages},
+                      startPage=${T(java.lang.Math).max(0, currentPage - 2)},
+                      endPage=${T(java.lang.Math).min(totalPages - 1, startPage + 4)},
+                      adjustedStart=${T(java.lang.Math).max(0, endPage - 4)}">
+            <a class="pager-nav" th:if="${orderPage.hasPrevious()}"
                th:href="@{/admin/orders(page=${orderPage.number - 1})}">이전</a>
+            <span class="pager-nav pager-nav-disabled" th:unless="${orderPage.hasPrevious()}">이전</span>
 
-            <a th:each="pageNum : ${#numbers.sequence(0, orderPage.totalPages - 1)}"
+            <a th:if="${adjustedStart > 0}"
+               th:href="@{/admin/orders(page=0)}">1</a>
+            <span class="pager-ellipsis" th:if="${adjustedStart > 1}">...</span>
+
+            <a th:each="pageNum : ${#numbers.sequence(adjustedStart, endPage)}"
+               th:classappend="${pageNum == orderPage.number} ? ' pager-current'"
                th:href="@{/admin/orders(page=${pageNum})}"
                th:text="${pageNum + 1}"></a>
 
-            <a th:if="${orderPage.hasNext()}"
+            <span class="pager-ellipsis" th:if="${endPage < totalPages - 2}">...</span>
+            <a th:if="${endPage < totalPages - 1}"
+               th:href="@{/admin/orders(page=${totalPages - 1})}"
+               th:text="${totalPages}"></a>
+
+            <a class="pager-nav" th:if="${orderPage.hasNext()}"
                th:href="@{/admin/orders(page=${orderPage.number + 1})}">다음</a>
+            <span class="pager-nav pager-nav-disabled" th:unless="${orderPage.hasNext()}">다음</span>
         </div>
     </section>
 </main>

@@ -3,7 +3,7 @@
     <div class="header-inner">
 
         <div class="logo">
-            <a th:href="@{/main}">Ac.com</a>
+            <a th:href="${#authorization.expression('hasRole(''ADMIN'')')} ? @{/admin} : @{/main}">Ac.com</a>
         </div>
 
         <div class="search-bar">
@@ -26,7 +26,7 @@
                 </form>
             </div>
 
-            <div sec:authorize="isAuthenticated()" class="icon-menu">
+            <div sec:authorize="isAuthenticated() and !hasRole('ADMIN')" class="icon-menu">
                 <a th:href="@{/members/mypage}" class="icon-link">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <circle cx="12" cy="8" r="3.5"></circle>

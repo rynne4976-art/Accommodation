@@ -2,6 +2,8 @@ package com.Accommodation.config;
 
 import com.Accommodation.controller.MainController;
 import com.Accommodation.controller.MemberController;
+import com.Accommodation.constant.Role;
+import com.Accommodation.entity.Member;
 import com.Accommodation.service.AccomService;
 import com.Accommodation.service.CustomUserDetailsService;
 import com.Accommodation.service.MemberService;
@@ -19,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -32,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         controllers = {MainController.class, MemberController.class},
         excludeAutoConfiguration = UserDetailsServiceAutoConfiguration.class
 )
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, RoleBasedAuthenticationSuccessHandler.class})
 class SecurityFlowTest {
 
     @Autowired
@@ -67,6 +70,25 @@ class SecurityFlowTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/main"))
                 .andExpect(authenticated().withUsername("dummy@example.com"));
+    }
+
+    @Test
+    @DisplayName("관리자 로그인은 관리자 대시보드로 이동한다")
+    void adminLoginRedirectsToDashboard() throws Exception {
+        UserDetails userDetails = User.withUsername("admin@accom.com")
+                .password(passwordEncoder.encode("password123"))
+                .roles("ADMIN")
+                .build();
+
+        given(customUserDetailsService.loadUserByUsername("admin@accom.com"))
+                .willReturn(userDetails);
+
+        mockMvc.perform(formLogin("/members/login")
+                        .user("email", "admin@accom.com")
+                        .password("password", "password123"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin"))
+                .andExpect(authenticated().withUsername("admin@accom.com"));
     }
 
     @Test
@@ -113,5 +135,24 @@ class SecurityFlowTest {
     void loginPageWithErrorLoads() throws Exception {
         mockMvc.perform(get("/members/login").param("error", ""))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("로그인한 사용자는 마이페이지를 볼 수 있다")
+    void myPageLoads() throws Exception {
+        Member member = new Member();
+        member.setName("김테스트");
+        member.setEmail("kim@test.com");
+        member.setPassword(passwordEncoder.encode("password123"));
+        member.setNumber("01012345678");
+        member.setAddress("서울시 강남구");
+        member.setRole(Role.USER);
+
+        given(memberService.getMemberByEmail("kim@test.com")).willReturn(member);
+
+        mockMvc.perform(get("/members/mypage")
+                        .with(user("kim@test.com").roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("김테스트님, 반갑습니다.")));
     }
 }
