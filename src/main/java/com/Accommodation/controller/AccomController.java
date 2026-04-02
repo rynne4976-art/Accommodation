@@ -17,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -28,8 +29,18 @@ public class AccomController {
     private final ReviewService reviewService;
 
     @GetMapping("/admin/accom/new")
-    public String accomForm(Model model) {
+    public String accomForm(@RequestParam(value = "returnPage", defaultValue = "0") int returnPage,
+                            @RequestParam(value = "returnSearchQuery", required = false) String returnSearchQuery,
+                            @RequestParam(value = "returnAccomType", required = false) String returnAccomType,
+                            @RequestParam(value = "returnGrade", required = false) String returnGrade,
+                            @RequestParam(value = "returnAccomStatus", required = false) String returnAccomStatus,
+                            Model model) {
         model.addAttribute("accomFormDto", new AccomFormDto());
+        model.addAttribute("currentPage", returnPage);
+        model.addAttribute("returnSearchQuery", returnSearchQuery);
+        model.addAttribute("returnAccomType", returnAccomType);
+        model.addAttribute("returnGrade", returnGrade);
+        model.addAttribute("returnAccomStatus", returnAccomStatus);
         return "accom/accomForm";
     }
 
@@ -48,10 +59,21 @@ public class AccomController {
     }
 
     @GetMapping("/admin/accom/{accomId}")
-    public String accomUpdateForm(@PathVariable("accomId") Long accomId, Model model) {
+    public String accomUpdateForm(@PathVariable("accomId") Long accomId,
+                                  @RequestParam(value = "returnPage", defaultValue = "0") int returnPage,
+                                  @RequestParam(value = "returnSearchQuery", required = false) String returnSearchQuery,
+                                  @RequestParam(value = "returnAccomType", required = false) String returnAccomType,
+                                  @RequestParam(value = "returnGrade", required = false) String returnGrade,
+                                  @RequestParam(value = "returnAccomStatus", required = false) String returnAccomStatus,
+                                  Model model) {
         try {
             AccomFormDto accomFormDto = accomService.getAccomFormDto(accomId);
             model.addAttribute("accomFormDto", accomFormDto);
+            model.addAttribute("currentPage", returnPage);
+            model.addAttribute("returnSearchQuery", returnSearchQuery);
+            model.addAttribute("returnAccomType", returnAccomType);
+            model.addAttribute("returnGrade", returnGrade);
+            model.addAttribute("returnAccomStatus", returnAccomStatus);
             return "accom/accomForm";
         } catch (EntityNotFoundException e) {
             return "redirect:/admin/accoms";
@@ -61,17 +83,33 @@ public class AccomController {
     @PostMapping("/admin/accom/{accomId}")
     public String accomUpdate(@PathVariable("accomId") Long accomId,
                               @ModelAttribute AccomFormDto accomFormDto,
+                              @RequestParam(value = "returnPage", defaultValue = "0") int returnPage,
+                              @RequestParam(value = "returnSearchQuery", required = false) String returnSearchQuery,
+                              @RequestParam(value = "returnAccomType", required = false) String returnAccomType,
+                              @RequestParam(value = "returnGrade", required = false) String returnGrade,
+                              @RequestParam(value = "returnAccomStatus", required = false) String returnAccomStatus,
                               @RequestParam("accomImgFile") List<MultipartFile> accomImgFileList,
-                              Model model) {
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
         try {
             accomService.updateAccom(accomId, accomFormDto, accomImgFileList);
         } catch (Exception e) {
             accomFormDto.setId(accomId);
             model.addAttribute("accomFormDto", accomFormDto);
             model.addAttribute("errorMessage", "숙소 수정 중 오류가 발생하였습니다.");
+            model.addAttribute("currentPage", returnPage);
+            model.addAttribute("returnSearchQuery", returnSearchQuery);
+            model.addAttribute("returnAccomType", returnAccomType);
+            model.addAttribute("returnGrade", returnGrade);
+            model.addAttribute("returnAccomStatus", returnAccomStatus);
             return "accom/accomForm";
         }
 
+        redirectAttributes.addAttribute("page", returnPage);
+        redirectAttributes.addAttribute("searchQuery", returnSearchQuery);
+        redirectAttributes.addAttribute("accomType", returnAccomType);
+        redirectAttributes.addAttribute("grade", returnGrade);
+        redirectAttributes.addAttribute("accomStatus", returnAccomStatus);
         return "redirect:/admin/accoms";
     }
 
@@ -116,8 +154,19 @@ public class AccomController {
     }
 
     @GetMapping("/admin/accom/delete/{accomId}")
-    public String deleteAccom(@PathVariable("accomId") Long accomId) {
+    public String deleteAccom(@PathVariable("accomId") Long accomId,
+                              @RequestParam(value = "returnPage", defaultValue = "0") int returnPage,
+                              @RequestParam(value = "returnSearchQuery", required = false) String returnSearchQuery,
+                              @RequestParam(value = "returnAccomType", required = false) String returnAccomType,
+                              @RequestParam(value = "returnGrade", required = false) String returnGrade,
+                              @RequestParam(value = "returnAccomStatus", required = false) String returnAccomStatus,
+                              RedirectAttributes redirectAttributes) {
         accomService.deleteAccom(accomId);
+        redirectAttributes.addAttribute("page", returnPage);
+        redirectAttributes.addAttribute("searchQuery", returnSearchQuery);
+        redirectAttributes.addAttribute("accomType", returnAccomType);
+        redirectAttributes.addAttribute("grade", returnGrade);
+        redirectAttributes.addAttribute("accomStatus", returnAccomStatus);
         return "redirect:/admin/accoms";
     }
 }

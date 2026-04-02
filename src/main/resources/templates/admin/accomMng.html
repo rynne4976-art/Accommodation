@@ -20,7 +20,7 @@
             <p>등록된 숙소의 상태와 상세 정보를 독립 관리자 화면에서 관리합니다.</p>
         </div>
         <div class="header-actions">
-            <a th:href="@{/admin/accom/new}">숙소 등록</a>
+            <a th:href="@{/admin/accom/new(returnPage=${accomPage.number},returnSearchQuery=${accomSearchDto.searchQuery},returnAccomType=${accomSearchDto.accomType},returnGrade=${accomSearchDto.grade},returnAccomStatus=${accomSearchDto.accomStatus})}">숙소 등록</a>
         </div>
     </section>
 
@@ -64,15 +64,16 @@
         <section class="table-panel">
         <table class="accom-table">
             <colgroup>
-                <col style="width: 8%;">
-                <col style="width: 20%;">
+                <col style="width: 7%;">
+                <col style="width: 17%;">
                 <col style="width: 10%;">
                 <col style="width: 10%;">
                 <col style="width: 12%;">
-                <col style="width: 16%;">
                 <col style="width: 10%;">
-                <col style="width: 7%;">
-                <col style="width: 7%;">
+                <col style="width: 12%;">
+                <col style="width: 10%;">
+                <col style="width: 6.5%;">
+                <col style="width: 6.5%;">
             </colgroup>
             <thead>
             <tr>
@@ -90,7 +91,7 @@
             </thead>
             <tbody>
             <tr class="empty-row" th:if="${accomPage.totalElements == 0}">
-                <td colspan="9">조회된 숙소가 없습니다.</td>
+                <td colspan="10">조회된 숙소가 없습니다.</td>
             </tr>
             <tr th:each="accom : ${accomPage.content}">
                 <td th:text="${accom.id}"></td>
@@ -106,10 +107,12 @@
                     <span class="status-badge" th:text="${accom.status}"></span>
                 </td>
                 <td>
-                    <a class="table-link" th:href="@{/admin/accom/{id}(id=${accom.id})}">수정</a>
+                    <a class="table-link"
+                       th:href="@{/admin/accom/{id}(id=${accom.id},returnPage=${accomPage.number},returnSearchQuery=${accomSearchDto.searchQuery},returnAccomType=${accomSearchDto.accomType},returnGrade=${accomSearchDto.grade},returnAccomStatus=${accomSearchDto.accomStatus})}">수정</a>
                 </td>
                 <td>
-                    <a class="table-link" th:href="@{/admin/accom/delete/{id}(id=${accom.id})}"
+                    <a class="table-link"
+                       th:href="@{/admin/accom/delete/{id}(id=${accom.id},returnPage=${accomPage.number},returnSearchQuery=${accomSearchDto.searchQuery},returnAccomType=${accomSearchDto.accomType},returnGrade=${accomSearchDto.grade},returnAccomStatus=${accomSearchDto.accomStatus})}"
                        onclick="return confirm('해당 숙소를 삭제하시겠습니까?');">삭제</a>
                 </td>
             </tr>
