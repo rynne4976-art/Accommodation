@@ -48,11 +48,13 @@ public class SecurityConfig {
                                 "/js/**",
                                 "/images/**",
                                 "/accom/**",
-                                "/review/**"
+                                "/review/**",
+                                "/reviews/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+                // 미인증 접근은 로그인 페이지로 유도해 일반 웹 흐름에 맞춥니다.
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                 )
@@ -60,6 +62,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/members/login")
                         .loginProcessingUrl("/members/login")
+                        // 로그인 실패 메시지 처리를 커스텀 핸들러로 분리합니다.
                         .failureHandler(new FormLoginAuthenticationFailureHandler())
                         .defaultSuccessUrl("/main", true)
                         .usernameParameter("email")

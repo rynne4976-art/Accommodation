@@ -13,13 +13,12 @@
 
 <main class="page-wrap">
     <section class="page-header">
-        <div>
+        <div class="page-header-copy">
             <span class="page-label">Admin Accommodations</span>
             <h2>숙소 관리</h2>
             <p>등록된 숙소의 상태와 상세 정보를 독립 관리자 화면에서 관리합니다.</p>
         </div>
         <div class="header-actions">
-            <a th:href="@{/admin}">대시보드</a>
             <a th:href="@{/admin/accom/new}">숙소 등록</a>
         </div>
     </section>
@@ -82,7 +81,7 @@
             <tr th:each="accom : ${accomPage.content}">
                 <td th:text="${accom.id}"></td>
                 <td>
-                    <a th:href="@{/accom/{id}(id=${accom.id})}" th:text="${accom.accomName}"></a>
+                    <a class="cell-link" th:href="@{/accom/{id}(id=${accom.id})}" th:text="${accom.accomName}"></a>
                 </td>
                 <td th:text="${accom.accomType}"></td>
                 <td th:text="${accom.grade}"></td>

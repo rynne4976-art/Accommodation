@@ -25,11 +25,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 public class MemberController {
 
-    /**
-     * 📦 MemberService 주입
-     *
-     * 회원가입 비즈니스 로직을 처리하기 위해 사용합니다.
-     */
     private final MemberService memberService;
 
     /**
@@ -64,6 +59,7 @@ public class MemberController {
     public String memberLogin(@RequestParam(value = "error", required = false) String error,
                               @RequestParam(value = "signupSuccess", required = false) String signupSuccess,
                               Model model) {
+        // 로그인 실패와 회원가입 완료 메시지를 같은 로그인 화면에서 처리합니다.
         if (error != null) {
             model.addAttribute("loginErrorMessage", "이메일 또는 비밀번호를 다시 확인해주세요.");
         }
@@ -103,6 +99,7 @@ public class MemberController {
             return "member/memberForm";
         }
 
+        // PRG 패턴으로 새로고침 시 중복 회원가입 요청이 나가지 않도록 합니다.
         redirectAttributes.addAttribute("signupSuccess", "true");
         return "redirect:/members/login";
 
