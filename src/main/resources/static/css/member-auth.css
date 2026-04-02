@@ -94,10 +94,72 @@ body {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.form-group select {
+    height: 48px;
+    padding: 0 14px;
+    border: 1px solid #d0d5dd;
+    border-radius: 14px;
+    font-size: 15px;
+    box-sizing: border-box;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
 .form-group input:focus {
     outline: none;
     border-color: #7b3ff2;
     box-shadow: 0 0 0 4px rgba(123, 63, 242, 0.12);
+}
+
+.form-group select:focus {
+    outline: none;
+    border-color: #7b3ff2;
+    box-shadow: 0 0 0 4px rgba(123, 63, 242, 0.12);
+}
+
+.phone-field {
+    display: grid;
+    grid-template-columns: 84px 10px 88px 10px 88px;
+    align-items: center;
+    gap: 8px;
+    justify-content: start;
+}
+
+.phone-part {
+    width: 100%;
+    text-align: left;
+}
+
+.phone-prefix {
+    text-align: left;
+}
+
+.phone-separator {
+    text-align: center;
+    color: #98a2b3;
+    font-weight: 700;
+}
+
+.address-search-row {
+    display: grid;
+    grid-template-columns: 120px auto;
+    gap: 10px;
+}
+
+.address-search-button {
+    height: 48px;
+    border: 1px solid #d0d5dd;
+    border-radius: 14px;
+    background: #f8f5ff;
+    color: #6a35d4;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.address-search-button:hover {
+    border-color: #bca8f5;
+    background: #f1ebff;
 }
 
 .field-error {
@@ -138,5 +200,17 @@ body {
 
     .auth-card h2 {
         font-size: 28px;
+    }
+
+    .phone-field {
+        grid-template-columns: 1fr;
+    }
+
+    .phone-separator {
+        display: none;
+    }
+
+    .address-search-row {
+        grid-template-columns: 1fr;
     }
 }

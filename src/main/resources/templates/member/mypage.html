@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>마이페이지</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+</head>
+<body>
+<div th:replace="layouts/header :: header"></div>
+
+    <main class="mypage-wrap">
+        <section class="mypage-hero">
+            <span class="mypage-label">My Page</span>
+            <h2 th:text="${member.name} + '님, 반갑습니다.'">회원명님, 반갑습니다.</h2>
+            <p>가입한 기본 정보와 계정 상태를 한 화면에서 확인할 수 있습니다.</p>
+        </section>
+
+        <section class="mypage-card">
+            <div class="mypage-card-header">
+                <h3>기본 정보</h3>
+                <span class="mypage-role" th:text="${member.role}">USER</span>
+            </div>
+
+            <div class="mypage-alert success" th:if="${param.profileUpdated}">
+                회원 정보가 수정되었습니다.
+            </div>
+            <div class="mypage-alert success" th:if="${param.passwordUpdated}">
+                비밀번호가 변경되었습니다.
+            </div>
+
+            <div class="mypage-grid">
+                <div class="mypage-item">
+                    <span class="mypage-item-label">이름</span>
+                    <strong th:text="${member.name}">홍길동</strong>
+                </div>
+                <div class="mypage-item">
+                    <span class="mypage-item-label">이메일</span>
+                    <strong th:text="${member.email}">user@example.com</strong>
+                </div>
+                <div class="mypage-item">
+                    <span class="mypage-item-label">휴대폰 번호</span>
+                    <strong th:text="${member.formattedNumber}">010-0000-0000</strong>
+                </div>
+                <div class="mypage-item">
+                    <span class="mypage-item-label">가입일</span>
+                    <strong th:text="${#temporals.format(member.regTime, 'yyyy-MM-dd HH:mm')}">2026-04-02 12:00</strong>
+                </div>
+                <div class="mypage-item mypage-item-wide">
+                    <span class="mypage-item-label">주소</span>
+                    <strong th:text="${member.address}">서울시 강남구</strong>
+                </div>
+            </div>
+
+            <div class="mypage-action-row">
+                <a th:href="@{/members/mypage/edit}" class="mypage-action-link">정보 수정</a>
+                <a th:href="@{/members/mypage/password}" class="mypage-action-link mypage-action-link-secondary">비밀번호 변경</a>
+            </div>
+        </section>
+    </main>
+
+<div th:replace="layouts/footer :: footer"></div>
+</body>
+</html>

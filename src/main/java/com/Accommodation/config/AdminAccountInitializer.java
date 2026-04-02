@@ -26,7 +26,7 @@ public class AdminAccountInitializer implements CommandLineRunner {
     @Value("${admin.bootstrap.name:관리자}")
     private String adminName;
 
-    @Value("${admin.bootstrap.number:010-0000-0000}")
+    @Value("${admin.bootstrap.number:01000000000}")
     private String adminNumber;
 
     @Value("${admin.bootstrap.address:관리자 기본 주소}")
