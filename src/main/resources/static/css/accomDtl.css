@@ -1,0 +1,38 @@
+.accom-detail-page {
+    margin-top: 48px;
+    margin-bottom: 48px;
+}
+
+.accom-detail-main-image {
+    width: 100%;
+    border-radius: 16px;
+    object-fit: cover;
+}
+
+.accom-detail-thumb-list {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.accom-detail-thumb {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.accom-detail-title {
+    margin-bottom: 20px;
+}
+
+.accom-detail-meta p {
+    margin-bottom: 10px;
+}
+
+.accom-detail-actions {
+    margin-top: 24px;
+    display: flex;
+    gap: 10px;
+}

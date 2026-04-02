@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(
         name = "review",
@@ -34,18 +37,11 @@ public class Review extends BaseEntity {
         @Column(nullable = false, length = 1000)
         private String content;
 
-        @Column(name = "review_img_name")
-        private String reviewImgName;
+        @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+        private List<ReviewImg> reviewImgList = new ArrayList<>();
 
-        @Column(name = "review_ori_img_name")
-        private String reviewOriImgName;
-
-        @Column(name = "review_img_url")
-        private String reviewImgUrl;
-
-        public void updateReviewImg(String reviewImgName, String reviewOriImgName, String reviewImgUrl) {
-                this.reviewImgName = reviewImgName;
-                this.reviewOriImgName = reviewOriImgName;
-                this.reviewImgUrl = reviewImgUrl;
+        public void addReviewImg(ReviewImg reviewImg) {
+                reviewImgList.add(reviewImg);
+                reviewImg.setReview(this);
         }
 }
