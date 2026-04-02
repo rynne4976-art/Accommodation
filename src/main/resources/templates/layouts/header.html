@@ -6,7 +6,7 @@
             <a th:href="@{/main}">Ac.com</a>
         </div>
 
-        <div class="search-bar">
+        <div class="search-bar" th:if="${compactHeader == null or !compactHeader}">
             <input type="text" placeholder="검색어를 입력하세요">
         </div>
 
@@ -34,13 +34,13 @@
                     </svg>
                     <span>마이</span>
                 </a>
-                <a href="#" class="icon-link">
+                <a th:href="@{/wish}" class="icon-link">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M12 20s-6.5-4.1-8.5-8C2 9.1 3.8 6 7.3 6c2 0 3.1 1.1 4.7 3 1.6-1.9 2.7-3 4.7-3C20.2 6 22 9.1 20.5 12c-2 3.9-8.5 8-8.5 8z"></path>
                     </svg>
                     <span>찜</span>
                 </a>
-                <a href="#" class="icon-link">
+                <a th:href="@{/cart}" class="icon-link">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <circle cx="9" cy="19" r="1.5"></circle>
                         <circle cx="18" cy="19" r="1.5"></circle>
@@ -60,7 +60,7 @@
 
     </div>
 
-    <div class="header-bottom">
+    <div class="header-bottom" th:if="${compactHeader == null or !compactHeader}">
         <div class="header-bottom-inner">
             <nav class="category-menu">
                 <th:block sec:authorize="hasRole('ADMIN')">
@@ -70,13 +70,13 @@
                 </th:block>
 
                 <th:block sec:authorize="!hasRole('ADMIN')">
-                <a href="#">호텔</a>
-                <a href="#">리조트</a>
-                <a href="#">펜션</a>
-                <a href="#">모텔</a>
-                <a href="#">게스트하우스</a>
-                <a href="#">교통(렌트카)</a>
-                <a href="#">내 주변</a>
+                    <a href="#">호텔</a>
+                    <a href="#">리조트</a>
+                    <a href="#">펜션</a>
+                    <a href="#">모텔</a>
+                    <a href="#">게스트하우스</a>
+                    <a href="#">교통/렌트카</a>
+                    <a href="#">해외숙소</a>
                 </th:block>
             </nav>
         </div>

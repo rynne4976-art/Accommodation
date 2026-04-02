@@ -1,0 +1,28 @@
+package com.Accommodation.dto;
+
+import lombok.Getter;
+
+@Getter
+public class WishListDto {
+
+    private final Long accomId;
+    private final String accomName;
+    private final String accomDetail;
+    private final String location;
+    private final Integer pricePerNight;
+    private final String imgUrl;
+    private final Double avgRating;
+    private final Integer reviewCount;
+
+    public WishListDto(Long accomId, String accomName, String accomDetail, String location,
+                       Integer pricePerNight, String imgUrl, Double avgRating, Integer reviewCount) {
+        this.accomId = accomId;
+        this.accomName = accomName;
+        this.accomDetail = accomDetail;
+        this.location = location;
+        this.pricePerNight = pricePerNight;
+        this.imgUrl = imgUrl;
+        this.avgRating = avgRating;
+        this.reviewCount = reviewCount;
+    }
+}
