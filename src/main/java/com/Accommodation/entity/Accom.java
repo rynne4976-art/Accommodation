@@ -43,6 +43,10 @@ public class Accom {
     // 위치
     private String location;
 
+    // 객실 수
+    @Column(nullable = false)
+    private Integer roomCount = 0;
+
     // 평균 별점
     @Column(nullable = false)
     private Double avgRating = 0.0;
@@ -90,6 +94,7 @@ public class Accom {
                             AccomType accomType,
                             AccomGrade grade,
                             String location,
+                            Integer roomCount,
                             AccomStatus status) {
         this.accomName = accomName;
         this.pricePerNight = pricePerNight;
@@ -97,6 +102,7 @@ public class Accom {
         this.accomType = accomType;
         this.grade = grade;
         this.location = location;
+        this.roomCount = roomCount;
         this.status = status;
     }
 
@@ -117,6 +123,10 @@ public class Accom {
 
         if (this.deleted == null) {
             this.deleted = false;
+        }
+
+        if (this.roomCount == null) {
+            this.roomCount = 0;
         }
     }
 

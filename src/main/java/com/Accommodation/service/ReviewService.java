@@ -220,4 +220,5 @@ public class ReviewService {
         accom.setAvgRating(avgRating);
         accomRepository.save(accom);
     }
+
 }
