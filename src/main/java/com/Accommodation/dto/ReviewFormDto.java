@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class ReviewFormDto {
@@ -20,5 +22,37 @@ public class ReviewFormDto {
     @NotBlank(message = "리뷰 내용을 입력해 주세요.")
     private String content;
 
-    private MultipartFile reviewImgFile;
+    private List<MultipartFile> reviewImgFileList;
+
+    public Long getAccomId() {
+        return accomId;
+    }
+
+    public void setAccomId(Long accomId) {
+        this.accomId = accomId;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public List<MultipartFile> getReviewImgFileList() {
+        return reviewImgFileList;
+    }
+
+    public void setReviewImgFileList(List<MultipartFile> reviewImgFileList) {
+        this.reviewImgFileList = reviewImgFileList;
+    }
 }

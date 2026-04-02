@@ -18,7 +18,8 @@ public class FileService {
         }
 
         UUID uuid = UUID.randomUUID();
-        String savedFileName = uuid + "_" + originalFileName;
+        String extension = extractExtension(originalFileName);
+        String savedFileName = uuid + extension;
         String fileUploadFullUrl = uploadPath + File.separator + savedFileName;
 
         multipartFile.transferTo(new File(fileUploadFullUrl));
@@ -31,5 +32,18 @@ public class FileService {
         if(deleteFile.exists()){
             deleteFile.delete();
         }
+    }
+
+    private String extractExtension(String originalFileName) {
+        if (originalFileName == null || originalFileName.isBlank()) {
+            return "";
+        }
+
+        int lastDotIndex = originalFileName.lastIndexOf('.');
+        if (lastDotIndex < 0 || lastDotIndex == originalFileName.length() - 1) {
+            return "";
+        }
+
+        return originalFileName.substring(lastDotIndex);
     }
 }

@@ -2,10 +2,8 @@ package com.Accommodation.controller;
 
 import com.Accommodation.dto.AccomFormDto;
 import com.Accommodation.dto.AccomSearchDto;
-import com.Accommodation.dto.ReviewFormDto;
 import com.Accommodation.entity.Accom;
 import com.Accommodation.service.AccomService;
-import com.Accommodation.service.ReviewService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,7 +22,6 @@ import java.util.List;
 public class AccomController {
 
     private final AccomService accomService;
-    private final ReviewService reviewService;
 
     @GetMapping("/admin/accom/new")
     public String accomForm(Model model) {
@@ -95,17 +92,6 @@ public class AccomController {
 
         Accom accom = accomService.getAccomDtl(accomId);
         model.addAttribute("accom", accom);
-        model.addAttribute("reviewList", reviewService.getReviewList(accomId));
-
-        ReviewFormDto reviewFormDto = new ReviewFormDto();
-        reviewFormDto.setAccomId(accomId);
-        model.addAttribute("reviewFormDto", reviewFormDto);
-
-        boolean hasMyReview = false;
-        if (user != null) {
-            hasMyReview = reviewService.hasMyReview(accomId, user.getUsername());
-        }
-        model.addAttribute("hasMyReview", hasMyReview);
 
         return "accom/accomDtl";
     }

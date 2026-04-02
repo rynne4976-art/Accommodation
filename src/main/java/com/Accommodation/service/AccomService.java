@@ -61,7 +61,7 @@ public class AccomService {
 
     @Transactional(readOnly = true)
     public Accom getAccomDtl(Long accomId) {
-        Accom accom = accomRepository.findById(accomId)
+        Accom accom = accomRepository.findWithAccomImgListById(accomId)
                 .orElseThrow(EntityNotFoundException::new);
 
         if (Boolean.TRUE.equals(accom.getDeleted())) {

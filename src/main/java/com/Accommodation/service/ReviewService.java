@@ -4,8 +4,10 @@ import com.Accommodation.dto.ReviewFormDto;
 import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.Member;
 import com.Accommodation.entity.Review;
+import com.Accommodation.entity.ReviewImg;
 import com.Accommodation.repository.AccomRepository;
 import com.Accommodation.repository.MemberRepository;
+import com.Accommodation.repository.ReviewImgRepository;
 import com.Accommodation.repository.ReviewRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.util.List;
 
 @Service
@@ -25,9 +28,155 @@ public class ReviewService {
     private String uploadPath;
 
     private final ReviewRepository reviewRepository;
+    private final ReviewImgRepository reviewImgRepository;
     private final MemberRepository memberRepository;
     private final AccomRepository accomRepository;
     private final FileService fileService;
+
+    public void saveReview(ReviewFormDto reviewFormDto, String email) throws Exception {
+
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            throw new IllegalArgumentException("로그인한 회원 정보를 찾을 수 없습니다.");
+        }
+
+        Accom accom = accomRepository.findById(reviewFormDto.getAccomId())
+                .orElseThrow(() -> new EntityNotFoundException("숙소 정보를 찾을 수 없습니다."));
+
+        boolean exists = reviewRepository.existsByMemberIdAndAccomId(member.getId(), accom.getId());
+        if (exists) {
+            throw new IllegalStateException("이미 해당 숙소에 리뷰를 작성하셨습니다.");
+        }
+
+        Review review = new Review();
+        review.setMember(member);
+        review.setAccom(accom);
+        review.setRating(reviewFormDto.getRating());
+        review.setContent(reviewFormDto.getContent());
+
+        reviewRepository.save(review);
+
+        saveReviewImages(review, reviewFormDto.getReviewImgFileList());
+
+        updateAccomReviewInfo(accom);
+    }
+
+    public void updateReview(Long reviewId, ReviewFormDto reviewFormDto, String email) throws Exception {
+
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            throw new IllegalArgumentException("로그인한 회원 정보를 찾을 수 없습니다.");
+        }
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new EntityNotFoundException("리뷰 정보를 찾을 수 없습니다."));
+
+        if (!review.getMember().getId().equals(member.getId())) {
+            throw new IllegalStateException("본인 리뷰만 수정할 수 있습니다.");
+        }
+
+        review.setRating(reviewFormDto.getRating());
+        review.setContent(reviewFormDto.getContent());
+
+        saveReviewImages(review, reviewFormDto.getReviewImgFileList());
+
+        updateAccomReviewInfo(review.getAccom());
+    }
+
+    public void deleteReview(Long reviewId, String email) throws Exception {
+
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            throw new IllegalArgumentException("로그인한 회원 정보를 찾을 수 없습니다.");
+        }
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new EntityNotFoundException("리뷰 정보를 찾을 수 없습니다."));
+
+        if (!review.getMember().getId().equals(member.getId())) {
+            throw new IllegalStateException("본인 리뷰만 삭제할 수 있습니다.");
+        }
+
+        Accom accom = review.getAccom();
+
+        deleteAllReviewImages(review);
+        reviewRepository.delete(review);
+
+        updateAccomReviewInfo(accom);
+    }
+
+    public void deleteReviewImage(Long reviewId, Long reviewImgId, String email) throws Exception {
+
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            throw new IllegalArgumentException("로그인한 회원 정보를 찾을 수 없습니다.");
+        }
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new EntityNotFoundException("리뷰 정보를 찾을 수 없습니다."));
+
+        if (!review.getMember().getId().equals(member.getId())) {
+            throw new IllegalStateException("본인 리뷰 이미지만 삭제할 수 있습니다.");
+        }
+
+        ReviewImg reviewImg = reviewImgRepository.findByIdAndReviewId(reviewImgId, reviewId)
+                .orElseThrow(() -> new EntityNotFoundException("리뷰 이미지를 찾을 수 없습니다."));
+
+        deleteReviewImageFile(reviewImg.getImgName());
+        reviewImgRepository.delete(reviewImg);
+
+        review.getReviewImgList().removeIf(img -> img.getId().equals(reviewImgId));
+    }
+
+    private void saveReviewImages(Review review, List<MultipartFile> reviewImgFileList) throws Exception {
+
+        if (reviewImgFileList == null || reviewImgFileList.isEmpty()) {
+            return;
+        }
+
+        String reviewUploadPath = System.getProperty("user.dir") + "/" + uploadPath + "/review";
+
+        for (MultipartFile reviewImgFile : reviewImgFileList) {
+            if (reviewImgFile == null || reviewImgFile.isEmpty()) {
+                continue;
+            }
+
+            String oriImgName = reviewImgFile.getOriginalFilename();
+            String imgName = fileService.uploadFile(reviewUploadPath, oriImgName, reviewImgFile);
+            String imgUrl = "/images/review/" + imgName;
+
+            ReviewImg reviewImg = new ReviewImg();
+            reviewImg.updateReviewImg(imgName, oriImgName, imgUrl);
+            reviewImg.setReview(review);
+
+            reviewImgRepository.save(reviewImg);
+            review.addReviewImg(reviewImg);
+        }
+    }
+
+    private void deleteAllReviewImages(Review review) throws Exception {
+        List<ReviewImg> reviewImgList = reviewImgRepository.findByReviewId(review.getId());
+
+        for (ReviewImg reviewImg : reviewImgList) {
+            deleteReviewImageFile(reviewImg.getImgName());
+        }
+
+        reviewImgRepository.deleteAll(reviewImgList);
+        review.getReviewImgList().clear();
+    }
+
+    private void deleteReviewImageFile(String imgName) throws Exception {
+        if (imgName == null || imgName.isEmpty()) {
+            return;
+        }
+
+        String filePath = System.getProperty("user.dir") + "/" + uploadPath + "/review/" + imgName;
+        File file = new File(filePath);
+
+        if (file.exists()) {
+            fileService.deleteFile(file.getAbsolutePath());
+        }
+    }
 
     @Transactional(readOnly = true)
     public List<Review> getReviewList(Long accomId) {
@@ -37,7 +186,6 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public boolean hasMyReview(Long accomId, String email) {
         Member member = memberRepository.findByEmail(email);
-
         if (member == null) {
             return false;
         }
@@ -45,125 +193,31 @@ public class ReviewService {
         return reviewRepository.existsByMemberIdAndAccomId(member.getId(), accomId);
     }
 
-    public void saveReview(ReviewFormDto reviewFormDto,
-                           String email)
-            throws Exception {
-
-        Member member =
-                memberRepository.findByEmail(email);
-
+    @Transactional(readOnly = true)
+    public Review getMyReview(Long accomId, String email) {
+        Member member = memberRepository.findByEmail(email);
         if (member == null) {
-            throw new IllegalArgumentException(
-                    "로그인한 회원 정보를 찾을 수 없습니다."
-            );
+            return null;
         }
 
-        Accom accom =
-                accomRepository.findById(
-                                reviewFormDto.getAccomId()
-                        )
-                        .orElseThrow(
-                                () -> new EntityNotFoundException(
-                                        "숙소 정보를 찾을 수 없습니다."
-                                )
-                        );
-
-        boolean exists =
-                reviewRepository
-                        .existsByMemberIdAndAccomId(
-                                member.getId(),
-                                accom.getId()
-                        );
-
-        if (exists) {
-            throw new IllegalStateException(
-                    "이미 해당 숙소에 리뷰를 작성하셨습니다."
-            );
-        }
-
-        Review review = new Review();
-
-        review.setMember(member);
-        review.setAccom(accom);
-        review.setRating(
-                reviewFormDto.getRating()
-        );
-        review.setContent(
-                reviewFormDto.getContent()
-        );
-
-        MultipartFile reviewImgFile =
-                reviewFormDto.getReviewImgFile();
-
-        if (reviewImgFile != null
-                && !reviewImgFile.isEmpty()) {
-
-            String reviewUploadPath =
-                    System.getProperty("user.dir")
-                            + "/"
-                            + uploadPath
-                            + "/review";
-
-            String oriImgName =
-                    reviewImgFile.getOriginalFilename();
-
-            String imgName =
-                    fileService.uploadFile(
-                            reviewUploadPath,
-                            oriImgName,
-                            reviewImgFile
-                    );
-
-            String imgUrl =
-                    "/images/review/"
-                            + imgName;
-
-            review.updateReviewImg(
-                    imgName,
-                    oriImgName,
-                    imgUrl
-            );
-        }
-
-        reviewRepository.save(review);
-
-        updateAccomReviewInfo(accom);
+        return reviewRepository.findByMemberIdAndAccomId(member.getId(), accomId).orElse(null);
     }
 
-    private void updateAccomReviewInfo(
-            Accom accom) {
+    private void updateAccomReviewInfo(Accom accom) {
+        List<Review> reviewList = reviewRepository.findByAccomIdOrderByRegTimeDesc(accom.getId());
 
-        List<Review> reviewList =
-                reviewRepository
-                        .findByAccomIdOrderByRegTimeDesc(
-                                accom.getId()
-                        );
-
-        int reviewCount =
-                reviewList.size();
-
+        int reviewCount = reviewList.size();
         double avgRating = 0.0;
 
         if (reviewCount > 0) {
-
-            int totalRating =
-                    reviewList.stream()
-                            .mapToInt(Review::getRating)
-                            .sum();
-
-            avgRating =
-                    (double) totalRating
-                            / reviewCount;
+            int totalRating = reviewList.stream()
+                    .mapToInt(Review::getRating)
+                    .sum();
+            avgRating = (double) totalRating / reviewCount;
         }
 
-        accom.setReviewCount(
-                reviewCount
-        );
-
-        accom.setAvgRating(
-                avgRating
-        );
-
+        accom.setReviewCount(reviewCount);
+        accom.setAvgRating(avgRating);
         accomRepository.save(accom);
     }
 }
