@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layouts}">
+<head>
+    <meta charset="UTF-8">
+    <title>주문 내역</title>
+    <style>
+        .order-page {
+            max-width: 860px;
+            margin: 48px auto;
+            padding: 0 16px;
+        }
+
+        .order-page__title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 32px;
+        }
+
+        .order-empty {
+            text-align: center;
+            padding: 80px 0;
+            color: #888;
+        }
+
+        .order-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .order-card__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f8f8;
+            padding: 14px 20px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .order-card__status {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .order-card__status.cancel {
+            color: #e53935;
+        }
+
+        .order-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .order-item__img {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #eee;
+            flex-shrink: 0;
+        }
+
+        .order-item__info {
+            flex: 1;
+        }
+
+        .order-item__name {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .order-item__meta {
+            font-size: 0.88rem;
+            color: #777;
+        }
+
+        .order-item__price {
+            font-size: 1rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .order-card__footer {
+            display: flex;
+            justify-content: flex-end;
+            padding: 14px 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .btn-cancel {
+            padding: 8px 20px;
+            border: 1px solid #e53935;
+            border-radius: 8px;
+            color: #e53935;
+            background: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: #fdecea;
+        }
+
+        .btn-cancel:disabled {
+            border-color: #ccc;
+            color: #ccc;
+            cursor: default;
+            background: #fff;
+        }
+    </style>
+</head>
+
+<div layout:fragment="content">
+    <section class="order-page">
+        <h2 class="order-page__title">주문 내역</h2>
+
+        <!-- 주문 없음 -->
+        <div th:if="${#lists.isEmpty(orders)}" class="order-empty">
+            <p>주문 내역이 없습니다.</p>
+        </div>
+
+        <!-- 주문 목록 -->
+        <div th:each="order : ${orders}" class="order-card">
+
+            <!-- 주문 헤더 -->
+            <div class="order-card__header">
+                <span th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">날짜</span>
+                <span class="order-card__status"
+                      th:classappend="${order.orderStatus.name() == 'CANCEL'} ? 'cancel'"
+                      th:text="${order.orderStatus.name() == 'ORDER'} ? '예약 완료' : '예약 취소'">상태</span>
+            </div>
+
+            <!-- 주문 상품 목록 -->
+            <div th:each="item : ${order.orderItemDtos}" class="order-item">
+                <img class="order-item__img"
+                     th:src="${#strings.isEmpty(item.imgUrl)} ? '/images/no-image.png' : ${item.imgUrl}}"
+                     th:alt="${item.accomName}">
+                <div class="order-item__info">
+                    <div class="order-item__name" th:text="${item.accomName}">숙소명</div>
+                    <div class="order-item__meta" th:text="${item.count} + '박'">1박</div>
+                </div>
+                <div class="order-item__price"
+                     th:text="${#numbers.formatInteger(item.orderPrice, 3, 'COMMA')} + '원'">0원</div>
+            </div>
+
+            <!-- 취소 버튼 -->
+            <div class="order-card__footer">
+                <button class="btn-cancel"
+                        th:disabled="${order.orderStatus.name() == 'CANCEL'}"
+                        th:data-order-id="${order.orderId}"
+                        onclick="cancelOrder(this)">
+                    주문 취소
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <script th:inline="javascript">
+        function cancelOrder(btn) {
+            if (!confirm('주문을 취소하시겠습니까?')) return;
+
+            const orderId = btn.getAttribute('data-order-id');
+
+            fetch('/order/' + orderId + '/cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''
+                }
+            })
+            .then(res => {
+                if (res.ok) {
+                    alert('주문이 취소되었습니다.');
+                    location.reload();
+                } else {
+                    return res.text().then(msg => { throw new Error(msg); });
+                }
+            })
+            .catch(err => alert('취소 실패: ' + err.message));
+        }
+    </script>
+</div>
+</html>
