@@ -85,17 +85,28 @@
     align-items:center;
     justify-content:center;
     height:40px;
-    padding:0;
+    padding:0 14px;
     margin:0;
     border:0;
-    background:none;
-    color:#333;
-    font-size:14px;
+    border-radius:999px;
+    background:#111827;
+    color:#fff;
+    font-size:13px;
+    font-weight:700;
     font-family:inherit;
     line-height:1;
     cursor:pointer;
     appearance:none;
     -webkit-appearance:none;
+    transition:background-color 0.2s ease, transform 0.2s ease;
+}
+
+.logout-button:hover{
+    background:#1f2937;
+}
+
+.logout-button:active{
+    transform:translateY(1px);
 }
 
 .user-greeting{

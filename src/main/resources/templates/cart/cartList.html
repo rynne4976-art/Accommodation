@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layouts}">
+<head>
+    <meta charset="UTF-8">
+    <title>장바구니</title>
+    <link rel="stylesheet" th:href="@{/css/cart.css}">
+</head>
+
+<div layout:fragment="content">
+    <section class="cart-page">
+        <div class="cart-page__inner">
+            <div class="cart-main">
+                <div class="cart-empty">
+                    <div class="cart-empty__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="9" cy="19" r="1.5"></circle>
+                            <circle cx="18" cy="19" r="1.5"></circle>
+                            <path d="M4 5h2l2.2 9h9.6l2.2-7H7.2"></path>
+                        </svg>
+                    </div>
+                    <h2>아직 장바구니가 비어있어요</h2>
+                    <p>원하는 숙소를 담아두면 한 번에 비교하고 예약할 수 있어요.</p>
+                    <a th:href="@{/main}" class="cart-empty__action">담으러 가기</a>
+                </div>
+            </div>
+
+            <aside class="cart-summary">
+                <div class="cart-summary__row">
+                    <span>총 <strong th:text="${cartCount}">0</strong>건</span>
+                    <span>결제 예상 금액 <strong th:text="${#numbers.formatInteger(cartTotalPrice, 3, 'COMMA')} + '원'">0원</strong></span>
+                </div>
+
+                <button type="button" class="cart-summary__button" th:disabled="${cartCount == 0}">
+                    구매하기
+                </button>
+
+                <p class="cart-summary__help">
+                    장바구니에 숙소를 담으면 여기에서 총 예약 후보를 확인할 수 있습니다.
+                </p>
+            </aside>
+        </div>
+    </section>
+</div>
+</html>
