@@ -100,6 +100,7 @@
                 <td th:text="${accom.accomType}"></td>
                 <td th:text="${accom.grade}"></td>
                 <td th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원'"></td>
+                <td th:text="${accom.roomCount}"></td>
                 <td th:text="${accom.location}" th:title="${accom.location}"></td>
                 <td>
                     <span class="status-badge" th:text="${accom.status}"></span>
