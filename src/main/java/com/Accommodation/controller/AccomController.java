@@ -7,6 +7,7 @@ import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.Review;
 import com.Accommodation.service.AccomService;
 import com.Accommodation.service.ReviewService;
+import com.Accommodation.validation.AccomValidator;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -30,6 +30,7 @@ public class AccomController {
 
     private final AccomService accomService;
     private final ReviewService reviewService;
+    private final AccomValidator accomValidator;
 
     @GetMapping("/admin/accom/new")
     public String accomForm(@RequestParam(value = "returnPage", defaultValue = "0") int returnPage,
@@ -52,8 +53,7 @@ public class AccomController {
                            BindingResult bindingResult,
                            @RequestParam("accomImgFile") List<MultipartFile> accomImgFileList,
                            Model model) {
-        validateGuestCount(accomFormDto, bindingResult);
-        validateOperationInfo(accomFormDto, bindingResult);
+        accomValidator.validate(accomFormDto, bindingResult);
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("accomFormDto", accomFormDto);
@@ -112,8 +112,7 @@ public class AccomController {
                               @RequestParam("accomImgFile") List<MultipartFile> accomImgFileList,
                               Model model,
                               RedirectAttributes redirectAttributes) {
-        validateGuestCount(accomFormDto, bindingResult);
-        validateOperationInfo(accomFormDto, bindingResult);
+        accomValidator.validate(accomFormDto, bindingResult);
 
         if (bindingResult.hasErrors()) {
             accomFormDto.setId(accomId);
@@ -209,102 +208,5 @@ public class AccomController {
         redirectAttributes.addAttribute("grade", returnGrade);
         redirectAttributes.addAttribute("accomStatus", returnAccomStatus);
         return "redirect:/admin/accoms";
-    }
-
-    private void validateGuestCount(AccomFormDto accomFormDto, BindingResult bindingResult) {
-        if (bindingResult.hasFieldErrors("accomType") || bindingResult.hasFieldErrors("guestCount")) {
-            return;
-        }
-
-        if (accomFormDto.getAccomType() == null || accomFormDto.getGuestCount() == null) {
-            return;
-        }
-
-        switch (accomFormDto.getAccomType()) {
-            case HOTEL, RESORT, PENSION -> {
-                if (accomFormDto.getGuestCount() < 2 || accomFormDto.getGuestCount() > 10) {
-                    bindingResult.rejectValue(
-                            "guestCount",
-                            "guestCount.range",
-                            "호텔, 리조트, 펜션은 투숙 가능 인원을 2명에서 10명 사이로 입력해 주세요."
-                    );
-                }
-            }
-            case GUESTHOUSE, MOTEL -> {
-                if (accomFormDto.getGuestCount() < 1 || accomFormDto.getGuestCount() > 6) {
-                    bindingResult.rejectValue(
-                            "guestCount",
-                            "guestCount.range",
-                            "게스트하우스와 모텔은 투숙 가능 인원을 1명에서 6명 사이로 입력해 주세요."
-                    );
-                }
-            }
-        }
-    }
-
-    private void validateOperationInfo(AccomFormDto accomFormDto, BindingResult bindingResult) {
-        if (!bindingResult.hasFieldErrors("operationStartDate")
-                && !bindingResult.hasFieldErrors("operationEndDate")
-                && accomFormDto.getOperationStartDate() != null
-                && accomFormDto.getOperationEndDate() != null) {
-
-            if (accomFormDto.getOperationStartDate().isAfter(accomFormDto.getOperationEndDate())) {
-                bindingResult.rejectValue(
-                        "operationEndDate",
-                        "operationEndDate.range",
-                        "운영 종료일은 운영 시작일보다 빠를 수 없습니다."
-                );
-            }
-        }
-
-        if (!bindingResult.hasFieldErrors("checkInTime")
-                && !bindingResult.hasFieldErrors("checkOutTime")
-                && accomFormDto.getCheckInTime() != null
-                && accomFormDto.getCheckOutTime() != null) {
-
-            if (accomFormDto.getCheckInTime().equals(accomFormDto.getCheckOutTime())) {
-                bindingResult.rejectValue(
-                        "checkOutTime",
-                        "checkOutTime.duplicate",
-                        "체크인 시간과 체크아웃 시간은 같을 수 없습니다."
-                );
-            }
-        }
-
-        if (accomFormDto.getOperationDateList() == null || accomFormDto.getOperationDateList().isEmpty()) {
-            bindingResult.rejectValue(
-                    "operationDateList",
-                    "operationDateList.empty",
-                    "운영일을 한 개 이상 선택해 주세요."
-            );
-            return;
-        }
-
-        if (accomFormDto.getOperationStartDate() == null || accomFormDto.getOperationEndDate() == null) {
-            return;
-        }
-
-        for (String operationDateStr : accomFormDto.getOperationDateList()) {
-            try {
-                LocalDate operationDate = LocalDate.parse(operationDateStr);
-
-                if (operationDate.isBefore(accomFormDto.getOperationStartDate())
-                        || operationDate.isAfter(accomFormDto.getOperationEndDate())) {
-                    bindingResult.rejectValue(
-                            "operationDateList",
-                            "operationDateList.range",
-                            "운영일은 운영 기간 안에서만 선택해 주세요."
-                    );
-                    break;
-                }
-            } catch (Exception e) {
-                bindingResult.rejectValue(
-                        "operationDateList",
-                        "operationDateList.format",
-                        "운영일 형식이 올바르지 않습니다."
-                );
-                break;
-            }
-        }
     }
 }

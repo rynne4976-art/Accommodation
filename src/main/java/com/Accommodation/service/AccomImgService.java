@@ -3,7 +3,6 @@ package com.Accommodation.service;
 import com.Accommodation.entity.AccomImg;
 import com.Accommodation.repository.AccomImgRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
@@ -53,58 +52,6 @@ public class AccomImgService {
         );
 
         accomImgRepository.save(accomImg);
-    }
-
-    // =========================
-    // 이미지 수정
-    // =========================
-    public void updateAccomImg(
-            Long accomImgId,
-            MultipartFile accomImgFile
-    ) throws Exception {
-
-        if (accomImgFile.isEmpty()) {
-            return;
-        }
-
-        AccomImg savedAccomImg =
-                accomImgRepository
-                        .findById(accomImgId)
-                        .orElseThrow(() ->
-                                new EntityNotFoundException(
-                                        "숙소 이미지를 찾을 수 없습니다."
-                                ));
-
-        // 기존 이미지 삭제
-        if (savedAccomImg.getImgName()
-                != null
-                && !savedAccomImg
-                .getImgName()
-                .isEmpty()) {
-
-            s3FileService.deleteFile(
-                    savedAccomImg.getImgName()
-            );
-        }
-
-        String oriImgName =
-                accomImgFile.getOriginalFilename();
-
-        String imgName =
-                s3FileService.uploadFile(
-                        "accom",
-                        oriImgName,
-                        accomImgFile
-                );
-
-        String imgUrl =
-                s3FileService.getFileUrl(imgName);
-
-        savedAccomImg.updateAccomImg(
-                imgName,
-                oriImgName,
-                imgUrl
-        );
     }
 
     public void deleteAccomImg(AccomImg accomImg) {

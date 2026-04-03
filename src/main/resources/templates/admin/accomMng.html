@@ -60,7 +60,9 @@
                     <option value="READY" th:selected="${accomSearchDto.accomStatus != null and accomSearchDto.accomStatus.name() == 'READY'}">준비중</option>
                 </select>
 
-                <button type="submit" data-reset-search>조회</button>
+                <div class="search-form-actions">
+                    <button type="submit" data-reset-search>조회</button>
+                </div>
             </form>
         </section>
 

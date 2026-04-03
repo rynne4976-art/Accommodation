@@ -163,7 +163,8 @@
                     <div class="form-group">
                         <label for="operationStartDate">운영 시작일</label>
                         <input type="date"
-                               th:field="*{operationStartDate}"
+                               name="operationStartDate"
+                               th:value="${accomFormDto.operationStartDate != null ? #temporals.format(accomFormDto.operationStartDate, 'yyyy-MM-dd') : ''}"
                                id="operationStartDate"
                                th:classappend="${#fields.hasErrors('operationStartDate')} ? ' is-invalid'">
                         <p class="field-error" th:if="${#fields.hasErrors('operationStartDate')}" th:errors="*{operationStartDate}"></p>
@@ -173,7 +174,8 @@
                     <div class="form-group">
                         <label for="operationEndDate">운영 종료일</label>
                         <input type="date"
-                               th:field="*{operationEndDate}"
+                               name="operationEndDate"
+                               th:value="${accomFormDto.operationEndDate != null ? #temporals.format(accomFormDto.operationEndDate, 'yyyy-MM-dd') : ''}"
                                id="operationEndDate"
                                th:classappend="${#fields.hasErrors('operationEndDate')} ? ' is-invalid'">
                         <p class="field-error" th:if="${#fields.hasErrors('operationEndDate')}" th:errors="*{operationEndDate}"></p>
@@ -183,7 +185,9 @@
                     <div class="form-group">
                         <label for="checkInTime">체크인 시간</label>
                         <input type="time"
-                               th:field="*{checkInTime}"
+                               name="checkInTime"
+                               th:value="${accomFormDto.checkInTime != null ? #temporals.format(accomFormDto.checkInTime, 'HH:mm') : ''}"
+                               step="60"
                                id="checkInTime"
                                th:classappend="${#fields.hasErrors('checkInTime')} ? ' is-invalid'">
                         <p class="field-error" th:if="${#fields.hasErrors('checkInTime')}" th:errors="*{checkInTime}"></p>
@@ -193,7 +197,9 @@
                     <div class="form-group">
                         <label for="checkOutTime">체크아웃 시간</label>
                         <input type="time"
-                               th:field="*{checkOutTime}"
+                               name="checkOutTime"
+                               th:value="${accomFormDto.checkOutTime != null ? #temporals.format(accomFormDto.checkOutTime, 'HH:mm') : ''}"
+                               step="60"
                                id="checkOutTime"
                                th:classappend="${#fields.hasErrors('checkOutTime')} ? ' is-invalid'">
                         <p class="field-error" th:if="${#fields.hasErrors('checkOutTime')}" th:errors="*{checkOutTime}"></p>
