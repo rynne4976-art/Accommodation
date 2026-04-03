@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layouts}">
+<head>
+    <meta charset="UTF-8">
+    <title>예약하기</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <style>
+        .order-form-page {
+            max-width: 560px;
+            margin: 48px auto;
+            padding: 0 16px;
+        }
+
+        .order-form-page__title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 32px;
+        }
+
+        .order-form-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .order-form-accom {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .order-form-accom__img {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #eee;
+            flex-shrink: 0;
+        }
+
+        .order-form-accom__name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .order-form-accom__meta {
+            font-size: 0.88rem;
+            color: #777;
+        }
+
+        .order-form-body {
+            padding: 24px 20px;
+        }
+
+        .order-form-info {
+            background: #f8f8f8;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .order-form-info__row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .order-form-info__row:last-child { margin-bottom: 0; }
+
+        .order-form-info__label { color: #777; }
+
+        .order-form-info__value { font-weight: 600; }
+
+        .order-form-group {
+            margin-bottom: 20px;
+        }
+
+        .order-form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .order-form-group input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .order-form-group input.error { border-color: #e53935; }
+
+        .order-form-hint {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .order-form-hint.error { color: #e53935; }
+
+        .order-form-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-top: 1px solid #f0f0f0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .order-form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-order {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #333;
+            color: #fff;
+            transition: background 0.2s;
+        }
+
+        .btn-order:hover { background: #111; }
+
+        .btn-back {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #fff;
+            color: #555;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<div layout:fragment="content">
+    <section class="order-form-page">
+        <h2 class="order-form-page__title">예약하기</h2>
+
+        <div class="order-form-card">
+            <!-- 숙소 정보 -->
+            <div class="order-form-accom">
+                <img class="order-form-accom__img"
+                     th:src="${accom.accomImgList != null and !#lists.isEmpty(accom.accomImgList)}
+                              ? ${accom.accomImgList[0].imgUrl}
+                              : '/images/no-image.png'"
+                     th:alt="${accom.accomName}">
+                <div>
+                    <div class="order-form-accom__name" th:text="${accom.accomName}">숙소명</div>
+                    <div class="order-form-accom__meta"
+                         th:text="'1박 ' + ${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원 · 최대 ' + ${accom.guestCount} + '명'">
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-form-body">
+
+                <!-- 체크인/체크아웃 표시 (이전 페이지에서 전달) -->
+                <div class="order-form-info">
+                    <div class="order-form-info__row">
+                        <span class="order-form-info__label">체크인</span>
+                        <span class="order-form-info__value" id="displayCheckIn"
+                              th:text="${checkInDate != null} ? ${#temporals.format(checkInDate, 'yyyy-MM-dd')} : '—'">—</span>
+                    </div>
+                    <div class="order-form-info__row">
+                        <span class="order-form-info__label">체크아웃</span>
+                        <span class="order-form-info__value" id="displayCheckOut"
+                              th:text="${checkOutDate != null} ? ${#temporals.format(checkOutDate, 'yyyy-MM-dd')} : '—'">—</span>
+                    </div>
+                    <div class="order-form-info__row">
+                        <span class="order-form-info__label">숙박 일수</span>
+                        <span class="order-form-info__value" id="displayNights">—</span>
+                    </div>
+                </div>
+
+                <!-- 투숙 인원 -->
+                <div class="order-form-group">
+                    <label for="guestCount">투숙 인원</label>
+                    <input type="number" id="guestCount"
+                           value="1" min="1"
+                           th:max="${accom.guestCount}"
+                           oninput="onGuestChange()">
+                    <p class="order-form-hint" id="guestHint"
+                       th:text="'최대 ' + ${accom.guestCount} + '명까지 가능합니다.'"></p>
+                </div>
+
+                <!-- 총 결제 금액 -->
+                <div class="order-form-total">
+                    <span>총 결제 금액</span>
+                    <span id="totalPrice">—</span>
+                </div>
+
+                <div class="order-form-actions">
+                    <a class="btn-back" th:href="@{/accom/{id}(id=${accom.id})}">돌아가기</a>
+                    <button type="button" class="btn-order" onclick="submitOrder()">예약 확정</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script th:inline="javascript">
+        const accomId       = /*[[${accom.id}]]*/ 0;
+        const pricePerNight = /*[[${accom.pricePerNight}]]*/ 0;
+        const maxGuest      = /*[[${accom.guestCount}]]*/ 2;
+        const checkInDate   = /*[[${checkInDate}]]*/ null;
+        const checkOutDate  = /*[[${checkOutDate}]]*/ null;
+
+        // 숙박 일수 & 총 금액 계산
+        (function init() {
+            if (!checkInDate || !checkOutDate) return;
+            const nights = Math.round(
+                (new Date(checkOutDate) - new Date(checkInDate)) / 86400000);
+            if (nights > 0) {
+                document.getElementById('displayNights').textContent = nights + '박';
+                document.getElementById('totalPrice').textContent =
+                    (pricePerNight * nights).toLocaleString('ko-KR') + '원';
+            }
+        })();
+
+        function onGuestChange() {
+            const val = parseInt(document.getElementById('guestCount').value);
+            const hint = document.getElementById('guestHint');
+            if (val > maxGuest) {
+                document.getElementById('guestCount').classList.add('error');
+                hint.textContent = '최대 ' + maxGuest + '명까지 가능합니다.';
+                hint.classList.add('error');
+            } else {
+                document.getElementById('guestCount').classList.remove('error');
+                hint.textContent = '최대 ' + maxGuest + '명까지 가능합니다.';
+                hint.classList.remove('error');
+            }
+        }
+
+        function submitOrder() {
+            if (!checkInDate || !checkOutDate) {
+                alert('날짜 정보가 없습니다. 숙소 페이지에서 날짜를 먼저 선택해 주세요.');
+                return;
+            }
+
+            const guestCount = parseInt(document.getElementById('guestCount').value);
+            if (!guestCount || guestCount < 1) {
+                alert('투숙 인원을 1명 이상 입력해 주세요.');
+                return;
+            }
+            if (guestCount > maxGuest) {
+                alert('최대 ' + maxGuest + '명까지 가능합니다.');
+                return;
+            }
+
+            const nights = Math.round(
+                (new Date(checkOutDate) - new Date(checkInDate)) / 86400000);
+
+            if (!confirm(checkInDate + ' ~ ' + checkOutDate + ' (' + nights + '박), ' +
+                         guestCount + '명 예약을 진행하시겠습니까?')) return;
+
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+            const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+
+            fetch('/order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({
+                    accomId:      accomId,
+                    checkInDate:  checkInDate,
+                    checkOutDate: checkOutDate,
+                    guestCount:   guestCount
+                })
+            })
+            .then(res => {
+                if (res.ok) {
+                    alert('예약이 완료되었습니다.');
+                    window.location.href = '/orders';
+                } else {
+                    return res.text().then(msg => { throw new Error(msg); });
+                }
+            })
+            .catch(err => alert('예약 실패: ' + err.message));
+        }
+    </script>
+</div>
+</html>
