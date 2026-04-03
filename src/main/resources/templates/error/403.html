@@ -3,11 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title>접근 권한 없음</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <style>
+        .error-page {
+            max-width: 720px;
+            margin: 80px auto;
+            padding: 0 16px;
+            text-align: center;
+        }
+
+        .error-page h1 {
+            margin-bottom: 16px;
+            font-size: 3rem;
+        }
+
+        .error-page p {
+            margin: 8px 0;
+            color: #555;
+        }
+
+        .error-page a {
+            display: inline-block;
+            margin-top: 24px;
+            color: #111;
+            font-weight: 600;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
 <div th:replace="~{layouts/header :: header}"></div>
 
-<main style="max-width: 720px; margin: 80px auto; text-align: center;">
+<main class="error-page">
     <h1>403</h1>
     <p>이 요청은 현재 계정으로 처리할 수 없습니다.</p>
     <p>로그인 상태와 권한을 확인한 뒤 다시 시도해주세요.</p>

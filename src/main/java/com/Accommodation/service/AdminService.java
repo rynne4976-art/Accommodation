@@ -2,6 +2,7 @@ package com.Accommodation.service;
 
 import com.Accommodation.constant.Role;
 import com.Accommodation.dto.MemberSearchDto;
+import com.Accommodation.dto.OrderSearchDto;
 import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.Member;
 import com.Accommodation.entity.Order;
@@ -25,7 +26,7 @@ public class AdminService {
     private final MemberRepository memberRepository;
     private final OrderRepository orderRepository;
 
-    public Page<Member> getMemberPage(MemberSearchDto memberSearchDto, Pageable pageable) {
+    public Page<Member> getMemberPage(MemberSearchDto memberSearchDto, String currentAdminEmail, Pageable pageable) {
         String searchBy = memberSearchDto.getSearchBy();
         if (searchBy == null || searchBy.isBlank()) {
             searchBy = "all";
@@ -40,12 +41,13 @@ public class AdminService {
                 searchBy,
                 searchQuery,
                 memberSearchDto.getRole(),
+                currentAdminEmail,
                 pageable
         );
     }
 
-    public Page<Order> getOrderPage(Pageable pageable) {
-        return orderRepository.findAll(pageable);
+    public Page<Order> getOrderPage(OrderSearchDto orderSearchDto, Pageable pageable) {
+        return orderRepository.searchOrders(orderSearchDto, pageable);
     }
 
     public Member getMemberDetail(Long memberId) {

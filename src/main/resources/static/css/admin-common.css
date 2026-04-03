@@ -344,6 +344,41 @@ thead {
     gap: 6px;
 }
 
+.order-status-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: nowrap;
+}
+
+.order-status-cell {
+    overflow: visible;
+    text-overflow: clip;
+}
+
+.order-status-cell .role-select {
+    min-width: 92px;
+}
+
+.order-status-cell .role-submit {
+    min-width: 88px;
+}
+
+.order-cancel-button {
+    background: #dc2626;
+}
+
+.order-cancel-button:hover {
+    background: #b91c1c;
+}
+
+.order-cancel-button:disabled {
+    background: #e5e7eb;
+    color: #6b7280;
+    cursor: default;
+}
+
 .role-change-cell {
     overflow: visible;
     text-overflow: clip;
