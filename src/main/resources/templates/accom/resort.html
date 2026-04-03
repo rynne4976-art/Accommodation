@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>리조트</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+</head>
+<body>
+<div th:replace="~{layouts/header :: header}"></div>
+<div th:replace="~{accom/type-list-fragment :: content}"></div>
+<div th:replace="~{layouts/footer :: footer}"></div>
+</body>
+</html>

@@ -11,12 +11,10 @@ import com.Accommodation.repository.ReviewImgRepository;
 import com.Accommodation.repository.ReviewRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
 
 @Service
@@ -24,14 +22,11 @@ import java.util.List;
 @Transactional
 public class ReviewService {
 
-    @Value("${uploadPath}")
-    private String uploadPath;
-
     private final ReviewRepository reviewRepository;
     private final ReviewImgRepository reviewImgRepository;
     private final MemberRepository memberRepository;
     private final AccomRepository accomRepository;
-    private final FileService fileService;
+    private final S3FileService s3FileService;
 
     public void saveReview(ReviewFormDto reviewFormDto, String email) throws Exception {
 
@@ -134,16 +129,25 @@ public class ReviewService {
             return;
         }
 
-        String reviewUploadPath = System.getProperty("user.dir") + "/" + uploadPath + "/review";
-
         for (MultipartFile reviewImgFile : reviewImgFileList) {
             if (reviewImgFile == null || reviewImgFile.isEmpty()) {
                 continue;
             }
 
-            String oriImgName = reviewImgFile.getOriginalFilename();
-            String imgName = fileService.uploadFile(reviewUploadPath, oriImgName, reviewImgFile);
-            String imgUrl = "/images/review/" + imgName;
+            String oriImgName =
+                    reviewImgFile.getOriginalFilename();
+
+            String imgName =
+                    s3FileService.uploadFile(
+                            "review",
+                            oriImgName,
+                            reviewImgFile
+                    );
+
+            String imgUrl =
+                    s3FileService.getFileUrl(
+                            imgName
+                    );
 
             ReviewImg reviewImg = new ReviewImg();
             reviewImg.updateReviewImg(imgName, oriImgName, imgUrl);
@@ -169,18 +173,17 @@ public class ReviewService {
         if (imgName == null || imgName.isEmpty()) {
             return;
         }
-
-        String filePath = System.getProperty("user.dir") + "/" + uploadPath + "/review/" + imgName;
-        File file = new File(filePath);
-
-        if (file.exists()) {
-            fileService.deleteFile(file.getAbsolutePath());
-        }
+        s3FileService.deleteFile(imgName);
     }
 
     @Transactional(readOnly = true)
     public List<Review> getReviewList(Long accomId) {
-        return reviewRepository.findByAccomIdOrderByRegTimeDesc(accomId);
+        List<Review> reviewList =
+                reviewRepository.findByAccomIdOrderByRegTimeDesc(accomId);
+
+        reviewList.forEach(this::applyAccessibleImageUrls);
+
+        return reviewList;
     }
 
     @Transactional(readOnly = true)
@@ -200,7 +203,13 @@ public class ReviewService {
             return null;
         }
 
-        return reviewRepository.findByMemberIdAndAccomId(member.getId(), accomId).orElse(null);
+        Review review =
+                reviewRepository.findByMemberIdAndAccomId(member.getId(), accomId)
+                        .orElse(null);
+
+        applyAccessibleImageUrls(review);
+
+        return review;
     }
 
     private void updateAccomReviewInfo(Accom accom) {
@@ -219,6 +228,21 @@ public class ReviewService {
         accom.setReviewCount(reviewCount);
         accom.setAvgRating(avgRating);
         accomRepository.save(accom);
+    }
+
+    private void applyAccessibleImageUrls(Review review) {
+
+        if (review == null || review.getReviewImgList() == null) {
+            return;
+        }
+
+        review.getReviewImgList().forEach(reviewImg ->
+                reviewImg.setImgUrl(
+                        s3FileService.getProxyImageUrl(
+                                reviewImg.getImgName()
+                        )
+                )
+        );
     }
 
 }
