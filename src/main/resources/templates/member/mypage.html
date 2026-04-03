@@ -11,124 +11,170 @@
     <style>
         /* ── 예약 내역 섹션 ── */
         .order-section {
-            max-width: 860px;
-            margin: 0 auto 48px;
+            max-width: 980px;
+            margin: 0 auto 88px;
             padding: 0 16px;
         }
 
-        .order-section__title {
-            font-size: 1.2rem;
-            font-weight: 700;
+        .order-section__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 20px;
+        }
+
+        .order-section__title {
+            margin: 0;
+            font-size: 24px;
+            color: #111827;
         }
 
         .order-empty {
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
             text-align: center;
-            padding: 48px 0;
-            color: #888;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
+            padding: 64px 0;
+            color: #667085;
+            font-size: 15px;
         }
 
+        /* 카드: mypage-card와 동일한 스타일 */
         .order-card {
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
+            background: #fff;
+            border-radius: 24px;
+            padding: 28px 32px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
             margin-bottom: 20px;
-            overflow: hidden;
         }
 
-        .order-card__header {
+        .order-card__top {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            background: #f8f8f8;
-            padding: 12px 18px;
-            font-size: 0.88rem;
-            color: #555;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #eaecf0;
         }
 
-        .order-card__status {
+        .order-card__date {
+            font-size: 13px;
+            color: #667085;
             font-weight: 700;
-            color: #333;
         }
 
-        .order-card__status.cancel { color: #e53935; }
+        /* 상태 뱃지: mypage-role과 동일 계열 */
+        .order-card__badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+        }
 
+        .order-card__badge--order {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .order-card__badge--cancel {
+            background: #fff1f0;
+            color: #cf1322;
+        }
+
+        /* 아이템: mypage-item과 동일한 스타일 */
         .order-item {
             display: flex;
             align-items: center;
-            gap: 16px;
-            padding: 16px 18px;
-            border-top: 1px solid #f0f0f0;
+            gap: 18px;
+            padding: 18px 20px;
+            border: 1px solid #eaecf0;
+            border-radius: 18px;
+            background: #fcfcfd;
+            margin-bottom: 12px;
         }
 
+        .order-item:last-of-type { margin-bottom: 0; }
+
         .order-item__img {
-            width: 80px;
-            height: 80px;
+            width: 76px;
+            height: 76px;
             object-fit: cover;
-            border-radius: 8px;
-            background: #eee;
+            border-radius: 14px;
+            background: #eef2ff;
             flex-shrink: 0;
         }
 
-        .order-item__info { flex: 1; }
+        .order-item__info { flex: 1; min-width: 0; }
 
         .order-item__name {
-            font-size: 0.98rem;
-            font-weight: 600;
-            margin-bottom: 4px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #101828;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .order-item__meta {
-            font-size: 0.83rem;
-            color: #777;
-            line-height: 1.6;
+            font-size: 13px;
+            color: #667085;
+            font-weight: 700;
+            line-height: 1.7;
         }
 
         .order-item__price {
-            font-size: 0.98rem;
+            font-size: 16px;
             font-weight: 700;
+            color: #101828;
             white-space: nowrap;
         }
 
+        /* 액션 버튼: mypage-action-link와 동일 계열 */
         .order-card__footer {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
-            padding: 12px 18px;
-            border-top: 1px solid #f0f0f0;
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid #eaecf0;
         }
 
-        .btn-sm {
-            padding: 7px 16px;
-            border-radius: 7px;
-            font-size: 0.85rem;
+        .btn-order-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
+            padding: 10px 20px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 700;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.18s, color 0.18s;
+            border: none;
         }
 
-        .btn-edit {
-            border: 1px solid #555;
-            background: #fff;
-            color: #333;
+        .btn-order-edit {
+            background: #f8faff;
+            color: #1f4acc;
+            border: 1px solid #dbe4ff;
         }
 
-        .btn-edit:hover { background: #f5f5f5; }
+        .btn-order-edit:hover { background: #eef2ff; }
 
-        .btn-cancel {
-            border: 1px solid #e53935;
-            background: #fff;
-            color: #e53935;
+        .btn-order-cancel {
+            background: #111827;
+            color: #fff;
         }
 
-        .btn-cancel:hover { background: #fdecea; }
+        .btn-order-cancel:hover { background: #1f2937; }
 
-        .btn-cancel:disabled,
-        .btn-edit:disabled {
-            border-color: #ccc;
-            color: #ccc;
+        .btn-order-action:disabled {
+            background: #f2f4f7;
+            color: #98a2b3;
+            border-color: #eaecf0;
             cursor: default;
-            background: #fff;
         }
 
         /* ── 수정 모달 ── */
@@ -146,83 +192,89 @@
         .edit-modal__backdrop {
             position: absolute;
             inset: 0;
-            background: rgba(0,0,0,.45);
+            background: rgba(15, 23, 42, 0.5);
         }
 
         .edit-modal__dialog {
             position: relative;
             background: #fff;
-            border-radius: 12px;
-            padding: 32px 28px;
+            border-radius: 24px;
+            padding: 32px 30px;
             width: 100%;
-            max-width: 440px;
+            max-width: 460px;
             z-index: 1;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.15);
         }
 
         .edit-modal__title {
-            font-size: 1.1rem;
+            font-size: 20px;
             font-weight: 700;
-            margin-bottom: 20px;
+            color: #111827;
+            margin-bottom: 24px;
         }
 
-        .edit-modal__group {
-            margin-bottom: 16px;
-        }
+        .edit-modal__group { margin-bottom: 16px; }
 
         .edit-modal__group label {
             display: block;
-            font-size: 0.88rem;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: #333;
+            font-size: 13px;
+            font-weight: 700;
+            color: #667085;
+            margin-bottom: 8px;
         }
 
         .edit-modal__group input {
             width: 100%;
-            padding: 9px 11px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 0.95rem;
+            padding: 12px 14px;
+            border: 1px solid #eaecf0;
+            border-radius: 14px;
+            background: #fcfcfd;
+            font-size: 15px;
+            color: #101828;
             box-sizing: border-box;
         }
 
-        .edit-modal__row {
-            display: flex;
-            gap: 12px;
+        .edit-modal__group input:read-only {
+            background: #f2f4f7;
+            color: #667085;
         }
 
+        .edit-modal__row { display: flex; gap: 12px; }
         .edit-modal__row .edit-modal__group { flex: 1; }
 
         .edit-modal__actions {
             display: flex;
             gap: 10px;
-            margin-top: 24px;
+            margin-top: 28px;
         }
 
         .btn-modal-primary {
             flex: 1;
-            padding: 11px;
+            padding: 13px;
             border: none;
-            border-radius: 8px;
-            background: #333;
+            border-radius: 999px;
+            background: #111827;
             color: #fff;
-            font-size: 0.95rem;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 700;
             cursor: pointer;
         }
 
-        .btn-modal-primary:hover { background: #111; }
+        .btn-modal-primary:hover { background: #1f2937; }
 
         .btn-modal-secondary {
             flex: 1;
-            padding: 11px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            background: #fff;
-            color: #555;
-            font-size: 0.95rem;
+            padding: 13px;
+            border: 1px solid #dbe4ff;
+            border-radius: 999px;
+            background: #f8faff;
+            color: #1f4acc;
+            font-size: 14px;
+            font-weight: 700;
             cursor: pointer;
         }
+
+        .btn-modal-secondary:hover { background: #eef2ff; }
     </style>
 </head>
 <body>
@@ -280,18 +332,21 @@
 
     <!-- 예약 내역 -->
     <section class="order-section">
-        <h3 class="order-section__title">예약 내역</h3>
+        <div class="order-section__header">
+            <h3 class="order-section__title">예약 내역</h3>
+        </div>
 
-        <div th:if="${#lists.isEmpty(orders)}" class="order-empty">
+        <div th:if="${orders == null or #lists.isEmpty(orders)}" class="order-empty">
             <p>예약 내역이 없습니다.</p>
         </div>
 
         <div th:each="order : ${orders}" class="order-card">
 
-            <div class="order-card__header">
-                <span th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">날짜</span>
-                <span class="order-card__status"
-                      th:classappend="${order.orderStatus.name() == 'CANCEL'} ? 'cancel'"
+            <div class="order-card__top">
+                <span class="order-card__date"
+                      th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">날짜</span>
+                <span class="order-card__badge"
+                      th:classappend="${order.orderStatus.name() == 'CANCEL'} ? 'order-card__badge--cancel' : 'order-card__badge--order'"
                       th:text="${order.orderStatus.name() == 'ORDER'} ? '예약 완료' : '예약 취소'">상태</span>
             </div>
 
@@ -314,7 +369,7 @@
             </div>
 
             <div class="order-card__footer">
-                <button class="btn-sm btn-edit"
+                <button class="btn-order-action btn-order-edit"
                         th:disabled="${order.orderStatus.name() == 'CANCEL'}"
                         th:data-order-id="${order.orderId}"
                         th:data-checkin="${order.orderItemDtos[0].checkInDate}"
@@ -323,7 +378,7 @@
                         onclick="openEditModal(this)">
                     예약 수정
                 </button>
-                <button class="btn-sm btn-cancel"
+                <button class="btn-order-action btn-order-cancel"
                         th:disabled="${order.orderStatus.name() == 'CANCEL'}"
                         th:data-order-id="${order.orderId}"
                         onclick="cancelOrder(this)">
