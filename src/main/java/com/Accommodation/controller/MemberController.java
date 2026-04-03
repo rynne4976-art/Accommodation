@@ -5,9 +5,11 @@ import com.Accommodation.dto.MemberUpdateDto;
 import com.Accommodation.dto.PasswordChangeDto;
 import com.Accommodation.entity.Member;
 import com.Accommodation.service.MemberService;
+import com.Accommodation.service.OrderService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -32,6 +34,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class MemberController {
 
     private final MemberService memberService;
+    private final OrderService orderService;
 
     /**
      * 📄 회원가입 페이지 요청
@@ -92,6 +95,8 @@ public class MemberController {
         }
 
         model.addAttribute("member", member);
+        model.addAttribute("orders",
+                orderService.getOrderList(userDetails.getUsername(), PageRequest.of(0, 20)));
         return "member/mypage";
     }
 

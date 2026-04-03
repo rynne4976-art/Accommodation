@@ -44,8 +44,8 @@ public class OrderItem extends BaseEntity {
         return orderPrice * count;
     }
 
-    // 주문 취소 시 재고 복구 등 후처리 (추후 구현)
+    // 주문 취소 시 객실 수 복구
     public void cancel() {
-        // TODO: 재고/예약 가용일 복구 로직
+        this.accom.increaseRoomCount();
     }
 }

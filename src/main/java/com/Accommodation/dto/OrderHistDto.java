@@ -22,6 +22,8 @@ public class OrderHistDto {
     private Long orderId;
     private LocalDateTime orderDate;
     private OrderStatus orderStatus;
+    private LocalDateTime cancelDate;
+    private int totalPrice;
     private List<OrderItemDto> orderItemDtos = new ArrayList<>();
 
     // Order 엔티티 → DTO 변환
@@ -29,6 +31,8 @@ public class OrderHistDto {
         this.orderId = order.getId();
         this.orderDate = order.getOrderDate();
         this.orderStatus = order.getOrderStatus();
+        this.cancelDate = order.getOrderStatus() == OrderStatus.CANCEL ? order.getUpdateTime() : null;
+        this.totalPrice = order.getTotalPrice();
     }
 
     public void addOrderItemDto(OrderItemDto orderItemDto) {
