@@ -105,6 +105,7 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                 .select(new QMainAccomDto(
                         accom.id,
                         accom.accomName,
+                        accom.accomType,
                         accom.grade,
                         accom.accomDetail,
                         accomImg.imgUrl,
