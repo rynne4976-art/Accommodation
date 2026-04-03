@@ -2,6 +2,7 @@ package com.Accommodation.service;
 
 import com.Accommodation.dto.AccomFormDto;
 import com.Accommodation.dto.AccomSearchDto;
+import com.Accommodation.constant.AccomType;
 import com.Accommodation.dto.MainAccomDto;
 import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.AccomImg;
@@ -27,6 +28,7 @@ public class AccomService {
     private final AccomImgRepository accomImgRepository;
 
     public Long saveAccom(AccomFormDto accomFormDto, List<MultipartFile> accomImgFileList) throws Exception {
+        validateGuestCount(accomFormDto.getAccomType(), accomFormDto.getGuestCount());
 
         Accom accom = new Accom();
         accom.updateAccom(
@@ -37,6 +39,7 @@ public class AccomService {
                 accomFormDto.getGrade(),
                 accomFormDto.getLocation(),
                 accomFormDto.getRoomCount(),
+                accomFormDto.getGuestCount(),
                 accomFormDto.getStatus()
         );
 
@@ -93,6 +96,7 @@ public class AccomService {
     public Long updateAccom(Long accomId,
                             AccomFormDto accomFormDto,
                             List<MultipartFile> accomImgFileList) throws Exception {
+        validateGuestCount(accomFormDto.getAccomType(), accomFormDto.getGuestCount());
 
         Accom accom = accomRepository.findById(accomId)
                 .orElseThrow(EntityNotFoundException::new);
@@ -105,6 +109,7 @@ public class AccomService {
                 accomFormDto.getGrade(),
                 accomFormDto.getLocation(),
                 accomFormDto.getRoomCount(),
+                accomFormDto.getGuestCount(),
                 accomFormDto.getStatus()
         );
 
@@ -144,5 +149,26 @@ public class AccomService {
                 .orElseThrow(EntityNotFoundException::new);
 
         accom.softDelete();
+    }
+
+    private void validateGuestCount(AccomType accomType, Integer guestCount) {
+        if (accomType == null || guestCount == null) {
+            throw new IllegalArgumentException("숙소 유형과 투숙 가능 인원을 입력해 주세요.");
+        }
+
+        boolean largeCapacity = accomType == AccomType.HOTEL
+                || accomType == AccomType.RESORT
+                || accomType == AccomType.PENSION;
+
+        boolean smallCapacity = accomType == AccomType.GUESTHOUSE
+                || accomType == AccomType.MOTEL;
+
+        if (largeCapacity && (guestCount < 2 || guestCount > 10)) {
+            throw new IllegalArgumentException("호텔, 리조트, 펜션은 투숙 가능 인원을 2명에서 10명 사이로 입력해 주세요.");
+        }
+
+        if (smallCapacity && (guestCount < 1 || guestCount > 6)) {
+            throw new IllegalArgumentException("게스트하우스와 모텔은 투숙 가능 인원을 1명에서 6명 사이로 입력해 주세요.");
+        }
     }
 }
