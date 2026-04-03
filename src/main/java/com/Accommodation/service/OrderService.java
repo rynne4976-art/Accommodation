@@ -96,6 +96,27 @@ public class OrderService {
         order.cancelOrder(); // OrderStatus → CANCEL, 각 OrderItem.cancel() → roomCount 복구
     }
 
+    // ── 관리자 예약 상태 변경 ──────────────────────────────────────────────
+    public void updateOrderStatusByAdmin(Long orderId, OrderStatus status) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(EntityNotFoundException::new);
+
+        if (order.getOrderStatus() == status) {
+            return;
+        }
+
+        if (order.getOrderStatus() == OrderStatus.CANCEL && status == OrderStatus.ORDER) {
+            throw new IllegalArgumentException("취소된 예약은 다시 예약 완료 상태로 변경할 수 없습니다.");
+        }
+
+        if (status == OrderStatus.CANCEL) {
+            order.cancelOrder();
+            return;
+        }
+
+        order.setOrderStatus(status);
+    }
+
     // ── 주문 수정 (체크인/체크아웃/인원 변경) ────────────────────────────────
     public void updateOrder(Long orderId, OrderUpdateDto dto, String email) {
 
