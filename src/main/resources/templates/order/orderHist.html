@@ -5,6 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <title>주문 내역</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <style>
         .order-page {
             max-width: 860px;
@@ -174,7 +176,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''
+                    [document.querySelector('meta[name="_csrf_header"]').getAttribute('content')]:
+                        document.querySelector('meta[name="_csrf"]').getAttribute('content')
                 }
             })
             .then(res => {
