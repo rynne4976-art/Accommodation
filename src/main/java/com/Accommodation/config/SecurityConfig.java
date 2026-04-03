@@ -44,6 +44,7 @@ public class SecurityConfig {
                                 "/",
                                 "/main",
                                 "/error",
+                                "/error/**",
                                 "/members/new",
                                 "/members/login",
                                 "/css/**",
@@ -58,6 +59,7 @@ public class SecurityConfig {
                 // 미인증 접근은 로그인 페이지로 유도해 일반 웹 흐름에 맞춥니다.
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                        .accessDeniedPage("/error/403")
                 )
 
                 .formLogin(form -> form

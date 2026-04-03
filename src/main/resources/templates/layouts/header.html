@@ -1,9 +1,12 @@
-<header th:fragment="header" class="header" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<header th:fragment="header"
+        class="header"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
     <div class="header-inner">
 
         <div class="logo">
-            <a th:href="${#authorization.expression('hasRole(''ADMIN'')')} ? @{/admin} : @{/main}">Ac.com</a>
+            <a th:href="@{/main}">Ac.com</a>
         </div>
 
         <div class="search-bar" th:if="${compactHeader == null or !compactHeader}">
@@ -26,7 +29,26 @@
                 </form>
             </div>
 
-            <div sec:authorize="isAuthenticated() and !hasRole('ADMIN')" class="icon-menu">
+            <div sec:authorize="isAuthenticated()" class="icon-menu">
+                <div class="notification-center">
+                    <button type="button" id="notificationButton" class="notification-button icon-link" aria-expanded="false">
+                        <svg class="notification-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M15 18H9"></path>
+                            <path d="M18 16H6l1.5-2.5V10a4.5 4.5 0 0 1 9 0v3.5L18 16z"></path>
+                            <path d="M10.5 19a1.5 1.5 0 0 0 3 0"></path>
+                        </svg>
+                        <span>알림</span>
+                        <span id="notificationBadge" class="notification-button__badge">0</span>
+                    </button>
+                    <div id="notificationPanel" class="notification-panel" aria-live="polite">
+                        <div class="notification-panel__header">
+                            <strong>예약 알림</strong>
+                        </div>
+                        <div id="notificationList" class="notification-panel__list">
+                            <p class="notification-panel__empty">알림이 없습니다.</p>
+                        </div>
+                    </div>
+                </div>
                 <a th:href="@{/members/mypage}" class="icon-link">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <circle cx="12" cy="8" r="3.5"></circle>
@@ -63,25 +85,132 @@
     <div class="header-bottom" th:if="${compactHeader == null or !compactHeader}">
         <div class="header-bottom-inner">
             <nav class="category-menu">
-                <th:block sec:authorize="hasRole('ADMIN')">
+                <th:block sec:authorize="hasRole('ADMIN')" th:if="${adminView}">
                     <a th:href="@{/admin/members}">회원 관리</a>
                     <a th:href="@{/admin/accoms}">숙소 관리</a>
                     <a th:href="@{/admin/orders}">예약 관리</a>
                 </th:block>
 
-                <th:block sec:authorize="!hasRole('ADMIN')">
-                    <a href="#">호텔</a>
-                    <a href="#">리조트</a>
-                    <a href="#">펜션</a>
-                    <a href="#">모텔</a>
-                    <a href="#">게스트하우스</a>
+                <th:block th:unless="${adminView}">
+                    <a th:href="@{/main/hotels}">호텔</a>
+                    <a th:href="@{/main/resorts}">리조트</a>
+                    <a th:href="@{/main/pensions}">펜션</a>
+                    <a th:href="@{/main/motels}">모텔</a>
+                    <a th:href="@{/main/guesthouses}">게스트하우스</a>
                     <a href="#">교통/렌트카</a>
                     <a href="#">해외숙소</a>
                 </th:block>
             </nav>
 
-            <a sec:authorize="hasRole('ADMIN')" th:href="@{/main}" class="header-action-link header-bottom-action">메인 보기</a>
+            <a sec:authorize="hasRole('ADMIN')"
+               th:if="${!adminView}"
+               th:href="@{/admin}"
+               class="header-action-link header-bottom-action admin-portal-link">관리자 페이지</a>
+            <a sec:authorize="hasRole('ADMIN')"
+               th:if="${adminView}"
+               th:href="@{/main}"
+               class="header-action-link header-bottom-action admin-portal-link">메인 보기</a>
         </div>
     </div>
+
+    <script sec:authorize="isAuthenticated()">
+        (function () {
+            const button = document.getElementById('notificationButton');
+            const badge = document.getElementById('notificationBadge');
+            const panel = document.getElementById('notificationPanel');
+            const list = document.getElementById('notificationList');
+
+            if (!button || !badge || !panel || !list || typeof EventSource === 'undefined') {
+                return;
+            }
+
+            const eventSource = new EventSource('/notifications/stream');
+            let notifications = [];
+
+            function escapeHtml(value) {
+                return String(value)
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#39;');
+            }
+
+            function updateBadge() {
+                const unreadCount = notifications.filter(function (item) {
+                    return !item.read;
+                }).length;
+
+                badge.textContent = unreadCount;
+                badge.classList.toggle('is-visible', unreadCount > 0);
+            }
+
+            function renderList() {
+                if (notifications.length === 0) {
+                    list.innerHTML = '<p class="notification-panel__empty">알림이 없습니다.</p>';
+                    updateBadge();
+                    return;
+                }
+
+                list.innerHTML = notifications.map(function (item) {
+                    return [
+                        '<button type="button" class="notification-item' + (item.read ? '' : ' is-unread') + '" data-id="' + item.id + '" data-url="' + escapeHtml(item.targetUrl) + '">',
+                        '<span class="notification-item__message">' + escapeHtml(item.message) + '</span>',
+                        '<span class="notification-item__time">' + new Date(item.createdAt).toLocaleString() + '</span>',
+                        '</button>'
+                    ].join('');
+                }).join('');
+
+                updateBadge();
+            }
+
+            async function loadNotifications() {
+                const response = await fetch('/notifications/recent');
+                if (!response.ok) {
+                    return;
+                }
+
+                notifications = await response.json();
+                renderList();
+            }
+
+            button.addEventListener('click', function () {
+                const isVisible = panel.classList.toggle('is-visible');
+                button.setAttribute('aria-expanded', String(isVisible));
+            });
+
+            eventSource.addEventListener('order-cancelled', function (event) {
+                const notification = JSON.parse(event.data);
+                notifications.unshift(notification);
+                notifications = notifications.slice(0, 10);
+                renderList();
+                panel.classList.add('is-visible');
+                button.setAttribute('aria-expanded', 'true');
+            });
+
+            list.addEventListener('click', async function (event) {
+                const item = event.target.closest('.notification-item');
+                if (!item) {
+                    return;
+                }
+
+                const notificationId = item.getAttribute('data-id');
+                window.location.href = '/notifications/' + notificationId + '/open';
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!event.target.closest('.notification-center')) {
+                    panel.classList.remove('is-visible');
+                    button.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            eventSource.onerror = function () {
+                eventSource.close();
+            };
+
+            loadNotifications();
+        })();
+    </script>
 
 </header>

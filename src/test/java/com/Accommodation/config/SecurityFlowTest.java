@@ -2,6 +2,7 @@ package com.Accommodation.config;
 
 import com.Accommodation.controller.MainController;
 import com.Accommodation.controller.MemberController;
+import com.Accommodation.controller.CommonViewAttributesAdvice;
 import com.Accommodation.constant.Role;
 import com.Accommodation.entity.Member;
 import com.Accommodation.service.AccomService;
@@ -29,13 +30,14 @@ import static org.springframework.security.test.web.servlet.response.SecurityMoc
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
         controllers = {MainController.class, MemberController.class},
         excludeAutoConfiguration = UserDetailsServiceAutoConfiguration.class
 )
-@Import({SecurityConfig.class, RoleBasedAuthenticationSuccessHandler.class})
+@Import({SecurityConfig.class, RoleBasedAuthenticationSuccessHandler.class, CommonViewAttributesAdvice.class})
 class SecurityFlowTest {
 
     @Autowired
@@ -73,7 +75,7 @@ class SecurityFlowTest {
     }
 
     @Test
-    @DisplayName("관리자 로그인은 관리자 대시보드로 이동한다")
+    @DisplayName("관리자 로그인은 메인으로 이동한다")
     void adminLoginRedirectsToDashboard() throws Exception {
         UserDetails userDetails = User.withUsername("admin@accom.com")
                 .password(passwordEncoder.encode("password123"))
@@ -87,8 +89,36 @@ class SecurityFlowTest {
                         .user("email", "admin@accom.com")
                         .password("password", "password123"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin"))
+                .andExpect(redirectedUrl("/main"))
                 .andExpect(authenticated().withUsername("admin@accom.com"));
+    }
+
+    @Test
+    @DisplayName("보호된 페이지 접근 후 로그인하면 원래 보던 화면으로 돌아간다")
+    void loginRedirectsToSavedRequest() throws Exception {
+        UserDetails userDetails = User.withUsername("dummy@example.com")
+                .password(passwordEncoder.encode("password123"))
+                .roles("USER")
+                .build();
+
+        given(customUserDetailsService.loadUserByUsername("dummy@example.com"))
+                .willReturn(userDetails);
+
+        var savedSession = mockMvc.perform(get("/members/mypage"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/members/login"))
+                .andReturn()
+                .getRequest()
+                .getSession(false);
+
+        mockMvc.perform(post("/members/login")
+                        .with(csrf())
+                .session((org.springframework.mock.web.MockHttpSession) savedSession)
+                        .param("email", "dummy@example.com")
+                        .param("password", "password123"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/members/mypage**"))
+                .andExpect(authenticated().withUsername("dummy@example.com"));
     }
 
     @Test

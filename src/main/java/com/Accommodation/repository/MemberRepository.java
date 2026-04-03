@@ -37,7 +37,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query("""
             SELECT m
             FROM Member m
-            WHERE (:role IS NULL OR m.role = :role)
+            WHERE m.email <> :excludedEmail
+              AND (:role IS NULL OR m.role = :role)
               AND (
                     :searchQuery IS NULL OR :searchQuery = ''
                     OR (:searchBy = 'name' AND lower(m.name) LIKE lower(concat('%', :searchQuery, '%')))
@@ -51,6 +52,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Page<Member> searchMembers(@Param("searchBy") String searchBy,
                                @Param("searchQuery") String searchQuery,
                                @Param("role") Role role,
+                               @Param("excludedEmail") String excludedEmail,
                                Pageable pageable);
 
     long countByRole(Role role);
