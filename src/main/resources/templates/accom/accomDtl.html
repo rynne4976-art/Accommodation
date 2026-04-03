@@ -53,6 +53,9 @@
                     <span>객실 수</span>
                     <strong th:text="${accom.roomCount} + '개'"></strong>
 
+                    <span>투숙 가능 인원</span>
+                    <strong th:text="${accom.guestCount} + '명'"></strong>
+
                     <span class="highlight-label">1박 요금</span>
                     <strong th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원'">0원</strong>
 
@@ -100,6 +103,11 @@
                 <div class="detail-bullet-item">
                     <span>객실 수</span>
                     <strong th:text="${accom.roomCount} + '개'">0개</strong>
+                </div>
+
+                <div class="detail-bullet-item">
+                    <span>투숙 가능 인원</span>
+                    <strong th:text="${accom.guestCount} + '명'">2명</strong>
                 </div>
             </div>
         </section>
@@ -217,6 +225,11 @@
                     <div class="option-item">
                         <span>잔여 객실 수</span>
                         <strong th:text="${accom.roomCount}">OPEN</strong>
+                    </div>
+
+                    <div class="option-item">
+                        <span>투숙 가능 인원</span>
+                        <strong th:text="${accom.guestCount} + '명'">2명</strong>
                     </div>
 
                     <div class="option-item">
@@ -514,7 +527,8 @@
                 alert(data.message);
 
                 if (data.success) {
-                    window.location.href = "/accom/" + data.accomId + "#review-info";
+                    closeReviewModal();
+                    window.location.assign("/accom/" + data.accomId + "?reviewUpdated=" + Date.now() + "#review-info");
                 }
             } catch (e) {
                 alert("리뷰 등록 중 오류가 발생했습니다.");

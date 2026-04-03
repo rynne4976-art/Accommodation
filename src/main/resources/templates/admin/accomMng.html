@@ -64,16 +64,17 @@
         <section class="table-panel">
         <table class="accom-table">
             <colgroup>
-                <col style="width: 7%;">
-                <col style="width: 17%;">
+                <col style="width: 6%;">
+                <col style="width: 16%;">
+                <col style="width: 8%;">
+                <col style="width: 8%;">
                 <col style="width: 10%;">
-                <col style="width: 10%;">
-                <col style="width: 12%;">
-                <col style="width: 10%;">
-                <col style="width: 12%;">
-                <col style="width: 10%;">
-                <col style="width: 6.5%;">
-                <col style="width: 6.5%;">
+                <col style="width: 8%;">
+                <col style="width: 11%;">
+                <col style="width: 13%;">
+                <col style="width: 8%;">
+                <col style="width: 6%;">
+                <col style="width: 6%;">
             </colgroup>
             <thead>
             <tr>
@@ -83,6 +84,7 @@
                 <th>등급</th>
                 <th>가격</th>
                 <th>객실 수</th>
+                <th>투숙 가능 인원</th>
                 <th>위치</th>
                 <th>상태</th>
                 <th>수정</th>
@@ -91,7 +93,7 @@
             </thead>
             <tbody>
             <tr class="empty-row" th:if="${accomPage.totalElements == 0}">
-                <td colspan="10">조회된 숙소가 없습니다.</td>
+                <td colspan="11">조회된 숙소가 없습니다.</td>
             </tr>
             <tr th:each="accom : ${accomPage.content}">
                 <td th:text="${accom.id}"></td>
@@ -102,6 +104,7 @@
                 <td th:text="${accom.grade}"></td>
                 <td th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원'"></td>
                 <td th:text="${accom.roomCount}"></td>
+                <td th:text="${accom.guestCount} + '명'"></td>
                 <td th:text="${accom.location}" th:title="${accom.location}"></td>
                 <td>
                     <span class="status-badge" th:text="${accom.status}"></span>
