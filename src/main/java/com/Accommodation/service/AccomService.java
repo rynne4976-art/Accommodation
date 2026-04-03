@@ -1,6 +1,5 @@
 package com.Accommodation.service;
 
-import com.Accommodation.constant.AccomType;
 import com.Accommodation.dto.AccomFormDto;
 import com.Accommodation.dto.AccomSearchDto;
 import com.Accommodation.dto.MainAccomDto;
@@ -10,6 +9,7 @@ import com.Accommodation.entity.AccomOperationDay;
 import com.Accommodation.entity.AccomOperationPolicy;
 import com.Accommodation.repository.AccomImgRepository;
 import com.Accommodation.repository.AccomRepository;
+import com.Accommodation.validation.AccomValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,9 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -33,10 +35,10 @@ public class AccomService {
     private final AccomImgService accomImgService;
     private final AccomImgRepository accomImgRepository;
     private final S3FileService s3FileService;
+    private final AccomValidator accomValidator;
 
     public Long saveAccom(AccomFormDto accomFormDto, List<MultipartFile> accomImgFileList) throws Exception {
-        validateGuestCount(accomFormDto.getAccomType(), accomFormDto.getGuestCount());
-        validateOperationInfo(accomFormDto);
+        accomValidator.validateOrThrow(accomFormDto);
 
         Accom accom = new Accom();
         accom.updateAccom(
@@ -102,8 +104,7 @@ public class AccomService {
     public Long updateAccom(Long accomId,
                             AccomFormDto accomFormDto,
                             List<MultipartFile> accomImgFileList) throws Exception {
-        validateGuestCount(accomFormDto.getAccomType(), accomFormDto.getGuestCount());
-        validateOperationInfo(accomFormDto);
+        accomValidator.validateOrThrow(accomFormDto);
 
         Accom accom = accomRepository.findWithOperationInfoById(accomId)
                 .orElseThrow(EntityNotFoundException::new);
@@ -190,79 +191,35 @@ public class AccomService {
                 accomFormDto.getCheckOutTime()
         );
 
-        accom.clearOperationDays();
-
-        Set<String> uniqueDateSet = new LinkedHashSet<>();
+        Set<LocalDate> requestedDateSet = new LinkedHashSet<>();
         if (accomFormDto.getOperationDateList() != null) {
             for (String operationDate : accomFormDto.getOperationDateList()) {
                 if (operationDate != null && !operationDate.isBlank()) {
-                    uniqueDateSet.add(operationDate);
+                    requestedDateSet.add(LocalDate.parse(operationDate));
                 }
             }
         }
 
-        for (String operationDateStr : uniqueDateSet) {
-            LocalDate operationDate = LocalDate.parse(operationDateStr);
+        Map<LocalDate, AccomOperationDay> existingDayMap = new HashMap<>();
+        for (AccomOperationDay operationDay : accom.getOperationDayList()) {
+            existingDayMap.put(operationDay.getOperationDate(), operationDay);
+        }
+
+        Set<LocalDate> removableDateSet = new HashSet<>(existingDayMap.keySet());
+        removableDateSet.removeAll(requestedDateSet);
+
+        for (LocalDate removableDate : removableDateSet) {
+            accom.removeOperationDay(existingDayMap.get(removableDate));
+        }
+
+        for (LocalDate requestedDate : requestedDateSet) {
+            if (existingDayMap.containsKey(requestedDate)) {
+                continue;
+            }
 
             AccomOperationDay operationDay = new AccomOperationDay();
-            operationDay.setOperationDate(operationDate);
+            operationDay.setOperationDate(requestedDate);
             accom.addOperationDay(operationDay);
-        }
-    }
-
-    private void validateGuestCount(AccomType accomType, Integer guestCount) {
-        if (accomType == null || guestCount == null) {
-            throw new IllegalArgumentException("숙소 유형과 투숙 가능 인원을 입력해 주세요.");
-        }
-
-        boolean largeCapacity = accomType == AccomType.HOTEL
-                || accomType == AccomType.RESORT
-                || accomType == AccomType.PENSION;
-
-        boolean smallCapacity = accomType == AccomType.GUESTHOUSE
-                || accomType == AccomType.MOTEL;
-
-        if (largeCapacity && (guestCount < 2 || guestCount > 10)) {
-            throw new IllegalArgumentException("호텔, 리조트, 펜션은 투숙 가능 인원을 2명에서 10명 사이로 입력해 주세요.");
-        }
-
-        if (smallCapacity && (guestCount < 1 || guestCount > 6)) {
-            throw new IllegalArgumentException("게스트하우스와 모텔은 투숙 가능 인원을 1명에서 6명 사이로 입력해 주세요.");
-        }
-    }
-
-    private void validateOperationInfo(AccomFormDto accomFormDto) {
-        if (accomFormDto.getOperationStartDate() == null || accomFormDto.getOperationEndDate() == null) {
-            throw new IllegalArgumentException("운영 기간을 입력해 주세요.");
-        }
-
-        if (accomFormDto.getOperationStartDate().isAfter(accomFormDto.getOperationEndDate())) {
-            throw new IllegalArgumentException("운영 시작일은 운영 종료일보다 늦을 수 없습니다.");
-        }
-
-        if (accomFormDto.getCheckInTime() == null || accomFormDto.getCheckOutTime() == null) {
-            throw new IllegalArgumentException("체크인 및 체크아웃 시간을 입력해 주세요.");
-        }
-
-        if (accomFormDto.getCheckInTime().equals(accomFormDto.getCheckOutTime())) {
-            throw new IllegalArgumentException("체크인 시간과 체크아웃 시간은 같을 수 없습니다.");
-        }
-
-        if (accomFormDto.getOperationDateList() == null || accomFormDto.getOperationDateList().isEmpty()) {
-            throw new IllegalArgumentException("운영일을 한 개 이상 선택해 주세요.");
-        }
-
-        for (String operationDateStr : accomFormDto.getOperationDateList()) {
-            try {
-                LocalDate operationDate = LocalDate.parse(operationDateStr);
-
-                if (operationDate.isBefore(accomFormDto.getOperationStartDate())
-                        || operationDate.isAfter(accomFormDto.getOperationEndDate())) {
-                    throw new IllegalArgumentException("운영일은 운영 기간 안에서만 선택할 수 있습니다.");
-                }
-            } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException("운영일 형식이 올바르지 않습니다.");
-            }
         }
     }
 }
