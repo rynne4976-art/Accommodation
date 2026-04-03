@@ -189,16 +189,18 @@ img { display: block; max-width: 100%; }
 
 .card{
     overflow:hidden;
-    border-radius:18px;
-    background:#fff;
-    border:1px solid #e5e7eb;
-    box-shadow:0 6px 18px rgba(0,0,0,0.06);
-    transition:all .25s ease;
+    border-radius:24px;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,255,0.98));
+    border:1px solid #e6ebf5;
+    box-shadow:0 18px 42px rgba(15,23,42,0.10);
+    transition:transform .28s ease, box-shadow .28s ease, border-color .28s ease;
 }
 
 .card:hover{
-    transform:translateY(-6px);
-    box-shadow:0 16px 40px rgba(0,0,0,0.12);
+    transform:translateY(-8px);
+    border-color:#d8d3ff;
+    box-shadow:0 24px 52px rgba(15,23,42,0.16);
 }
 
 /* 카드 전체 */
@@ -214,57 +216,116 @@ img { display: block; max-width: 100%; }
 .accom-card__visual{
     position:relative;
     overflow:hidden;
+    border-bottom:1px solid rgba(230,235,245,0.85);
+    background:linear-gradient(135deg, #eef3ff, #f8fbff);
 }
 
 .accom-card__image{
     width:100%;
-    height:170px;
+    height:182px;
     object-fit:cover;
     background:#e5e7eb;
-    transition:transform .35s ease;
+    transition:transform .45s ease, filter .45s ease;
 }
 
 .card:hover .accom-card__image{
-    transform:scale(1.05);
+    transform:scale(1.06);
+    filter:saturate(1.03);
 }
 
 /* 찜 버튼 */
 
 .accom-card__wish{
     position:absolute;
-    top:12px;
-    right:12px;
-    width:36px;
-    height:36px;
-    border-radius:50%;
+    top:14px;
+    right:14px;
+    z-index:2;
+    width:42px;
+    height:42px;
+    border-radius:999px;
     border:none;
-    background:white;
-    box-shadow:0 6px 14px rgba(0,0,0,0.15);
+    background:rgba(255,255,255,0.96);
+    box-shadow:0 12px 24px rgba(15,23,42,0.18);
     cursor:pointer;
     font-size:16px;
-    transition:.2s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
 
 .accom-card__wish:hover{
-    transform:scale(1.1);
+    transform:scale(1.08);
+    box-shadow:0 16px 28px rgba(15,23,42,0.22);
+    background:#fff;
+}
+
+.accom-card__wish svg{
+    width:19px;
+    height:19px;
+    fill:#111827;
+    transition:fill .2s ease, transform .2s ease;
+}
+
+.accom-card__wish.is-active{
+    background:#fff1f2;
+    box-shadow:0 16px 28px rgba(244,63,94,0.20);
+}
+
+.accom-card__wish.is-active svg{
+    fill:#e11d48;
 }
 
 /* 카드 정보 */
 
 .accom-info{
-    padding:16px;
+    padding:16px 16px 18px;
     display:flex;
     flex-direction:column;
-    gap:4px;
+    gap:8px;
 }
 
 /* 숙소 이름 */
 
 .accom-card__title{
-    font-size:1.05rem;
+    font-size:1.02rem;
     font-weight:800;
-    margin:0 0 2px 0;
+    margin:0;
     color:#111827;
+    line-height:1.3;
+}
+
+.accom-card__badge-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:2px;
+}
+
+.accom-card__kind{
+    color:#6b7280;
+    font-size:0.82rem;
+    font-weight:500;
+}
+
+.accom-card__grade-stars{
+    display:inline-flex;
+    align-items:center;
+    gap:2px;
+    flex:0 0 auto;
+    white-space:nowrap;
+    transform:translateY(-1px);
+}
+
+.star{
+    font-size:13px;
+    line-height:1;
+    color:#d5dbe8;
+    text-shadow:0 1px 0 rgba(255,255,255,0.7);
+}
+
+.star.filled{
+    color:#ffb400;
 }
 
 /* 평점 */
@@ -272,27 +333,33 @@ img { display: block; max-width: 100%; }
 .accom-card__rating{
     display:flex;
     align-items:center;
-    gap:6px;
-    margin-bottom:4px;
+    gap:8px;
+    margin-bottom:0;
 }
 
 .accom-card__score{
-    background:#7b3ff2;
+    background:linear-gradient(135deg,#7b3ff2,#965cff);
     color:#fff;
     font-size:0.78rem;
     font-weight:800;
-    border-radius:6px;
-    padding:2px 6px;
+    border-radius:9px;
+    padding:4px 9px;
+    box-shadow:0 8px 18px rgba(123,63,242,0.22);
 }
 
 .accom-card__rating-copy{
     display:flex;
-    gap:5px;
-    font-size:0.8rem;
+    gap:6px;
+    align-items:center;
+    font-size:0.82rem;
+    color:#6b7280;
 }
 
-.accom-card__rating-copy strong{
-    color:#111827;
+.accom-card__rating-stars{
+    display:inline-flex;
+    align-items:center;
+    gap:2px;
+    margin:0;
 }
 
 .accom-card__rating-copy span{
@@ -302,18 +369,19 @@ img { display: block; max-width: 100%; }
 /* 위치 */
 
 .accom-card__location{
-    font-size:0.82rem;
-    color:#6b7280;
+    font-size:0.84rem;
+    color:#546174;
     margin:0;
+    font-weight:500;
 }
 
 /* 설명 */
 
 .accom-card__desc{
-    font-size:0.82rem;
-    color:#4b5563;
-    line-height:1;
-    margin:2px 0 6px 0;
+    font-size:0.83rem;
+    color:#7d8899;
+    line-height:1.45;
+    margin:0 0 4px 0;
 
     display:-webkit-box;
     -webkit-line-clamp:2;
@@ -326,8 +394,10 @@ img { display: block; max-width: 100%; }
 .accom-card__bottom{
     display:flex;
     justify-content:space-between;
-    align-items:center;
+    align-items:flex-end;
     margin-top:auto;
+    gap:12px;
+    padding-top:2px;
 }
 
 /* 가격 */
@@ -335,34 +405,45 @@ img { display: block; max-width: 100%; }
 .accom-card__price-wrap{
     display:flex;
     flex-direction:column;
+    gap:3px;
 }
 
 .accom-card__price-label{
-    font-size:0.72rem;
-    color:#6b7280;
+    font-size:0.73rem;
+    color:#7b8798;
+    letter-spacing:-0.01em;
 }
 
 .price{
-    font-size:1.2rem;
+    font-size:1.18rem;
     font-weight:900;
     color:#111827;
+    letter-spacing:-0.03em;
 }
 
 /* 예약 버튼 */
 
 .reserve-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:92px;
+    height:44px;
     background:linear-gradient(135deg,#7b3ff2,#9258ff);
     color:white;
-    font-size:0.78rem;
-    font-weight:700;
-    border-radius:10px;
-    padding:8px 14px;
+    font-size:0.8rem;
+    font-weight:800;
+    border-radius:14px;
+    padding:0 16px;
     text-decoration:none;
-    transition:.2s;
+    box-shadow:0 12px 22px rgba(123,63,242,0.24);
+    transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
 
 .reserve-btn:hover{
     background:linear-gradient(135deg,#6b2fe6,#7b3ff2);
+    transform:translateY(-1px);
+    box-shadow:0 16px 30px rgba(123,63,242,0.30);
 }
 
 .accommodation > div:last-child p {

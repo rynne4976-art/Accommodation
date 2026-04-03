@@ -8,7 +8,7 @@
     <link rel="stylesheet" th:href="@{/css/footer.css}">
 </head>
 <body>
-<div th:replace="layouts/header :: header"></div>
+<div th:replace="~{layouts/header :: header}"></div>
 
 <section class="hero">
     <div class="hero-overlay">
@@ -143,8 +143,8 @@
     <div class="accom-section__head">
         <div>
             <p class="accom-section__eyebrow">Curated Stays</p>
-            <h2>가고 싶은 숙소를 둘러보세요</h2>
-            <p class="accom-section__sub">메인에서는 핵심 정보만 빠르게 보고 상세 페이지에서 더 자세한 내용을 확인할 수 있습니다.</p>
+            <h2>가격과 타입을 한눈에 비교해보세요</h2>
+            <p class="accom-section__sub">메인에서는 핵심 정보만 빠르게 보고, 상세 페이지에서 더 자세한 내용을 확인할 수 있습니다.</p>
         </div>
         <div class="accom-slider__controls" th:if="${accomList != null and !#lists.isEmpty(accomList)}">
             <button type="button" class="accom-slider__button" data-accom-prev aria-label="이전"><span>&lsaquo;</span></button>
@@ -155,7 +155,7 @@
     <div class="accom-slider" data-accom-slider th:if="${accomList != null and !#lists.isEmpty(accomList)}">
         <article class="card accom-card" th:each="accom : ${accomList}">
             <div class="accom-card__visual">
-                <button class="accom-card__wish" type="button" aria-label="찜">
+                <button class="accom-card__wish" type="button" aria-label="찜" aria-pressed="false" data-wish-button>
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M12 20.5 4.8 13.8a4.9 4.9 0 0 1 6.9-6.9L12 7.2l.3-.3a4.9 4.9 0 0 1 6.9 6.9Z"/>
                     </svg>
@@ -167,19 +167,41 @@
             </div>
 
             <div class="card-body accom-info">
+                <div class="accom-card__badge-row"
+                     th:with="gradeNum=${accom.grade == T(com.Accommodation.constant.AccomGrade).ONE ? 1 :
+                                        accom.grade == T(com.Accommodation.constant.AccomGrade).TWO ? 2 :
+                                        accom.grade == T(com.Accommodation.constant.AccomGrade).THREE ? 3 :
+                                        accom.grade == T(com.Accommodation.constant.AccomGrade).FOUR ? 4 :
+                                        accom.grade == T(com.Accommodation.constant.AccomGrade).FIVE ? 5 : 0}">
+                    <span class="accom-card__kind"
+                          th:text="${accom.accomType == T(com.Accommodation.constant.AccomType).HOTEL ? '호텔' :
+                                     accom.accomType == T(com.Accommodation.constant.AccomType).MOTEL ? '모텔' :
+                                     accom.accomType == T(com.Accommodation.constant.AccomType).PENSION ? '펜션' :
+                                     accom.accomType == T(com.Accommodation.constant.AccomType).RESORT ? '리조트' :
+                                     accom.accomType == T(com.Accommodation.constant.AccomType).GUESTHOUSE ? '게스트하우스' : '숙소'}">호텔</span>
+                    <span class="accom-card__grade-stars" aria-label="숙소 등급">
+                        <span class="star"
+                              th:each="i : ${#numbers.sequence(1,5)}"
+                              th:classappend="${i <= gradeNum} ? ' filled' : ''">&#9733;</span>
+                    </span>
+                </div>
                 <h3 class="accom-card__title" th:text="${accom.accomName}">숙소명</h3>
+
                 <div class="accom-card__rating">
-                    <span class="accom-card__score" th:text="${accom.avgRating != null ? #numbers.formatDecimal(accom.avgRating, 1, 1) : '0.0'}">8.5</span>
+                    <span class="accom-card__score" th:text="${accom.avgRating != null ? #numbers.formatDecimal(accom.avgRating, 1, 1) : '0.0'}">0.0</span>
                     <div class="accom-card__rating-copy">
-                        <strong th:text="${accom.grade}">등급</strong>
                         <span th:text="${accom.reviewCount != null ? #numbers.formatInteger(accom.reviewCount, 1, 'COMMA') + '개 후기' : '후기 0개'}">후기 0개</span>
                     </div>
                 </div>
 
-                <p class="accom-card__location" th:text="${accom.location}">위치</p>
-
-
-                <p class="desc accom-card__desc" th:text="${accom.accomDetail}">상세설명</p>
+                <div class="accom-card__meta">
+                    <div class="accom-card__location">
+                        <span th:text="${accom.location}">위치</span>
+                    </div>
+                    <div class="accom-card__desc">
+                        <span th:text="${accom.accomDetail}">상세설명</span>
+                    </div>
+                </div>
 
                 <div class="card-bottom accom-card__bottom">
                     <div class="accom-card__price-wrap">
@@ -197,7 +219,15 @@
     </div>
 </section>
 
-<div th:replace="layouts/footer :: footer"></div>
+<div th:replace="~{layouts/footer :: footer}"></div>
 <script th:src="@{/js/main.js}"></script>
+<script>
+    document.querySelectorAll("[data-wish-button]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const active = button.classList.toggle("is-active");
+            button.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+    });
+</script>
 </body>
 </html>
