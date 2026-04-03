@@ -14,14 +14,14 @@ import lombok.Setter;
 @Setter
 public class OrderItemDto {
 
-    private String accomNm;    // 숙소명
+    private String accomName;  // 숙소명
     private int count;         // 주문 수량 (박수)
     private int orderPrice;    // 주문 당시 가격
     private String imgUrl;     // 숙소 대표 이미지 경로
 
     // OrderItem 엔티티 → DTO 변환
     public OrderItemDto(OrderItem orderItem, String imgUrl) {
-        this.accomNm = orderItem.getAccom().getAccomDetail();
+        this.accomName = orderItem.getAccom().getAccomName();
         this.count = orderItem.getCount();
         this.orderPrice = orderItem.getOrderPrice();
         this.imgUrl = imgUrl;
