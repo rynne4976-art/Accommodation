@@ -146,6 +146,10 @@ public class Accom {
     }
 
     public String getReserveStatCd() {
-        return null;
+        // status가 OPEN이고 roomCount가 1 이상이면 예약 가능
+        if (this.status == AccomStatus.OPEN && this.roomCount != null && this.roomCount > 0) {
+            return "Y";
+        }
+        return "N";
     }
 }
