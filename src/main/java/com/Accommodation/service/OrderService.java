@@ -172,6 +172,31 @@ public class OrderService {
 
     // ── 총 주문 수 (페이징 계산용) ───────────────────────────────────────────
     @Transactional(readOnly = true)
+    public OrderHistDto getOrderDetail(Long orderId, String email) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(EntityNotFoundException::new);
+
+        if (!order.getMember().getEmail().equals(email)) {
+            throw new IllegalArgumentException("주문 상세 조회 권한이 없습니다.");
+        }
+
+        OrderHistDto orderHistDto = new OrderHistDto(order);
+
+        for (OrderItem orderItem : order.getOrderItems()) {
+            String imgUrl = orderItem.getAccom().getAccomImgList().stream()
+                    .filter(img -> "Y".equals(img.getRepImgYn()))
+                    .map(AccomImg::getImgUrl)
+                    .findFirst()
+                    .orElse("");
+
+            orderHistDto.addOrderItemDto(new OrderItemDto(orderItem, imgUrl));
+        }
+
+        return orderHistDto;
+    }
+
+    @Transactional(readOnly = true)
     public Long countOrder(String email) {
         return orderRepository.countOrder(email);
     }

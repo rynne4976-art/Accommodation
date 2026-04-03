@@ -31,6 +31,7 @@
             border-radius: 12px;
             margin-bottom: 24px;
             overflow: hidden;
+            background: #fff;
         }
 
         .order-card__header {
@@ -58,6 +59,13 @@
             gap: 20px;
             padding: 20px;
             border-top: 1px solid #f0f0f0;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.2s ease;
+        }
+
+        .order-item:hover {
+            background: #fafafa;
         }
 
         .order-item__img {
@@ -82,6 +90,7 @@
         .order-item__meta {
             font-size: 0.88rem;
             color: #777;
+            line-height: 1.6;
         }
 
         .order-item__price {
@@ -125,15 +134,11 @@
     <section class="order-page">
         <h2 class="order-page__title">주문 내역</h2>
 
-        <!-- 주문 없음 -->
         <div th:if="${#lists.isEmpty(orders)}" class="order-empty">
             <p>주문 내역이 없습니다.</p>
         </div>
 
-        <!-- 주문 목록 -->
         <div th:each="order : ${orders}" class="order-card">
-
-            <!-- 주문 헤더 -->
             <div class="order-card__header">
                 <span th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">날짜</span>
                 <span class="order-card__status"
@@ -141,20 +146,23 @@
                       th:text="${order.orderStatus.name() == 'ORDER'} ? '예약 완료' : '예약 취소'">상태</span>
             </div>
 
-            <!-- 주문 상품 목록 -->
-            <div th:each="item : ${order.orderItemDtos}" class="order-item">
+            <a th:each="item : ${order.orderItemDtos}"
+               th:href="@{/orders/{orderId}(orderId=${order.orderId})}"
+               class="order-item">
                 <img class="order-item__img"
-                     th:src="${#strings.isEmpty(item.imgUrl)} ? '/images/no-image.png' : ${item.imgUrl}"
+                     th:src="${#strings.isEmpty(item.imgUrl) ? '/images/no-image.png' : item.imgUrl}"
                      th:alt="${item.accomName}">
                 <div class="order-item__info">
                     <div class="order-item__name" th:text="${item.accomName}">숙소명</div>
-                    <div class="order-item__meta" th:text="${item.count} + '박'">1박</div>
+                    <div class="order-item__meta">
+                        <div th:text="${item.checkInDate + ' ~ ' + item.checkOutDate}">체크인/체크아웃</div>
+                        <div th:text="${item.count + '박 · ' + item.guestCount + '명'}">숙박 정보</div>
+                    </div>
                 </div>
                 <div class="order-item__price"
-                     th:text="${#numbers.formatInteger(item.orderPrice, 3, 'COMMA')} + '원'">0원</div>
-            </div>
+                     th:text="${#numbers.formatInteger(item.totalPrice, 3, 'COMMA')} + '원'">0원</div>
+            </a>
 
-            <!-- 취소 버튼 -->
             <div class="order-card__footer">
                 <button class="btn-cancel"
                         th:disabled="${order.orderStatus.name() == 'CANCEL'}"

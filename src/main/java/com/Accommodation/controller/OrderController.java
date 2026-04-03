@@ -106,4 +106,12 @@ public class OrderController {
                 orderService.getOrderList(principal.getName(), pageable));
         return "order/orderHist";
     }
+
+    @GetMapping("/orders/{orderId}")
+    public String orderDetail(@PathVariable Long orderId,
+                              Model model,
+                              Principal principal) {
+        model.addAttribute("order", orderService.getOrderDetail(orderId, principal.getName()));
+        return "order/orderDetail";
+    }
 }

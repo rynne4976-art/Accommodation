@@ -181,21 +181,41 @@
 
             <div class="order-form-body">
 
-                <!-- 체크인/체크아웃 표시 (이전 페이지에서 전달) -->
-                <div class="order-form-info">
+                <!-- 날짜가 URL로 전달된 경우: 읽기 전용 표시 -->
+                <div class="order-form-info" th:if="${checkInDate != null}">
                     <div class="order-form-info__row">
                         <span class="order-form-info__label">체크인</span>
-                        <span class="order-form-info__value" id="displayCheckIn"
-                              th:text="${checkInDate != null} ? ${#temporals.format(checkInDate, 'yyyy-MM-dd')} : '—'">—</span>
+                        <span class="order-form-info__value"
+                              th:text="${#temporals.format(checkInDate, 'yyyy-MM-dd')}"></span>
                     </div>
                     <div class="order-form-info__row">
                         <span class="order-form-info__label">체크아웃</span>
-                        <span class="order-form-info__value" id="displayCheckOut"
-                              th:text="${checkOutDate != null} ? ${#temporals.format(checkOutDate, 'yyyy-MM-dd')} : '—'">—</span>
+                        <span class="order-form-info__value"
+                              th:text="${#temporals.format(checkOutDate, 'yyyy-MM-dd')}"></span>
                     </div>
                     <div class="order-form-info__row">
                         <span class="order-form-info__label">숙박 일수</span>
                         <span class="order-form-info__value" id="displayNights">—</span>
+                    </div>
+                </div>
+
+                <!-- [임시] 날짜 미전달 시 직접 입력 -->
+                <div th:if="${checkInDate == null}">
+                    <div style="display:flex; gap:12px; margin-bottom:12px;">
+                        <div class="order-form-group" style="flex:1; margin-bottom:0;">
+                            <label for="inputCheckIn">체크인 날짜</label>
+                            <input type="date" id="inputCheckIn" oninput="onDateInput()">
+                        </div>
+                        <div class="order-form-group" style="flex:1; margin-bottom:0;">
+                            <label for="inputCheckOut">체크아웃 날짜</label>
+                            <input type="date" id="inputCheckOut" oninput="onDateInput()">
+                        </div>
+                    </div>
+                    <div class="order-form-info" style="margin-bottom:20px;">
+                        <div class="order-form-info__row">
+                            <span class="order-form-info__label">숙박 일수</span>
+                            <span class="order-form-info__value" id="displayNights">—</span>
+                        </div>
                     </div>
                 </div>
 
@@ -226,43 +246,70 @@
 
     <script th:inline="javascript">
         const accomId       = /*[[${accom.id}]]*/ 0;
+        const accomName     = /*[[${accom.accomName}]]*/ '';
         const pricePerNight = /*[[${accom.pricePerNight}]]*/ 0;
         const maxGuest      = /*[[${accom.guestCount}]]*/ 2;
         const checkInDate   = /*[[${checkInDate}]]*/ null;
         const checkOutDate  = /*[[${checkOutDate}]]*/ null;
 
-        // 숙박 일수 & 총 금액 계산
+        // ── 숙박 일수 & 총 금액 계산 ─────────────────────────────────────────
+        let totalAmount = 0;
+        let nights = 0;
+        let resolvedCheckIn  = checkInDate;
+        let resolvedCheckOut = checkOutDate;
+
         (function init() {
-            if (!checkInDate || !checkOutDate) return;
-            const nights = Math.round(
-                (new Date(checkOutDate) - new Date(checkInDate)) / 86400000);
-            if (nights > 0) {
-                document.getElementById('displayNights').textContent = nights + '박';
-                document.getElementById('totalPrice').textContent =
-                    (pricePerNight * nights).toLocaleString('ko-KR') + '원';
+            if (!checkInDate || !checkOutDate) {
+                // 임시 date picker: 오늘 날짜를 min으로 설정
+                const today = new Date().toISOString().split('T')[0];
+                const inEl  = document.getElementById('inputCheckIn');
+                const outEl = document.getElementById('inputCheckOut');
+                if (inEl)  inEl.min  = today;
+                if (outEl) outEl.min = today;
+                return;
             }
+            calcNightsAndAmount(checkInDate, checkOutDate);
         })();
 
-        function onGuestChange() {
-            const val = parseInt(document.getElementById('guestCount').value);
-            const hint = document.getElementById('guestHint');
-            if (val > maxGuest) {
-                document.getElementById('guestCount').classList.add('error');
-                hint.textContent = '최대 ' + maxGuest + '명까지 가능합니다.';
-                hint.classList.add('error');
+        function calcNightsAndAmount(inDate, outDate) {
+            nights = Math.round((new Date(outDate) - new Date(inDate)) / 86400000);
+            if (nights > 0) {
+                totalAmount = pricePerNight * nights;
+                document.getElementById('displayNights').textContent = nights + '박';
+                document.getElementById('totalPrice').textContent =
+                    totalAmount.toLocaleString('ko-KR') + '원';
             } else {
-                document.getElementById('guestCount').classList.remove('error');
-                hint.textContent = '최대 ' + maxGuest + '명까지 가능합니다.';
-                hint.classList.remove('error');
+                nights = 0; totalAmount = 0;
+                document.getElementById('displayNights').textContent = '—';
+                document.getElementById('totalPrice').textContent = '—';
             }
         }
 
-        function submitOrder() {
-            if (!checkInDate || !checkOutDate) {
-                alert('날짜 정보가 없습니다. 숙소 페이지에서 날짜를 먼저 선택해 주세요.');
+        // 임시 date picker 변경 시 호출
+        function onDateInput() {
+            const inVal  = document.getElementById('inputCheckIn').value;
+            const outVal = document.getElementById('inputCheckOut').value;
+            if (!inVal || !outVal) return;
+            resolvedCheckIn  = inVal;
+            resolvedCheckOut = outVal;
+            calcNightsAndAmount(inVal, outVal);
+        }
+
+        function onGuestChange() {
+            const val  = parseInt(document.getElementById('guestCount').value);
+            const hint = document.getElementById('guestHint');
+            const isOver = val > maxGuest;
+            document.getElementById('guestCount').classList.toggle('error', isOver);
+            hint.textContent = '최대 ' + maxGuest + '명까지 가능합니다.';
+            hint.classList.toggle('error', isOver);
+        }
+
+        // ── 예약 확정 요청 (POST /order) ─────────────────────────────────────
+        async function submitOrder() {
+            if (!resolvedCheckIn || !resolvedCheckOut) {
+                alert('체크인/체크아웃 날짜를 선택해 주세요.');
                 return;
             }
-
             const guestCount = parseInt(document.getElementById('guestCount').value);
             if (!guestCount || guestCount < 1) {
                 alert('투숙 인원을 1명 이상 입력해 주세요.');
@@ -272,35 +319,39 @@
                 alert('최대 ' + maxGuest + '명까지 가능합니다.');
                 return;
             }
+            if (nights <= 0) {
+                alert('체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.');
+                return;
+            }
 
-            const nights = Math.round(
-                (new Date(checkOutDate) - new Date(checkInDate)) / 86400000);
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+            const csrfToken  = document.querySelector('meta[name="_csrf"]').content;
 
-            if (!confirm(checkInDate + ' ~ ' + checkOutDate + ' (' + nights + '박), ' +
-                         guestCount + '명 예약을 진행하시겠습니까?')) return;
+            try {
+                const res = await fetch('/order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: JSON.stringify({
+                        accomId:      accomId,
+                        checkInDate:  resolvedCheckIn,
+                        checkOutDate: resolvedCheckOut,
+                        guestCount:   guestCount
+                    })
+                });
 
-            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-            const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-
-            fetch('/order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
-                body: JSON.stringify({
-                    accomId:      accomId,
-                    checkInDate:  checkInDate,
-                    checkOutDate: checkOutDate,
-                    guestCount:   guestCount
-                })
-            })
-            .then(res => {
                 if (res.ok) {
-                    alert('예약이 완료되었습니다.');
+                    alert('예약이 완료되었습니다!');
                     window.location.href = '/orders';
                 } else {
-                    return res.text().then(msg => { throw new Error(msg); });
+                    const msg = await res.text();
+                    alert('예약 실패: ' + msg);
                 }
-            })
-            .catch(err => alert('예약 실패: ' + err.message));
+            } catch (e) {
+                alert('오류가 발생했습니다: ' + e.message);
+            }
         }
     </script>
 </div>

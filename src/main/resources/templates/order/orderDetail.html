@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layouts}">
+<head>
+    <meta charset="UTF-8">
+    <title>예약 상세</title>
+    <style>
+        .order-detail-page {
+            --ink: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --panel: #ffffff;
+            --soft: #f8fafc;
+            --accent: #0f766e;
+            --accent-soft: rgba(15, 118, 110, 0.08);
+            max-width: 1040px;
+            margin: 42px auto 80px;
+            padding: 0 20px;
+            color: var(--ink);
+        }
+
+        .order-detail-page__back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+            color: #475569;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .order-hero {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+            background:
+                radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 48%),
+                linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #dbe4ea;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        }
+
+        .order-hero__media {
+            position: relative;
+            min-height: 340px;
+            background: #dbeafe;
+        }
+
+        .order-hero__img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .order-hero__overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(15, 23, 42, 0.52), rgba(15, 23, 42, 0.08));
+        }
+
+        .order-hero__tag {
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            min-height: 36px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(10px);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .order-hero__content {
+            padding: 34px 34px 30px;
+        }
+
+        .order-hero__eyebrow {
+            display: inline-block;
+            margin-bottom: 14px;
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .order-hero__grade {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            margin-bottom: 14px;
+            padding: 0 12px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        .order-hero__title {
+            margin: 0;
+            font-size: clamp(28px, 4vw, 40px);
+            line-height: 1.1;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .order-hero__lead {
+            margin: 14px 0 24px;
+            color: #475569;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .order-hero__facts {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px 22px;
+            padding-top: 20px;
+            border-top: 1px solid var(--line);
+        }
+
+        .order-hero__label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .order-hero__value {
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
+        .order-hero__value--cancel {
+            color: #dc2626;
+        }
+
+        .order-sections {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+            gap: 28px;
+            margin-top: 30px;
+            align-items: start;
+        }
+
+        .order-section {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 28px 28px 24px;
+        }
+
+        .order-section--plain {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+        }
+
+        .order-section__title {
+            margin: 0 0 18px;
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .order-meta {
+            border-top: 1px solid var(--line);
+        }
+
+        .order-meta__row {
+            display: grid;
+            grid-template-columns: 132px minmax(0, 1fr);
+            gap: 20px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .order-meta__term {
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .order-meta__desc {
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        .order-meta__desc--accent {
+            color: var(--accent);
+        }
+
+        .order-side-note {
+            padding: 24px 24px 22px;
+            background: linear-gradient(180deg, var(--accent-soft), rgba(15, 118, 110, 0.02));
+            border: 1px solid rgba(15, 118, 110, 0.14);
+            border-radius: 24px;
+        }
+
+        .order-side-note__title {
+            margin: 0 0 16px;
+            font-size: 20px;
+            line-height: 1.3;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .order-side-note__list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .order-side-note__item {
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(15, 118, 110, 0.14);
+        }
+
+        .order-side-note__item:last-child {
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .order-side-note__label {
+            display: block;
+            margin-bottom: 5px;
+            color: #0f766e;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .order-side-note__value {
+            color: #1f2937;
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.6;
+        }
+
+        .order-room-list {
+            display: grid;
+            gap: 22px;
+        }
+
+        .order-room {
+            padding-top: 4px;
+        }
+
+        .order-room + .order-room {
+            padding-top: 22px;
+            border-top: 1px solid var(--line);
+        }
+
+        .order-room__name {
+            margin: 0 0 16px;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .order-room__grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px 22px;
+        }
+
+        .order-room__item {
+            padding: 14px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .order-room__label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .order-room__value {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 900px) {
+            .order-hero {
+                grid-template-columns: 1fr;
+            }
+
+            .order-hero__media {
+                min-height: 280px;
+            }
+
+            .order-sections {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .order-detail-page {
+                padding: 0 14px 64px;
+            }
+
+            .order-hero__content,
+            .order-section {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .order-hero__facts,
+            .order-room__grid {
+                grid-template-columns: 1fr;
+            }
+
+            .order-meta__row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+
+<div layout:fragment="content">
+    <section class="order-detail-page">
+        <a class="order-detail-page__back" th:href="@{/orders}">← 주문 내역으로 돌아가기</a>
+
+        <article class="order-hero">
+            <div class="order-hero__media">
+                <img class="order-hero__img"
+                     th:src="${#strings.isEmpty(order.orderItemDtos[0].imgUrl) ? '/images/no-image.png' : order.orderItemDtos[0].imgUrl}"
+                     th:alt="${order.orderItemDtos[0].accomName}">
+                <div class="order-hero__overlay"></div>
+                <div class="order-hero__tag"
+                     th:text="${order.orderStatus.name() == 'ORDER' ? 'RESERVATION CONFIRMED' : 'RESERVATION CANCELED'}">
+                    RESERVATION CONFIRMED
+                </div>
+            </div>
+
+            <div class="order-hero__content">
+                <span class="order-hero__eyebrow">Stay Details</span>
+                <div th:if="${not #strings.isEmpty(order.orderItemDtos[0].gradeLabel)}"
+                     class="order-hero__grade"
+                     th:text="${order.orderItemDtos[0].gradeLabel}">
+                    4성급
+                </div>
+                <h2 class="order-hero__title" th:text="${order.orderItemDtos[0].accomName}">숙소명</h2>
+                <p class="order-hero__lead"
+                   th:text="${order.orderItemDtos[0].accomDetail}">
+                    숙소 소개 문구
+                </p>
+
+                <div class="order-hero__facts">
+                    <div>
+                        <span class="order-hero__label">체크인</span>
+                        <div class="order-hero__value" th:text="${order.orderItemDtos[0].checkInDate}">2026-04-10</div>
+                    </div>
+                    <div>
+                        <span class="order-hero__label">체크아웃</span>
+                        <div class="order-hero__value" th:text="${order.orderItemDtos[0].checkOutDate}">2026-04-12</div>
+                    </div>
+                    <div>
+                        <span class="order-hero__label">인원</span>
+                        <div class="order-hero__value" th:text="${order.orderItemDtos[0].guestCount + '명'}">2명</div>
+                    </div>
+                    <div>
+                        <span class="order-hero__label">총 결제 금액</span>
+                        <div class="order-hero__value" th:text="${#numbers.formatInteger(order.totalPrice, 3, 'COMMA') + '원'}">0원</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <div class="order-sections">
+            <section class="order-section">
+                <h3 class="order-section__title">예약 정보</h3>
+                <dl class="order-meta">
+                    <div class="order-meta__row">
+                        <dt class="order-meta__term">예약 번호</dt>
+                        <dd class="order-meta__desc" th:text="${order.orderId}">1</dd>
+                    </div>
+                    <div class="order-meta__row">
+                        <dt class="order-meta__term">예약 날짜</dt>
+                        <dd class="order-meta__desc" th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">2026-04-03 14:00</dd>
+                    </div>
+                    <div class="order-meta__row">
+                        <dt class="order-meta__term">예약 상태</dt>
+                        <dd class="order-meta__desc"
+                            th:classappend="${order.orderStatus.name() == 'CANCEL'} ? ' order-meta__desc--accent'"
+                            th:text="${order.orderStatus.name() == 'ORDER' ? '예약 완료' : '예약 취소'}">예약 완료</dd>
+                    </div>
+                    <div class="order-meta__row">
+                        <dt class="order-meta__term">예약 취소 날짜</dt>
+                        <dd class="order-meta__desc"
+                            th:text="${order.cancelDate != null ? #temporals.format(order.cancelDate, 'yyyy-MM-dd HH:mm') : '-'}">-</dd>
+                    </div>
+                    <div class="order-meta__row">
+                        <dt class="order-meta__term">총 결제 금액</dt>
+                        <dd class="order-meta__desc" th:text="${#numbers.formatInteger(order.totalPrice, 3, 'COMMA') + '원'}">0원</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="order-section order-section--plain">
+                <aside class="order-side-note">
+                    <h3 class="order-side-note__title">한눈에 보는 예약 요약</h3>
+                    <div class="order-side-note__list">
+                        <div class="order-side-note__item">
+                            <span class="order-side-note__label">숙박 일정</span>
+                            <div class="order-side-note__value"
+                                 th:text="${order.orderItemDtos[0].checkInDate + ' ~ ' + order.orderItemDtos[0].checkOutDate}">
+                                2026-04-10 ~ 2026-04-12
+                            </div>
+                        </div>
+                        <div class="order-side-note__item">
+                            <span class="order-side-note__label">숙박 수 / 인원</span>
+                            <div class="order-side-note__value"
+                                 th:text="${order.orderItemDtos[0].count + '박 · ' + order.orderItemDtos[0].guestCount + '명'}">
+                                2박 · 2명
+                            </div>
+                        </div>
+                        <div class="order-side-note__item">
+                            <span class="order-side-note__label">예약 상태</span>
+                            <div class="order-side-note__value"
+                                 th:text="${order.orderStatus.name() == 'ORDER' ? '현재 예약이 확정된 상태입니다.' : '현재 예약이 취소된 상태입니다.'}">
+                                현재 예약이 확정된 상태입니다.
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </section>
+        </div>
+
+        <section class="order-section" style="margin-top: 28px;">
+            <h3 class="order-section__title">숙박 상세내역</h3>
+
+            <div class="order-room-list">
+                <article th:each="item : ${order.orderItemDtos}" class="order-room">
+                    <h4 class="order-room__name" th:text="${item.accomName}">숙소명</h4>
+
+                    <div class="order-room__grid">
+                        <div class="order-room__item">
+                            <span class="order-room__label">체크인</span>
+                            <div class="order-room__value" th:text="${item.checkInDate}">2026-04-10</div>
+                        </div>
+                        <div class="order-room__item">
+                            <span class="order-room__label">체크아웃</span>
+                            <div class="order-room__value" th:text="${item.checkOutDate}">2026-04-12</div>
+                        </div>
+                        <div class="order-room__item">
+                            <span class="order-room__label">숙박 일수</span>
+                            <div class="order-room__value" th:text="${item.count + '박'}">2박</div>
+                        </div>
+                        <div class="order-room__item">
+                            <span class="order-room__label">인원 수</span>
+                            <div class="order-room__value" th:text="${item.guestCount + '명'}">2명</div>
+                        </div>
+                        <div class="order-room__item">
+                            <span class="order-room__label">예약 상태</span>
+                            <div class="order-room__value"
+                                 th:text="${item.bookingStatus != null and item.bookingStatus.name() == 'CONFIRMED' ? '확정' : item.bookingStatus}">확정</div>
+                        </div>
+                        <div class="order-room__item">
+                            <span class="order-room__label">1박 요금</span>
+                            <div class="order-room__value" th:text="${#numbers.formatInteger(item.orderPrice, 3, 'COMMA') + '원'}">0원</div>
+                        </div>
+                        <div class="order-room__item">
+                            <span class="order-room__label">결제 금액</span>
+                            <div class="order-room__value" th:text="${#numbers.formatInteger(item.totalPrice, 3, 'COMMA') + '원'}">0원</div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </section>
+</div>
+</html>
