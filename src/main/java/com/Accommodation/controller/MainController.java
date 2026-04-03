@@ -1,5 +1,6 @@
 package com.Accommodation.controller;
 
+import com.Accommodation.constant.AccomType;
 import com.Accommodation.dto.AccomSearchDto;
 import com.Accommodation.dto.MainAccomDto;
 import com.Accommodation.service.AccomService;
@@ -33,5 +34,101 @@ public class MainController {
         model.addAttribute("maxPage", 5);
 
         return "main";
+    }
+
+    @GetMapping("/main/hotels")
+    public String hotels(AccomSearchDto accomSearchDto,
+                         @RequestParam(value = "page") Optional<Integer> page,
+                         Model model) {
+        return renderTypePage(
+                "accom/hotel",
+                AccomType.HOTEL,
+                "호텔",
+                "도심과 여행지의 감도를 담은 호텔 숙소를 모았습니다.",
+                accomSearchDto,
+                page,
+                model
+        );
+    }
+
+    @GetMapping("/main/resorts")
+    public String resorts(AccomSearchDto accomSearchDto,
+                          @RequestParam(value = "page") Optional<Integer> page,
+                          Model model) {
+        return renderTypePage(
+                "accom/resort",
+                AccomType.RESORT,
+                "리조트",
+                "휴양과 레저를 함께 즐길 수 있는 리조트를 확인하세요.",
+                accomSearchDto,
+                page,
+                model
+        );
+    }
+
+    @GetMapping("/main/pensions")
+    public String pensions(AccomSearchDto accomSearchDto,
+                           @RequestParam(value = "page") Optional<Integer> page,
+                           Model model) {
+        return renderTypePage(
+                "accom/pension",
+                AccomType.PENSION,
+                "펜션",
+                "가족과 친구가 함께 머물기 좋은 펜션 숙소를 모았습니다.",
+                accomSearchDto,
+                page,
+                model
+        );
+    }
+
+    @GetMapping("/main/motels")
+    public String motels(AccomSearchDto accomSearchDto,
+                         @RequestParam(value = "page") Optional<Integer> page,
+                         Model model) {
+        return renderTypePage(
+                "accom/motel",
+                AccomType.MOTEL,
+                "모텔",
+                "합리적인 가격과 접근성을 갖춘 모텔을 빠르게 둘러보세요.",
+                accomSearchDto,
+                page,
+                model
+        );
+    }
+
+    @GetMapping("/main/guesthouses")
+    public String guesthouses(AccomSearchDto accomSearchDto,
+                              @RequestParam(value = "page") Optional<Integer> page,
+                              Model model) {
+        return renderTypePage(
+                "accom/guesthouse",
+                AccomType.GUESTHOUSE,
+                "게스트하우스",
+                "가볍고 편안한 여행을 위한 게스트하우스를 소개합니다.",
+                accomSearchDto,
+                page,
+                model
+        );
+    }
+
+    private String renderTypePage(String viewName,
+                                  AccomType accomType,
+                                  String pageTitle,
+                                  String pageDescription,
+                                  AccomSearchDto accomSearchDto,
+                                  Optional<Integer> page,
+                                  Model model) {
+        accomSearchDto.setAccomType(accomType);
+
+        Pageable pageable = PageRequest.of(page.orElse(0), 12);
+        Page<MainAccomDto> accomPage = accomService.getMainAccomPage(accomSearchDto, pageable);
+
+        model.addAttribute("accomList", accomPage.getContent());
+        model.addAttribute("accomPage", accomPage);
+        model.addAttribute("accomSearchDto", accomSearchDto);
+        model.addAttribute("pageTitle", pageTitle);
+        model.addAttribute("pageDescription", pageDescription);
+
+        return viewName;
     }
 }

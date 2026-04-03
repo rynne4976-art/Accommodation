@@ -82,6 +82,24 @@ public class Accom {
     @ToString.Exclude
     private List<AccomImg> accomImgList = new ArrayList<>();
 
+    @OneToOne(
+            mappedBy = "accom",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @ToString.Exclude
+    private AccomOperationPolicy operationPolicy;
+
+    @OneToMany(
+            mappedBy = "accom",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @OrderBy("operationDate ASC")
+    @ToString.Exclude
+    private List<AccomOperationDay> operationDayList = new ArrayList<>();
+
     public void addAccomImg(AccomImg accomImg) {
         accomImgList.add(accomImg);
         accomImg.setAccom(this);
@@ -90,6 +108,51 @@ public class Accom {
     public void removeAccomImg(AccomImg accomImg) {
         accomImgList.remove(accomImg);
         accomImg.setAccom(null);
+    }
+
+    public void setOperationPolicy(AccomOperationPolicy operationPolicy) {
+        if (this.operationPolicy != null) {
+            this.operationPolicy.setAccom(null);
+        }
+
+        this.operationPolicy = operationPolicy;
+
+        if (operationPolicy != null && operationPolicy.getAccom() != this) {
+            operationPolicy.setAccom(this);
+        }
+    }
+
+    public void addOperationDay(AccomOperationDay operationDay) {
+        if (operationDay == null) {
+            return;
+        }
+
+        if (!this.operationDayList.contains(operationDay)) {
+            this.operationDayList.add(operationDay);
+        }
+
+        if (operationDay.getAccom() != this) {
+            operationDay.setAccom(this);
+        }
+    }
+
+    public void removeOperationDay(AccomOperationDay operationDay) {
+        if (operationDay == null) {
+            return;
+        }
+
+        this.operationDayList.remove(operationDay);
+
+        if (operationDay.getAccom() == this) {
+            operationDay.setAccom(null);
+        }
+    }
+
+    public void clearOperationDays() {
+        List<AccomOperationDay> copiedList = new ArrayList<>(this.operationDayList);
+        for (AccomOperationDay operationDay : copiedList) {
+            removeOperationDay(operationDay);
+        }
     }
 
     public void updateAccom(String accomName,
@@ -145,8 +208,21 @@ public class Accom {
         this.updateTime = LocalDateTime.now();
     }
 
+    public void decreaseRoomCount() {
+        if (this.roomCount == null || this.roomCount <= 0) {
+            throw new IllegalStateException("예약 가능한 객실이 없습니다.");
+        }
+        this.roomCount--;
+    }
+
+    public void increaseRoomCount() {
+        if (this.roomCount == null) {
+            this.roomCount = 0;
+        }
+        this.roomCount++;
+    }
+
     public String getReserveStatCd() {
-        // status가 OPEN이고 roomCount가 1 이상이면 예약 가능
         if (this.status == AccomStatus.OPEN && this.roomCount != null && this.roomCount > 0) {
             return "Y";
         }

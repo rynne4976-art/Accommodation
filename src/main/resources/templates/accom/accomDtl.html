@@ -64,6 +64,21 @@
 
                     <span class="highlight-label">리뷰 수</span>
                     <strong th:text="${accom.reviewCount}">0</strong>
+
+                    <th:block th:if="${accom.operationPolicy != null}">
+                        <span class="highlight-label">운영 기간</span>
+                        <strong th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd')} + ' ~ ' + ${#temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">
+                            2026-04-01 ~ 2026-04-30
+                        </strong>
+
+                        <span class="highlight-label">체크인 / 체크아웃</span>
+                        <strong th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm')} + ' / ' + ${#temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">
+                            15:00 / 11:00
+                        </strong>
+
+                        <span class="highlight-label">운영일 수</span>
+                        <strong th:text="${#lists.size(accom.operationDayList)} + '일'">0일</strong>
+                    </th:block>
                 </div>
 
                 <div class="accom-detail-actions">
@@ -108,6 +123,52 @@
                 <div class="detail-bullet-item">
                     <span>투숙 가능 인원</span>
                     <strong th:text="${accom.guestCount} + '명'">2명</strong>
+                </div>
+            </div>
+
+            <div class="detail-section-card" th:if="${accom.operationPolicy != null}">
+                <div class="detail-section-header">
+                    <span class="accom-detail-label subtle">Operation</span>
+                    <h3>운영 정보</h3>
+                </div>
+
+                <div class="detail-bullet-grid">
+                    <div class="detail-bullet-item">
+                        <span>운영 시작일</span>
+                        <strong th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd')}">2026-04-01</strong>
+                    </div>
+
+                    <div class="detail-bullet-item">
+                        <span>운영 종료일</span>
+                        <strong th:text="${#temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">2026-04-30</strong>
+                    </div>
+
+                    <div class="detail-bullet-item">
+                        <span>체크인 시간</span>
+                        <strong th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm')}">15:00</strong>
+                    </div>
+
+                    <div class="detail-bullet-item">
+                        <span>체크아웃 시간</span>
+                        <strong th:text="${#temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">11:00</strong>
+                    </div>
+
+                    <div class="detail-bullet-item">
+                        <span>선택된 운영일 수</span>
+                        <strong th:text="${#lists.size(accom.operationDayList)} + '일'">0일</strong>
+                    </div>
+                </div>
+
+                <div class="operation-day-wrap"
+                     th:if="${accom.operationDayList != null and !#lists.isEmpty(accom.operationDayList)}">
+                    <p class="operation-day-title">운영일</p>
+                    <div class="operation-day-list">
+                        <span class="operation-day-chip"
+                              th:each="operationDay : ${accom.operationDayList}"
+                              th:text="${#temporals.format(operationDay.operationDate, 'yyyy-MM-dd')}">
+                            2026-04-01
+                        </span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -191,7 +252,22 @@
 
             <div class="detail-section-card">
                 <ul class="detail-rule-list">
-                    <li>체크인 및 체크아웃 시간은 숙소 운영 정책에 따라 변동될 수 있습니다.</li>
+                    <li th:if="${accom.operationPolicy != null}">
+                        운영 기간은
+                        <strong th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd')}"></strong>
+                        부터
+                        <strong th:text="${#temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}"></strong>
+                        까지입니다.
+                    </li>
+
+                    <li th:if="${accom.operationPolicy != null}">
+                        체크인 시간은
+                        <strong th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm')}"></strong>,
+                        체크아웃 시간은
+                        <strong th:text="${#temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}"></strong>
+                        입니다.
+                    </li>
+
                     <li>객실 내 흡연 및 시설 훼손 시 추가 비용이 청구될 수 있습니다.</li>
                     <li>반려동물 동반 가능 여부와 추가 인원 정책은 예약 전 확인하십시오.</li>
                     <li>취소 및 환불 규정은 예약 단계에서 최종 안내 기준을 따릅니다.</li>
@@ -209,7 +285,8 @@
                 <div class="option-grid">
                     <div class="option-item">
                         <span>기본 숙박 요금</span>
-                        <strong th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원 / 1박'">0원 / 1박</strong>
+                        <strong th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원 / 1박'">0원 /
+                            1박</strong>
                     </div>
 
                     <div class="option-item">
@@ -385,7 +462,6 @@
                     </div>
 
                     <div class="review-modal-actions">
-
                         <button type="submit" class="modal-action primary">
                             수정하기
                         </button>

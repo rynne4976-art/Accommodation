@@ -658,3 +658,257 @@ body.modal-open {
         width: 100%;
     }
 }
+
+/* =========================
+   운영 정보 카드
+========================= */
+.detail-section-card {
+    background: #ffffff;
+    border: 1px solid #e7ecf3;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+    margin-top: 20px;
+}
+
+.detail-section-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+.detail-section-header h2,
+.detail-section-header h3 {
+    margin: 0;
+    color: #111827;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.accom-detail-label.subtle {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+/* =========================
+   상세 정보 / 운영 정보 그리드
+========================= */
+.detail-bullet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+}
+
+.detail-bullet-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e5e7eb;
+    min-height: 90px;
+}
+
+.detail-bullet-item span {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.detail-bullet-item strong {
+    font-size: 16px;
+    color: #111827;
+    font-weight: 800;
+    word-break: keep-all;
+    line-height: 1.4;
+}
+
+/* =========================
+   운영일 목록 영역
+========================= */
+.operation-day-wrap {
+    margin-top: 18px;
+}
+
+.operation-day-title {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #111827;
+}
+
+.operation-day-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* 운영일 태그 */
+.operation-day-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #f8fafc;
+    border: 1px solid #dbe4ee;
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.operation-day-chip:hover {
+    background: #eef6ff;
+    border-color: #bfd7f2;
+    transform: translateY(-1px);
+}
+
+/* =========================
+   상단 요약 하이라이트 박스 보정
+========================= */
+.accom-detail-highlight {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 14px 18px;
+    margin-top: 24px;
+    padding: 20px;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid #e7ecf3;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.accom-detail-highlight span {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.accom-detail-highlight strong {
+    font-size: 15px;
+    color: #111827;
+    font-weight: 800;
+    line-height: 1.4;
+    word-break: keep-all;
+}
+
+.accom-detail-highlight .highlight-label {
+    color: #475569;
+}
+
+/* =========================
+   옵션 정보 카드
+========================= */
+.option-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.option-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+}
+
+.option-item span {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.option-item strong {
+    font-size: 15px;
+    color: #111827;
+    font-weight: 800;
+    line-height: 1.4;
+}
+
+/* =========================
+   이용 수칙
+========================= */
+.detail-rule-list {
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.detail-rule-list li {
+    color: #334155;
+    line-height: 1.7;
+    font-size: 15px;
+}
+
+.detail-rule-list strong {
+    color: #0f172a;
+    font-weight: 800;
+}
+
+/* =========================
+   리뷰 빈 영역 / 공통 카드 여백 보정
+========================= */
+.review-empty-card {
+    text-align: center;
+    color: #64748b;
+    padding: 32px 20px;
+}
+
+/* =========================
+   반응형
+========================= */
+@media (max-width: 1024px) {
+    .accom-detail-highlight {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .detail-bullet-grid,
+    .option-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .detail-section-card {
+        padding: 18px;
+        border-radius: 14px;
+    }
+
+    .accom-detail-highlight {
+        grid-template-columns: 1fr;
+        padding: 18px;
+        gap: 12px;
+    }
+
+    .detail-bullet-grid,
+    .option-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-bullet-item,
+    .option-item {
+        min-height: auto;
+    }
+
+    .operation-day-list {
+        gap: 8px;
+    }
+
+    .operation-day-chip {
+        font-size: 13px;
+        padding: 7px 12px;
+    }
+}

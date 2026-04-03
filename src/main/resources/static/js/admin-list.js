@@ -4,6 +4,11 @@ document.addEventListener('submit', function (event) {
         return;
     }
 
+    const submitter = event.submitter;
+    if (submitter && submitter.hasAttribute('data-reset-search')) {
+        form.reset();
+    }
+
     if (form.dataset.ajaxFallback === 'true') {
         delete form.dataset.ajaxFallback;
         return;

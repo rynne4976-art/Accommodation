@@ -26,7 +26,10 @@
 
     <div class="admin-list-shell" data-ajax-list data-update-selector=".admin-list-shell">
         <section class="search-panel">
-            <form class="search-form" data-ajax-form th:action="@{/admin/accoms}" method="get">
+            <form class="search-form"
+                  data-ajax-form
+                  th:action="@{/admin/accoms}"
+                  method="get">
                 <input type="text"
                        name="searchQuery"
                        placeholder="숙소명을 입력하십시오."
@@ -57,7 +60,7 @@
                     <option value="READY" th:selected="${accomSearchDto.accomStatus != null and accomSearchDto.accomStatus.name() == 'READY'}">준비중</option>
                 </select>
 
-                <button type="submit">조회</button>
+                <button type="submit" data-reset-search>조회</button>
             </form>
         </section>
 

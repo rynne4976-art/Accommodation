@@ -94,6 +94,13 @@
     box-shadow: 0 0 0 4px rgba(31, 74, 204, 0.12);
 }
 
+.form-group input.is-invalid,
+.form-group select.is-invalid,
+.form-group textarea.is-invalid {
+    border-color: #d92d20;
+    box-shadow: 0 0 0 4px rgba(217, 45, 32, 0.12);
+}
+
 .form-group input[type="file"] {
     padding: 12px;
     background: #f8fbff;
@@ -102,6 +109,13 @@
 .field-hint {
     margin: 0;
     color: #667085;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.field-error {
+    margin: 0;
+    color: #d92d20;
     font-size: 13px;
     line-height: 1.5;
 }

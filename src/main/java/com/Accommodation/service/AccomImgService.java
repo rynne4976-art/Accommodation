@@ -2,8 +2,10 @@ package com.Accommodation.service;
 
 import com.Accommodation.entity.AccomImg;
 import com.Accommodation.repository.AccomImgRepository;
+
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,15 +15,16 @@ import org.springframework.web.multipart.MultipartFile;
 @Transactional
 public class AccomImgService {
 
-    @Value("${uploadPath}")
-    private String uploadPath;
-
     private final AccomImgRepository accomImgRepository;
-    private final FileService fileService;
+    private final S3FileService s3FileService;
 
-    public void saveAccomImg(AccomImg accomImg,
-                             MultipartFile accomImgFile)
-            throws Exception {
+    // =========================
+    // 이미지 저장
+    // =========================
+    public void saveAccomImg(
+            AccomImg accomImg,
+            MultipartFile accomImgFile
+    ) throws Exception {
 
         String oriImgName =
                 accomImgFile.getOriginalFilename();
@@ -32,22 +35,15 @@ public class AccomImgService {
         if (oriImgName != null
                 && !oriImgName.isEmpty()) {
 
-            String accomUploadPath =
-                    System.getProperty("user.dir")
-                            + "/"
-                            + uploadPath
-                            + "/accom";
-
             imgName =
-                    fileService.uploadFile(
-                            accomUploadPath,
+                    s3FileService.uploadFile(
+                            "accom",
                             oriImgName,
                             accomImgFile
                     );
 
             imgUrl =
-                    "/images/accom/"
-                            + imgName;
+                    s3FileService.getFileUrl(imgName);
         }
 
         accomImg.updateAccomImg(
@@ -57,5 +53,73 @@ public class AccomImgService {
         );
 
         accomImgRepository.save(accomImg);
+    }
+
+    // =========================
+    // 이미지 수정
+    // =========================
+    public void updateAccomImg(
+            Long accomImgId,
+            MultipartFile accomImgFile
+    ) throws Exception {
+
+        if (accomImgFile.isEmpty()) {
+            return;
+        }
+
+        AccomImg savedAccomImg =
+                accomImgRepository
+                        .findById(accomImgId)
+                        .orElseThrow(() ->
+                                new EntityNotFoundException(
+                                        "숙소 이미지를 찾을 수 없습니다."
+                                ));
+
+        // 기존 이미지 삭제
+        if (savedAccomImg.getImgName()
+                != null
+                && !savedAccomImg
+                .getImgName()
+                .isEmpty()) {
+
+            s3FileService.deleteFile(
+                    savedAccomImg.getImgName()
+            );
+        }
+
+        String oriImgName =
+                accomImgFile.getOriginalFilename();
+
+        String imgName =
+                s3FileService.uploadFile(
+                        "accom",
+                        oriImgName,
+                        accomImgFile
+                );
+
+        String imgUrl =
+                s3FileService.getFileUrl(imgName);
+
+        savedAccomImg.updateAccomImg(
+                imgName,
+                oriImgName,
+                imgUrl
+        );
+    }
+
+    public void deleteAccomImg(AccomImg accomImg) {
+
+        if (accomImg == null) {
+            return;
+        }
+
+        String imgName =
+                accomImg.getImgName();
+
+        if (imgName != null
+                && !imgName.isBlank()) {
+
+            s3FileService.deleteFile(imgName);
+        }
     }
 }

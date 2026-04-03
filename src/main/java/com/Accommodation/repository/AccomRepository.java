@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface AccomRepository extends JpaRepository<Accom, Long>, AccomRepositoryCustom {
 
-    @EntityGraph(attributePaths = "accomImgList")
-    Optional<Accom> findWithAccomImgListById(Long id);
+    @EntityGraph(attributePaths = {"operationPolicy", "operationDayList"})
+    Optional<Accom> findWithOperationInfoById(Long id);
 }
