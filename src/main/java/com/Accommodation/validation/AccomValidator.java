@@ -2,16 +2,25 @@ package com.Accommodation.validation;
 
 import com.Accommodation.dto.AccomFormDto;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.BindingResult;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
 
 import java.time.LocalDate;
 
 @Component
-public class AccomValidator {
+public class AccomValidator implements Validator {
 
-    public void validate(AccomFormDto accomFormDto, BindingResult bindingResult) {
-        validateGuestCount(accomFormDto, bindingResult);
-        validateOperationInfo(accomFormDto, bindingResult);
+    @Override
+    public boolean supports(Class<?> clazz) {
+        return AccomFormDto.class.isAssignableFrom(clazz);
+    }
+
+    @Override
+    public void validate(Object target, Errors errors) {
+        AccomFormDto accomFormDto = (AccomFormDto) target;
+
+        validateGuestCount(accomFormDto, errors);
+        validateOperationInfo(accomFormDto, errors);
     }
 
     public void validateOrThrow(AccomFormDto accomFormDto) {
@@ -22,51 +31,49 @@ public class AccomValidator {
         }
     }
 
-    private void validateGuestCount(AccomFormDto accomFormDto, BindingResult bindingResult) {
-        if (bindingResult.hasFieldErrors("accomType") || bindingResult.hasFieldErrors("guestCount")) {
+    private void validateGuestCount(AccomFormDto accomFormDto, Errors errors) {
+        if (errors.hasFieldErrors("accomType") || errors.hasFieldErrors("guestCount")) {
             return;
         }
 
         ValidationError error = findGuestCountError(accomFormDto);
         if (error != null) {
-            bindingResult.rejectValue(error.field(), error.code(), error.message());
+            errors.rejectValue(error.field(), error.code(), error.message());
         }
     }
 
-    private void validateOperationInfo(AccomFormDto accomFormDto, BindingResult bindingResult) {
-        if (!bindingResult.hasFieldErrors("operationStartDate")
-                && !bindingResult.hasFieldErrors("operationEndDate")
+    private void validateOperationInfo(AccomFormDto accomFormDto, Errors errors) {
+        if (!errors.hasFieldErrors("operationStartDate")
+                && !errors.hasFieldErrors("operationEndDate")
                 && accomFormDto.getOperationStartDate() != null
                 && accomFormDto.getOperationEndDate() != null
                 && accomFormDto.getOperationStartDate().isAfter(accomFormDto.getOperationEndDate())) {
-
-            bindingResult.rejectValue(
+            errors.rejectValue(
                     "operationEndDate",
                     "operationEndDate.range",
                     "운영 종료일은 운영 시작일보다 빠를 수 없습니다."
             );
         }
 
-        if (!bindingResult.hasFieldErrors("checkInTime")
-                && !bindingResult.hasFieldErrors("checkOutTime")
+        if (!errors.hasFieldErrors("checkInTime")
+                && !errors.hasFieldErrors("checkOutTime")
                 && accomFormDto.getCheckInTime() != null
                 && accomFormDto.getCheckOutTime() != null
                 && accomFormDto.getCheckInTime().equals(accomFormDto.getCheckOutTime())) {
-
-            bindingResult.rejectValue(
+            errors.rejectValue(
                     "checkOutTime",
                     "checkOutTime.duplicate",
                     "체크인 시간과 체크아웃 시간은 같을 수 없습니다."
             );
         }
 
-        if (bindingResult.hasFieldErrors("operationDateList")) {
+        if (errors.hasFieldErrors("operationDateList")) {
             return;
         }
 
         ValidationError error = findOperationDateError(accomFormDto);
         if (error != null) {
-            bindingResult.rejectValue(error.field(), error.code(), error.message());
+            errors.rejectValue(error.field(), error.code(), error.message());
         }
     }
 
@@ -110,7 +117,7 @@ public class AccomValidator {
                             ? new ValidationError(
                             "guestCount",
                             "guestCount.range",
-                            "호텔, 리조트, 펜션은 투숙 가능 인원을 2명에서 10명 사이로 입력해 주세요."
+                            "호텔, 리조트, 펜션의 투숙 가능 인원은 2명에서 10명 사이여야 합니다."
                     )
                             : null;
             case GUESTHOUSE, MOTEL ->
@@ -118,7 +125,7 @@ public class AccomValidator {
                             ? new ValidationError(
                             "guestCount",
                             "guestCount.range",
-                            "게스트하우스와 모텔은 투숙 가능 인원을 1명에서 6명 사이로 입력해 주세요."
+                            "게스트하우스와 모텔의 투숙 가능 인원은 1명에서 6명 사이여야 합니다."
                     )
                             : null;
         };

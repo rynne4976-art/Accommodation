@@ -11,6 +11,7 @@ import com.Accommodation.validation.AccomValidator;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +19,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -31,6 +33,14 @@ public class AccomController {
     private final AccomService accomService;
     private final ReviewService reviewService;
     private final AccomValidator accomValidator;
+
+    @Value("${naver.map.client.id}")
+    private String naverMapClientId;
+
+    @InitBinder("accomFormDto")
+    public void initAccomFormDtoBinder(WebDataBinder binder) {
+        binder.addValidators(accomValidator);
+    }
 
     @GetMapping("/admin/accom/new")
     public String accomForm(@RequestParam(value = "returnPage", defaultValue = "0") int returnPage,
@@ -53,8 +63,6 @@ public class AccomController {
                            BindingResult bindingResult,
                            @RequestParam("accomImgFile") List<MultipartFile> accomImgFileList,
                            Model model) {
-        accomValidator.validate(accomFormDto, bindingResult);
-
         if (bindingResult.hasErrors()) {
             model.addAttribute("accomFormDto", accomFormDto);
             return "accom/accomForm";
@@ -67,7 +75,7 @@ public class AccomController {
             model.addAttribute(
                     "errorMessage",
                     e.getMessage() == null || e.getMessage().isBlank()
-                            ? "숙소 등록 중 오류가 발생하였습니다."
+                            ? "숙소 등록 중 오류가 발생했습니다."
                             : e.getMessage()
             );
             return "accom/accomForm";
@@ -112,8 +120,6 @@ public class AccomController {
                               @RequestParam("accomImgFile") List<MultipartFile> accomImgFileList,
                               Model model,
                               RedirectAttributes redirectAttributes) {
-        accomValidator.validate(accomFormDto, bindingResult);
-
         if (bindingResult.hasErrors()) {
             accomFormDto.setId(accomId);
             model.addAttribute("accomFormDto", accomFormDto);
@@ -133,7 +139,7 @@ public class AccomController {
             model.addAttribute(
                     "errorMessage",
                     e.getMessage() == null || e.getMessage().isBlank()
-                            ? "숙소 수정 중 오류가 발생하였습니다."
+                            ? "숙소 수정 중 오류가 발생했습니다."
                             : e.getMessage()
             );
             model.addAttribute("currentPage", returnPage);
@@ -171,17 +177,21 @@ public class AccomController {
     public String accomDtl(@PathVariable("accomId") Long accomId,
                            @AuthenticationPrincipal User user,
                            Model model) {
-
         Accom accom = accomService.getAccomDtl(accomId);
 
         ReviewFormDto reviewFormDto = new ReviewFormDto();
         reviewFormDto.setAccomId(accomId);
 
         Review myReview = null;
-
         if (user != null) {
             myReview = reviewService.getMyReview(accomId, user.getUsername());
         }
+
+        boolean canWriteReview = user != null && reviewService.canWriteReview(accomId, user.getUsername());
+        String reviewWriteDenyMessage = reviewService.getReviewWriteDenyMessage(
+                accomId,
+                user != null ? user.getUsername() : null
+        );
 
         model.addAttribute("accom", accom);
         model.addAttribute("reviewList", reviewService.getReviewList(accomId));
@@ -189,6 +199,9 @@ public class AccomController {
         model.addAttribute("isLoggedIn", user != null);
         model.addAttribute("hasMyReview", myReview != null);
         model.addAttribute("myReview", myReview);
+        model.addAttribute("canWriteReview", canWriteReview);
+        model.addAttribute("reviewWriteDenyMessage", reviewWriteDenyMessage);
+        model.addAttribute("naverMapClientId", naverMapClientId);
 
         return "accom/accomDtl";
     }
