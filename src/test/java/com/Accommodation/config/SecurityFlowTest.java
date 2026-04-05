@@ -8,6 +8,7 @@ import com.Accommodation.entity.Member;
 import com.Accommodation.service.AccomService;
 import com.Accommodation.service.CustomUserDetailsService;
 import com.Accommodation.service.MemberService;
+import com.Accommodation.service.OrderService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,9 @@ class SecurityFlowTest {
 
     @MockBean
     private AccomService accomService;
+
+    @MockBean
+    private OrderService orderService;
 
     @MockBean
     private CustomUserDetailsService customUserDetailsService;
