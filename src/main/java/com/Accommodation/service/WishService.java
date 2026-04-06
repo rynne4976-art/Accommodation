@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -61,13 +62,15 @@ public class WishService {
     }
 
     @Transactional(readOnly = true)
-    public List<WishListDto> getWishList(String email) {
-        return wishRepository.findByMemberEmailOrderByRegTimeDesc(email).stream()
+    public List<WishListDto> getWishList(String email, String sort) {
+        List<WishListDto> wishItems = wishRepository.findByMemberEmailOrderByRegTimeDesc(email).stream()
                 .map(wish -> {
                     Accom accom = wish.getAccom();
                     return new WishListDto(
                             accom.getId(),
                             accom.getAccomName(),
+                            accom.getAccomType(),
+                            accom.getGrade(),
                             accom.getAccomDetail(),
                             accom.getLocation(),
                             accom.getPricePerNight(),
@@ -76,6 +79,36 @@ public class WishService {
                             accom.getReviewCount()
                     );
                 })
+                .toList();
+
+        return sortWishItems(wishItems, sort);
+    }
+
+    @Transactional(readOnly = true)
+    public int getWishCount(String email) {
+        return wishRepository.findByMemberEmailOrderByRegTimeDesc(email).size();
+    }
+
+    private List<WishListDto> sortWishItems(List<WishListDto> wishItems, String sort) {
+        Comparator<WishListDto> comparator = switch (sort) {
+            case "priceDesc" -> Comparator
+                    .comparing(WishListDto::getPricePerNight, Comparator.nullsLast(Integer::compareTo))
+                    .reversed();
+            case "priceAsc" -> Comparator
+                    .comparing(WishListDto::getPricePerNight, Comparator.nullsLast(Integer::compareTo));
+            case "ratingDesc" -> Comparator
+                    .comparing(WishListDto::getAvgRating, Comparator.nullsLast(Double::compareTo))
+                    .reversed()
+                    .thenComparing(WishListDto::getReviewCount, Comparator.nullsLast(Integer::compareTo).reversed());
+            default -> null;
+        };
+
+        if (comparator == null) {
+            return wishItems;
+        }
+
+        return wishItems.stream()
+                .sorted(comparator)
                 .toList();
     }
 

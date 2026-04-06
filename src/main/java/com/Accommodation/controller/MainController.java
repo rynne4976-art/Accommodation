@@ -144,4 +144,23 @@ public class MainController {
 
         return viewName;
     }
+
+    @GetMapping("/searchList")
+    public String searchList(AccomSearchDto accomSearchDto,
+                             @RequestParam(value = "page") Optional<Integer> page,
+                             Model model) {
+        int currentPage = Math.max(page.orElse(1), 1);
+        Pageable pageable = PageRequest.of(currentPage - 1, 5);
+        Page<MainAccomDto> accomPage = accomService.getMainAccomPage(accomSearchDto, pageable);
+
+        model.addAttribute("accomList", accomPage.getContent());
+        model.addAttribute("accomPage", accomPage);
+        model.addAttribute("accomSearchDto", accomSearchDto);
+        model.addAttribute("currentPath", "/searchList");
+
+        return "category/searchList";
+    }
+
+
+
 }
