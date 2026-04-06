@@ -1,28 +1,41 @@
 package com.Accommodation.dto;
 
+import com.Accommodation.constant.AccomGrade;
+import com.Accommodation.constant.AccomType;
 import com.querydsl.core.annotations.QueryProjection;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter @Setter
+@Getter
+@Setter
 public class MainAccomDto {
 
-    private Long id; //업소id
-    private String accomNm; //업소명
-    private Integer Price; //가격
-    private Integer Stars; //등급
-    private String accomDetail; //업소 상세설명
-    private Integer StarRating; //별점
-    private  String ImName; // 대표이미지명
+    private Long id;
+    private String accomName;
+    private AccomType accomType;
+    private AccomGrade grade;
+    private String accomDetail;
+    private String imgUrl;
+    private Integer pricePerNight;
+    private String location;
+    private Integer roomCount;
+    private Double avgRating;
+    private Integer reviewCount;
 
     @QueryProjection
-    public MainAccomDto(Long id, String accomNm, Integer price, Integer stars, String accomDetail, Integer starRating, String imName) {
+    public MainAccomDto(Long id, String accomName, AccomType accomType, AccomGrade grade, String accomDetail,
+                        String imgUrl, Integer pricePerNight, String location,
+                        Integer roomCount, Double avgRating, Integer reviewCount) {
         this.id = id;
-        this.accomNm = accomNm;
-        Price = price;
-        Stars = stars;
+        this.accomName = accomName;
+        this.accomType = accomType;
+        this.grade = grade;
         this.accomDetail = accomDetail;
-        StarRating = starRating;
-        ImName = imName;
+        this.imgUrl = imgUrl;
+        this.pricePerNight = pricePerNight;
+        this.location = location;
+        this.roomCount = roomCount;
+        this.avgRating = avgRating;
+        this.reviewCount = reviewCount;
     }
 }

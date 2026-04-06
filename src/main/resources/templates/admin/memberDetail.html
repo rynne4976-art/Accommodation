@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>회원 상세</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-common.css}">
+</head>
+<body>
+
+<div th:replace="~{layouts/header :: header}"></div>
+
+<main class="page-wrap">
+    <section class="page-header">
+        <div class="page-header-copy">
+            <span class="page-label">Admin Member Detail</span>
+            <h2>회원 상세</h2>
+            <p>선택한 회원의 기본 정보와 권한 상태를 확인합니다.</p>
+        </div>
+        <div class="header-actions">
+            <a th:href="@{/admin/members(page=${page}, searchBy=${memberSearchDto.searchBy}, searchQuery=${memberSearchDto.searchQuery}, role=${memberSearchDto.role})}">목록으로</a>
+        </div>
+    </section>
+
+    <section class="detail-panel">
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">회원번호</span>
+                <strong th:text="${member.id}">1</strong>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">권한</span>
+                <strong th:text="${member.role}">USER</strong>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">이름</span>
+                <strong th:text="${member.name}">홍길동</strong>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">이메일</span>
+                <strong th:text="${member.email}">user@example.com</strong>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">휴대폰 번호</span>
+                <strong th:text="${member.formattedNumber}">010-0000-0000</strong>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">가입일</span>
+                <strong th:text="${#temporals.format(member.regTime, 'yyyy-MM-dd HH:mm')}">2026-04-02 12:00</strong>
+            </div>
+            <div class="detail-item detail-item-wide">
+                <span class="detail-label">주소</span>
+                <strong th:text="${member.address}">서울시 강남구</strong>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
+
+</body>
+</html>

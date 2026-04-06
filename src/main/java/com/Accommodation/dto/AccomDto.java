@@ -1,33 +1,24 @@
 package com.Accommodation.dto;
 
-
+import com.Accommodation.constant.AccomGrade;
+import com.Accommodation.constant.AccomStatus;
+import com.Accommodation.constant.AccomType;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
-import java.util.Date;
 
 @Getter
 @Setter
 public class AccomDto {
 
-        private Long id;                // 상품 번호
-        private String accomNm;          // 상품명
-        private Integer Stars;          //등급
-        private Integer price;          // 가격
-        private String accomDetail;      // 상세 설명
-        private String reserveStatCd;      // 예약 코드
-        private LocalDateTime regTime;  // 등록 시간
-        private LocalDateTime updateTime; // 수정 시간
-        private Date check_In; //입실 시간
-        private Date check_Out; //퇴실 시간
-        private Date reserveDay; //예약날짜
-        private Integer StarRating;  //별점
-
-
-
-
-
-
-
+        private Long id;                  // 숙소 ID
+        private String accomName;         // 숙소명
+        private Integer pricePerNight;    // 1박 가격
+        private String accomDetail;       // 숙소 상세 설명
+        private AccomType accomType;      // 숙소 유형
+        private AccomGrade grade;         // 숙소 등급
+        private String location;          // 숙소 위치
+        private Integer roomCount;        // 객실 수
+        private Double avgRating;         // 평균 별점
+        private Integer reviewCount;      // 리뷰 수
+        private AccomStatus status;       // 운영 상태
 }

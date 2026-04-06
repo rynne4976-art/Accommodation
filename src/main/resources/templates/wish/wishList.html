@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layouts}">
+<head>
+    <meta charset="UTF-8">
+    <title>찜 목록</title>
+    <link rel="stylesheet" th:href="@{/css/wish.css}">
+</head>
+
+<div layout:fragment="content">
+    <section class="wish-page">
+        <div class="wish-page__inner">
+            <div class="wish-page__content">
+                <div class="wish-empty">
+                    <div class="wish-empty__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 20s-6.5-4.1-8.5-8C2 9.1 3.8 6 7.3 6c2 0 3.1 1.1 4.7 3 1.6-1.9 2.7-3 4.7-3C20.2 6 22 9.1 20.5 12c-2 3.9-8.5 8-8.5 8z"></path>
+                        </svg>
+                    </div>
+                    <h2>아직 찜한 숙소가 없어요</h2>
+                    <p>마음에 드는 숙소를 찜해두고 나중에 한 번에 비교해보세요.</p>
+                    <a th:href="@{/main}" class="wish-empty__action">숙소 보러 가기</a>
+                </div>
+            </div>
+
+            <aside class="wish-summary">
+                <div class="wish-summary__row">
+                    <span>총 <strong th:text="${wishCount}">0</strong>건</span>
+                </div>
+                <div class="wish-summary__stack">
+                    <strong>찜 활용 팁</strong>
+                    <p>찜은 장기 보관용, 장바구니는 이번에 비교할 예약 후보용으로 나누면 흐름이 자연스럽습니다.</p>
+                </div>
+                <p class="wish-summary__help">
+                    로고 색과는 겹치지 않게 웜 코랄 톤으로 맞춰 사이트 전체 분위기와 어울리도록 정리했습니다.
+                </p>
+            </aside>
+        </div>
+    </section>
+</div>
+</html>

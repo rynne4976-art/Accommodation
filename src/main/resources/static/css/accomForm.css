@@ -1,0 +1,312 @@
+.accom-form-page {
+    margin-top: 48px;
+    margin-bottom: 88px;
+}
+
+.accom-form-header {
+    margin-bottom: 24px;
+}
+
+.accom-form-panel {
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.accom-form-card {
+    background:
+        linear-gradient(180deg, rgba(232, 239, 255, 0.6), rgba(255, 255, 255, 0) 120px),
+        #fff;
+    border-radius: 22px;
+    padding: 32px;
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.10);
+}
+
+.form-alert {
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.form-alert p {
+    margin: 0;
+}
+
+.form-alert.error {
+    background: #fff1f2;
+    color: #b42318;
+}
+
+.accom-form {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group.full-width,
+.form-group.file-group {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    color: #344054;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.required-indicator {
+    margin-left: 4px;
+    color: #d92d20;
+    font-weight: 700;
+}
+
+.field-hint.required-guide {
+    color: #d92d20;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 14px 15px;
+    border: 1px solid #d0d7e2;
+    border-radius: 14px;
+    box-sizing: border-box;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group textarea {
+    min-height: 180px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #1f4acc;
+    box-shadow: 0 0 0 4px rgba(31, 74, 204, 0.12);
+}
+
+.form-group input.is-invalid,
+.form-group select.is-invalid,
+.form-group textarea.is-invalid {
+    border-color: #d92d20;
+    box-shadow: 0 0 0 4px rgba(217, 45, 32, 0.12);
+}
+
+.operation-date-box.is-invalid {
+    border-color: #d92d20 !important;
+    box-shadow: 0 0 0 4px rgba(217, 45, 32, 0.12);
+}
+
+.form-group input[type="file"] {
+    padding: 12px;
+    background: #f8fbff;
+}
+
+.address-search-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+}
+
+.address-search-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 12px;
+    background: #eef4ff;
+    color: #1f3b7a;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.operation-date-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.operation-date-box {
+    padding: 16px;
+    border: 1px solid #d0d7e2;
+    border-radius: 14px;
+    background: #fbfdff;
+    min-height: 120px;
+}
+
+.operation-date-placeholder {
+    margin: 0;
+    color: #667085;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.operation-date-placeholder.is-error {
+    color: #d92d20;
+}
+
+.operation-calendar-card + .operation-calendar-card {
+    margin-top: 16px;
+}
+
+.operation-calendar-month {
+    margin: 0 0 12px;
+    color: #172033;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.operation-calendar-weekdays,
+.operation-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.operation-calendar-weekdays {
+    margin-bottom: 10px;
+}
+
+.operation-calendar-weekdays span {
+    text-align: center;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.operation-calendar-label {
+    display: block;
+    cursor: pointer;
+}
+
+.operation-calendar-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.operation-calendar-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    border-radius: 12px;
+    border: 1px solid #d0d7e2;
+    background: #fff;
+    color: #172033;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.operation-calendar-cell.is-empty {
+    border-color: transparent;
+    background: transparent;
+}
+
+.operation-calendar-label:hover .operation-calendar-cell {
+    border-color: #9ab0ef;
+    background: #f5f8ff;
+}
+
+.operation-calendar-label.is-selected .operation-calendar-cell {
+    border-color: #1f4acc;
+    background: #1f4acc;
+    color: #fff;
+    box-shadow: 0 10px 20px rgba(31, 74, 204, 0.18);
+}
+
+.field-hint {
+    margin: 0;
+    color: #667085;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.field-error {
+    margin: 0;
+    color: #d92d20;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.primary-action,
+.secondary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 132px;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 0;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.primary-action {
+    background: #1f4acc;
+    color: #fff;
+}
+
+.secondary-action {
+    background: #eef4ff;
+    color: #1f3b7a;
+}
+
+@media (max-width: 900px) {
+    .accom-form-card {
+        padding: 24px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .accom-form-page {
+        margin-top: 32px;
+        margin-bottom: 64px;
+    }
+
+    .accom-form-card {
+        padding: 20px;
+        border-radius: 18px;
+    }
+
+    .form-actions > * {
+        width: 100%;
+    }
+}

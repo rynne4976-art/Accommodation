@@ -2,6 +2,8 @@ package com.Accommodation.entity;
 
 import com.Accommodation.constant.Role;
 import com.Accommodation.dto.MemberFormDto;
+import com.Accommodation.dto.MemberUpdateDto;
+import com.Accommodation.util.PhoneNumberUtils;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -91,7 +93,7 @@ public class Member extends BaseTimeEntity {
         member.setName(memberFormDto.getName());
         member.setEmail(memberFormDto.getEmail());
         member.setNumber(memberFormDto.getNumber());
-        member.setAddress(memberFormDto.getAddress());
+        member.setAddress(memberFormDto.getFullAddress());
 
         // 비밀번호 암호화 후 저장
         String encodedPassword = passwordEncoder.encode(memberFormDto.getPassword());
@@ -101,5 +103,19 @@ public class Member extends BaseTimeEntity {
         member.setRole(Role.USER);
 
         return member;
+    }
+
+    public void setNumber(String number) {
+        this.number = PhoneNumberUtils.normalize(number);
+    }
+
+    public String getFormattedNumber() {
+        return PhoneNumberUtils.format(number);
+    }
+
+    public void updateProfile(MemberUpdateDto memberUpdateDto) {
+        this.name = memberUpdateDto.getName();
+        setNumber(memberUpdateDto.getNumber());
+        this.address = memberUpdateDto.getFullAddress();
     }
 }

@@ -1,0 +1,174 @@
+body {
+    background:
+        radial-gradient(circle at top, rgba(123, 63, 242, 0.08), transparent 24%),
+        #f6f7fb;
+}
+
+.mypage-wrap {
+    max-width: 980px;
+    margin: 56px auto 88px;
+    padding: 0 16px;
+}
+
+.mypage-hero {
+    margin-bottom: 24px;
+}
+
+.mypage-label {
+    display: inline-block;
+    margin-bottom: 14px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #efe7ff;
+    color: #6a35d4;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.mypage-hero h2 {
+    margin: 0 0 10px;
+    font-size: 34px;
+    color: #111827;
+}
+
+.mypage-hero p {
+    margin: 0;
+    color: #667085;
+}
+
+.mypage-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 30px 32px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+}
+
+.mypage-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.mypage-card-header h3 {
+    margin: 0;
+    font-size: 24px;
+    color: #111827;
+}
+
+.mypage-role {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3659c9;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.mypage-alert {
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.mypage-alert.success {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.mypage-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.mypage-item {
+    padding: 18px 20px;
+    border: 1px solid #eaecf0;
+    border-radius: 18px;
+    background: #fcfcfd;
+}
+
+.mypage-item-wide {
+    grid-column: span 2;
+}
+
+.mypage-item-label {
+    display: block;
+    margin-bottom: 10px;
+    color: #667085;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.mypage-item strong {
+    color: #101828;
+    font-size: 16px;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.mypage-action-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #eaecf0;
+}
+
+.mypage-action-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 140px;
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: #111827;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.mypage-action-link-secondary {
+    background: #f8faff;
+    color: #1f4acc;
+    border: 1px solid #dbe4ff;
+}
+
+@media (max-width: 720px) {
+    .mypage-wrap {
+        margin-top: 40px;
+    }
+
+    .mypage-hero h2 {
+        font-size: 28px;
+    }
+
+    .mypage-card {
+        padding: 24px 20px;
+        border-radius: 20px;
+    }
+
+    .mypage-card-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .mypage-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mypage-item-wide {
+        grid-column: auto;
+    }
+
+    .mypage-action-row {
+        flex-direction: column;
+    }
+}

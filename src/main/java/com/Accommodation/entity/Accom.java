@@ -1,5 +1,8 @@
 package com.Accommodation.entity;
 
+import com.Accommodation.constant.AccomGrade;
+import com.Accommodation.constant.AccomStatus;
+import com.Accommodation.constant.AccomType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,11 +10,16 @@ import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "accom")
+@Table(
+        name = "accom",
+        indexes = {
+                @Index(name = "idx_accom_deleted_status_type_grade", columnList = "deleted, status, accom_type, grade"),
+                @Index(name = "idx_accom_deleted_rating_review_id", columnList = "deleted, avg_rating, review_count, id")
+        }
+)
 @Getter
 @Setter
 @ToString
@@ -21,56 +29,209 @@ public class Accom {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "accom_nm")
-    private String accomNm;
+    // 숙소명
+    private String accomName;
 
-    @Column(name = "stars")
-    private Integer stars;
+    // 1박 가격
+    private Integer pricePerNight;
 
-    @Column(name = "price")
-    private Integer price;
-
-    @Column(name = "accom_detail")
+    // 숙소 설명
     private String accomDetail;
 
-    @Column(name = "reserve_stat_cd")
-    private String reserveStatCd;
+    // 숙소 유형
+    @Enumerated(EnumType.STRING)
+    private AccomType accomType;
 
-    @Column(name = "reg_time")
+    // 숙소 등급
+    @Enumerated(EnumType.STRING)
+    private AccomGrade grade;
+
+    // 위치
+    private String location;
+
+    // 객실 수
+    @Column(nullable = false)
+    private Integer roomCount = 0;
+
+    // 투숙 가능 인원
+    @Column(nullable = false)
+    private Integer guestCount = 2;
+
+    // 평균 별점
+    @Column(nullable = false)
+    private Double avgRating = 0.0;
+
+    // 리뷰 수
+    @Column(nullable = false)
+    private Integer reviewCount = 0;
+
+    // 숙소 상태
+    @Enumerated(EnumType.STRING)
+    private AccomStatus status = AccomStatus.OPEN;
+
+    // 소프트 삭제 여부
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
+    // 삭제 시각
+    private LocalDateTime deletedAt;
+
     private LocalDateTime regTime;
 
-    @Column(name = "update_time")
     private LocalDateTime updateTime;
 
-    @Column(name = "check_in")
-    private Date checkIn;
-
-    @Column(name = "check_out")
-    private Date checkOut;
-
-    @Column(name = "reserve_day")
-    private Date reserveDay;
-
-    @Column(name = "star_rating")
-    private Integer starRating;
-
-    // 숙소 1개가 여러 장의 이미지를 가질 수 있으므로 1:N 관계로 매핑합니다.
-    // mappedBy = "accom" 은 연관관계의 주인이 AccomImg.accom 이라는 뜻입니다.
-    // cascade = ALL 은 숙소 저장/삭제 시 이미지도 함께 반영되게 합니다.
-    // orphanRemoval = true 는 컬렉션에서 빠진 이미지를 DB에서도 삭제합니다.
-    @OneToMany(mappedBy = "accom", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "accom",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     @ToString.Exclude
     private List<AccomImg> accomImgList = new ArrayList<>();
 
-    // 숙소에 이미지를 추가할 때 양쪽 객체의 참조를 함께 맞춰주는 편의 메서드입니다.
+    @OneToOne(
+            mappedBy = "accom",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @ToString.Exclude
+    private AccomOperationPolicy operationPolicy;
+
+    @OneToMany(
+            mappedBy = "accom",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @OrderBy("operationDate ASC")
+    @ToString.Exclude
+    private List<AccomOperationDay> operationDayList = new ArrayList<>();
+
     public void addAccomImg(AccomImg accomImg) {
         accomImgList.add(accomImg);
         accomImg.setAccom(this);
     }
 
-    // 숙소에서 이미지를 제거할 때 양쪽 연관관계를 함께 끊어주는 메서드입니다.
     public void removeAccomImg(AccomImg accomImg) {
         accomImgList.remove(accomImg);
         accomImg.setAccom(null);
+    }
+
+    public void setOperationPolicy(AccomOperationPolicy operationPolicy) {
+        if (this.operationPolicy != null) {
+            this.operationPolicy.setAccom(null);
+        }
+
+        this.operationPolicy = operationPolicy;
+
+        if (operationPolicy != null && operationPolicy.getAccom() != this) {
+            operationPolicy.setAccom(this);
+        }
+    }
+
+    public void addOperationDay(AccomOperationDay operationDay) {
+        if (operationDay == null) {
+            return;
+        }
+
+        if (!this.operationDayList.contains(operationDay)) {
+            this.operationDayList.add(operationDay);
+        }
+
+        if (operationDay.getAccom() != this) {
+            operationDay.setAccom(this);
+        }
+    }
+
+    public void removeOperationDay(AccomOperationDay operationDay) {
+        if (operationDay == null) {
+            return;
+        }
+
+        this.operationDayList.remove(operationDay);
+
+        if (operationDay.getAccom() == this) {
+            operationDay.setAccom(null);
+        }
+    }
+
+    public void clearOperationDays() {
+        List<AccomOperationDay> copiedList = new ArrayList<>(this.operationDayList);
+        for (AccomOperationDay operationDay : copiedList) {
+            removeOperationDay(operationDay);
+        }
+    }
+
+    public void updateAccom(String accomName,
+                            Integer pricePerNight,
+                            String accomDetail,
+                            AccomType accomType,
+                            AccomGrade grade,
+                            String location,
+                            Integer roomCount,
+                            Integer guestCount,
+                            AccomStatus status) {
+        this.accomName = accomName;
+        this.pricePerNight = pricePerNight;
+        this.accomDetail = accomDetail;
+        this.accomType = accomType;
+        this.grade = grade;
+        this.location = location;
+        this.roomCount = roomCount;
+        this.guestCount = guestCount;
+        this.status = status;
+    }
+
+    public void softDelete() {
+        this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void restore() {
+        this.deleted = false;
+        this.deletedAt = null;
+    }
+
+    @PrePersist
+    public void onCreate() {
+        this.regTime = LocalDateTime.now();
+        this.updateTime = LocalDateTime.now();
+
+        if (this.deleted == null) {
+            this.deleted = false;
+        }
+
+        if (this.roomCount == null) {
+            this.roomCount = 0;
+        }
+
+        if (this.guestCount == null) {
+            this.guestCount = 2;
+        }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.updateTime = LocalDateTime.now();
+    }
+
+    public void decreaseRoomCount() {
+        if (this.roomCount == null || this.roomCount <= 0) {
+            throw new IllegalStateException("예약 가능한 객실이 없습니다.");
+        }
+        this.roomCount--;
+    }
+
+    public void increaseRoomCount() {
+        if (this.roomCount == null) {
+            this.roomCount = 0;
+        }
+        this.roomCount++;
+    }
+
+    public String getReserveStatCd() {
+        if (this.status == AccomStatus.OPEN && this.roomCount != null && this.roomCount > 0) {
+            return "Y";
+        }
+        return "N";
     }
 }

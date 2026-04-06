@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>예약 관리</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-common.css}">
+</head>
+<body>
+
+<div th:replace="~{layouts/header :: header}"></div>
+
+<main class="page-wrap">
+    <section class="page-header">
+        <div class="page-header-copy">
+            <span class="page-label">Admin Orders</span>
+            <h2>예약 관리</h2>
+            <p>예약 현황과 처리 상태를 한 번에 확인할 수 있는 관리자 전용 화면입니다.</p>
+        </div>
+    </section>
+
+    <section class="table-panel">
+        <div class="admin-feedback success" th:if="${param.orderUpdated}">예약 상태가 변경되었습니다.</div>
+        <div class="admin-feedback error" th:if="${param.orderError}" th:text="${param.orderError}">예약 상태 변경 중 오류가 발생했습니다.</div>
+
+        <section class="search-panel">
+            <form class="search-form" th:action="@{/admin/orders}" method="get">
+                <select name="searchBy">
+                    <option value="all" th:selected="${orderSearchDto.searchBy == null or orderSearchDto.searchBy == 'all'}">예약번호+이메일+회원명</option>
+                    <option value="orderId" th:selected="${orderSearchDto.searchBy == 'orderId'}">예약번호</option>
+                    <option value="email" th:selected="${orderSearchDto.searchBy == 'email'}">이메일</option>
+                    <option value="memberName" th:selected="${orderSearchDto.searchBy == 'memberName'}">회원명</option>
+                </select>
+                <input type="text" name="searchQuery" th:value="${orderSearchDto.searchQuery}" placeholder="예약번호, 이메일, 회원명을 입력하세요">
+                <select name="orderStatus">
+                    <option value="" th:selected="${orderSearchDto.orderStatus == null}">전체 상태</option>
+                    <option value="ORDER" th:selected="${orderSearchDto.orderStatus != null and orderSearchDto.orderStatus.name() == 'ORDER'}">예약 완료</option>
+                    <option value="CANCEL" th:selected="${orderSearchDto.orderStatus != null and orderSearchDto.orderStatus.name() == 'CANCEL'}">예약 취소</option>
+                </select>
+                <button type="submit">검색</button>
+            </form>
+        </section>
+
+        <table class="order-table">
+            <colgroup>
+                <col style="width: 9%;">
+                <col style="width: 10%;">
+                <col style="width: 18%;">
+                <col style="width: 14%;">
+                <col style="width: 10%;">
+                <col style="width: 15%;">
+                <col style="width: 6%;">
+                <col style="width: 18%;">
+            </colgroup>
+            <thead>
+            <tr>
+                <th>예약번호</th>
+                <th>회원명</th>
+                <th>이메일</th>
+                <th>예약일시</th>
+                <th>예약상태</th>
+                <th>총금액</th>
+                <th>상품수</th>
+                <th>관리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="empty-row" th:if="${orderPage.totalElements == 0}">
+                <td colspan="8">등록된 예약이 없습니다.</td>
+            </tr>
+            <tr th:each="order : ${orderPage.content}">
+                <td th:text="${order.id}"></td>
+                <td th:text="${order.member.name}" th:title="${order.member.name}"></td>
+                <td th:text="${order.member.email}" th:title="${order.member.email}"></td>
+                <td th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}"></td>
+                <td>
+                    <span class="status-badge" th:text="${order.orderStatus}"></span>
+                </td>
+                <td th:text="${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')} + '원'"></td>
+                <td th:text="${#lists.size(order.orderItems)}"></td>
+                <td class="order-status-cell">
+                    <form class="order-status-form"
+                          th:action="@{/admin/orders/{orderId}/status(orderId=${order.id})}"
+                          method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <input type="hidden" name="page" th:value="${orderPage.number}">
+                        <input type="hidden" name="searchBy" th:value="${orderSearchDto.searchBy}">
+                        <input type="hidden" name="searchQuery" th:value="${orderSearchDto.searchQuery}">
+                        <input type="hidden" name="filterOrderStatus" th:value="${orderSearchDto.orderStatus}">
+                        <input type="hidden" name="status" value="CANCEL">
+                        <button type="submit"
+                                class="role-submit order-cancel-button"
+                                th:disabled="${order.orderStatus.name() == 'CANCEL'}"
+                                th:text="${order.orderStatus.name() == 'CANCEL'} ? '취소 완료' : '예약 취소'">예약 취소</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="pager" th:if="${orderPage.totalPages > 0}"
+             th:with="currentPage=${orderPage.number},
+                      totalPages=${orderPage.totalPages},
+                      startPage=${T(java.lang.Math).max(0, currentPage - 2)},
+                      endPage=${T(java.lang.Math).min(totalPages - 1, startPage + 4)},
+                      adjustedStart=${T(java.lang.Math).max(0, endPage - 4)}">
+            <a class="pager-nav" th:if="${orderPage.hasPrevious()}"
+               th:href="@{/admin/orders(page=${orderPage.number - 1}, searchBy=${orderSearchDto.searchBy}, searchQuery=${orderSearchDto.searchQuery}, orderStatus=${orderSearchDto.orderStatus})}">이전</a>
+            <span class="pager-nav pager-nav-disabled" th:unless="${orderPage.hasPrevious()}">이전</span>
+
+            <a th:if="${adjustedStart > 0}"
+               th:href="@{/admin/orders(page=0, searchBy=${orderSearchDto.searchBy}, searchQuery=${orderSearchDto.searchQuery}, orderStatus=${orderSearchDto.orderStatus})}">1</a>
+            <span class="pager-ellipsis" th:if="${adjustedStart > 1}">...</span>
+
+            <a th:each="pageNum : ${#numbers.sequence(adjustedStart, endPage)}"
+               th:classappend="${pageNum == orderPage.number} ? ' pager-current'"
+               th:href="@{/admin/orders(page=${pageNum}, searchBy=${orderSearchDto.searchBy}, searchQuery=${orderSearchDto.searchQuery}, orderStatus=${orderSearchDto.orderStatus})}"
+               th:text="${pageNum + 1}"></a>
+
+            <span class="pager-ellipsis" th:if="${endPage < totalPages - 2}">...</span>
+            <a th:if="${endPage < totalPages - 1}"
+               th:href="@{/admin/orders(page=${totalPages - 1}, searchBy=${orderSearchDto.searchBy}, searchQuery=${orderSearchDto.searchQuery}, orderStatus=${orderSearchDto.orderStatus})}"
+               th:text="${totalPages}"></a>
+
+            <a class="pager-nav" th:if="${orderPage.hasNext()}"
+               th:href="@{/admin/orders(page=${orderPage.number + 1}, searchBy=${orderSearchDto.searchBy}, searchQuery=${orderSearchDto.searchQuery}, orderStatus=${orderSearchDto.orderStatus})}">다음</a>
+            <span class="pager-nav pager-nav-disabled" th:unless="${orderPage.hasNext()}">다음</span>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
+
+</body>
+</html>

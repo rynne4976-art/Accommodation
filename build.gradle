@@ -147,6 +147,7 @@ dependencies {
 	// ══════════════════════════════════════════════════════════
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'com.h2database:h2'
 	// ↑ Spring Security 테스트: @WithMockUser, csrf() 등 보안 테스트 도구
 
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -155,6 +156,10 @@ dependencies {
 	// ── WAR 배포용 ──
 	// ══════════════════════════════════════════════════════════
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+
+	// AWS S3 SDK (필수)
+	implementation 'software.amazon.awssdk:s3:2.25.26'
+
 }
 
 // ── 테스트 실행 설정 ────────────────────────────────────────

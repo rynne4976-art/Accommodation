@@ -2,8 +2,13 @@ package com.Accommodation.config;
 
 import com.Accommodation.controller.MainController;
 import com.Accommodation.controller.MemberController;
+import com.Accommodation.controller.CommonViewAttributesAdvice;
+import com.Accommodation.constant.Role;
+import com.Accommodation.entity.Member;
+import com.Accommodation.service.AccomService;
 import com.Accommodation.service.CustomUserDetailsService;
 import com.Accommodation.service.MemberService;
+import com.Accommodation.service.OrderService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -25,13 +31,14 @@ import static org.springframework.security.test.web.servlet.response.SecurityMoc
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
         controllers = {MainController.class, MemberController.class},
         excludeAutoConfiguration = UserDetailsServiceAutoConfiguration.class
 )
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, RoleBasedAuthenticationSuccessHandler.class, CommonViewAttributesAdvice.class})
 class SecurityFlowTest {
 
     @Autowired
@@ -42,6 +49,12 @@ class SecurityFlowTest {
 
     @MockBean
     private MemberService memberService;
+
+    @MockBean
+    private AccomService accomService;
+
+    @MockBean
+    private OrderService orderService;
 
     @MockBean
     private CustomUserDetailsService customUserDetailsService;
@@ -62,6 +75,53 @@ class SecurityFlowTest {
                         .password("password", "password123"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/main"))
+                .andExpect(authenticated().withUsername("dummy@example.com"));
+    }
+
+    @Test
+    @DisplayName("관리자 로그인은 메인으로 이동한다")
+    void adminLoginRedirectsToDashboard() throws Exception {
+        UserDetails userDetails = User.withUsername("admin@accom.com")
+                .password(passwordEncoder.encode("password123"))
+                .roles("ADMIN")
+                .build();
+
+        given(customUserDetailsService.loadUserByUsername("admin@accom.com"))
+                .willReturn(userDetails);
+
+        mockMvc.perform(formLogin("/members/login")
+                        .user("email", "admin@accom.com")
+                        .password("password", "password123"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/main"))
+                .andExpect(authenticated().withUsername("admin@accom.com"));
+    }
+
+    @Test
+    @DisplayName("보호된 페이지 접근 후 로그인하면 원래 보던 화면으로 돌아간다")
+    void loginRedirectsToSavedRequest() throws Exception {
+        UserDetails userDetails = User.withUsername("dummy@example.com")
+                .password(passwordEncoder.encode("password123"))
+                .roles("USER")
+                .build();
+
+        given(customUserDetailsService.loadUserByUsername("dummy@example.com"))
+                .willReturn(userDetails);
+
+        var savedSession = mockMvc.perform(get("/members/mypage"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/members/login"))
+                .andReturn()
+                .getRequest()
+                .getSession(false);
+
+        mockMvc.perform(post("/members/login")
+                        .with(csrf())
+                .session((org.springframework.mock.web.MockHttpSession) savedSession)
+                        .param("email", "dummy@example.com")
+                        .param("password", "password123"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/members/mypage**"))
                 .andExpect(authenticated().withUsername("dummy@example.com"));
     }
 
@@ -109,5 +169,24 @@ class SecurityFlowTest {
     void loginPageWithErrorLoads() throws Exception {
         mockMvc.perform(get("/members/login").param("error", ""))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("로그인한 사용자는 마이페이지를 볼 수 있다")
+    void myPageLoads() throws Exception {
+        Member member = new Member();
+        member.setName("김테스트");
+        member.setEmail("kim@test.com");
+        member.setPassword(passwordEncoder.encode("password123"));
+        member.setNumber("01012345678");
+        member.setAddress("서울시 강남구");
+        member.setRole(Role.USER);
+
+        given(memberService.getMemberByEmail("kim@test.com")).willReturn(member);
+
+        mockMvc.perform(get("/members/mypage")
+                        .with(user("kim@test.com").roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("김테스트님, 반갑습니다.")));
     }
 }

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${accomFormDto.id == null} ? '숙소 등록' : '숙소 수정'">숙소 등록</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-common.css}">
+    <link rel="stylesheet" th:href="@{/css/accomForm.css}">
+    <script src="//t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+</head>
+<body>
+
+<div th:replace="~{layouts/header :: header}"></div>
+
+<main class="page-wrap accom-form-page">
+    <section class="page-header accom-form-header">
+        <div class="page-header-copy">
+            <span class="page-label">Admin Accommodations</span>
+            <h2 th:text="${accomFormDto.id == null} ? '숙소 등록' : '숙소 수정'">숙소 등록</h2>
+            <p th:text="${accomFormDto.id == null}
+                    ? '새 숙소를 등록하고 운영 정보를 입력합니다.'
+                    : '기존 숙소 정보를 수정하고 이미지와 운영 상태를 관리합니다.'">
+                숙소 관리 페이지입니다.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a th:href="@{/admin/accoms(page=${currentPage},searchQuery=${returnSearchQuery},accomType=${returnAccomType},grade=${returnGrade},accomStatus=${returnAccomStatus})}">
+                목록으로 이동
+            </a>
+        </div>
+    </section>
+
+    <section class="accom-form-panel">
+        <div class="accom-form-card">
+            <div th:if="${updated}" class="form-alert success">
+                <p>숙소 정보가 수정되었습니다.</p>
+            </div>
+
+            <div th:if="${errorMessage}" class="form-alert error">
+                <p th:text="${errorMessage}"></p>
+            </div>
+
+            <form class="accom-form"
+                  th:object="${accomFormDto}"
+                  th:action="${accomFormDto.id == null} ? @{/admin/accom/new} : @{/admin/accom/{accomId}(accomId=${accomFormDto.id})}"
+                  method="post"
+                  novalidate
+                  enctype="multipart/form-data">
+
+                <p class="field-hint required-guide">* 는 필수 입력란입니다.</p>
+
+                <input type="hidden" th:field="*{id}">
+                <input type="hidden" name="returnPage" th:value="${currentPage}">
+                <input type="hidden" name="returnSearchQuery" th:value="${returnSearchQuery}">
+                <input type="hidden" name="returnAccomType" th:value="${returnAccomType}">
+                <input type="hidden" name="returnGrade" th:value="${returnGrade}">
+                <input type="hidden" name="returnAccomStatus" th:value="${returnAccomStatus}">
+
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="accomName">숙소명 <span class="required-indicator">*</span></label>
+                        <input type="text" th:field="*{accomName}" id="accomName" placeholder="1~100자 이내로 입력">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pricePerNight">1박 가격 <span class="required-indicator">*</span></label>
+                        <input type="number" th:field="*{pricePerNight}" id="pricePerNight" placeholder="0보다 큰 금액 입력">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="roomCount">객실 수 <span class="required-indicator">*</span></label>
+                        <input type="number" th:field="*{roomCount}" id="roomCount" min="0" placeholder="0 이상 입력">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="guestCount">투숙 가능 인원 <span class="required-indicator">*</span></label>
+                        <input type="number" th:field="*{guestCount}" id="guestCount" min="2" max="10" placeholder="숙소 유형에 맞는 인원 입력">
+                        <p class="field-hint" id="guestCountHint">호텔, 리조트, 펜션은 2~10명 / 게스트하우스, 모텔은 1~6명</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="accomType">숙소 유형 <span class="required-indicator">*</span></label>
+                        <select th:field="*{accomType}" id="accomType">
+                            <option value="">선택해 주세요.</option>
+                            <option th:value="HOTEL">호텔</option>
+                            <option th:value="MOTEL">모텔</option>
+                            <option th:value="PENSION">펜션</option>
+                            <option th:value="RESORT">리조트</option>
+                            <option th:value="GUESTHOUSE">게스트하우스</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="grade">숙소 등급 <span class="required-indicator">*</span></label>
+                        <select th:field="*{grade}" id="grade">
+                            <option value="">선택해 주세요.</option>
+                            <option th:value="FIVE">5성급</option>
+                            <option th:value="FOUR">4성급</option>
+                            <option th:value="THREE">3성급</option>
+                            <option th:value="TWO">2성급</option>
+                            <option th:value="ONE">1성급</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="postcode">주소 <span class="required-indicator">*</span></label>
+                        <input type="hidden" th:field="*{location}" id="location">
+                        <div class="address-search-row">
+                            <input type="text" th:field="*{postcode}" id="postcode" placeholder="우편번호" readonly>
+                            <button type="button" class="address-search-button" id="addressSearchButton">주소 검색</button>
+                        </div>
+                        <input type="text" th:field="*{address}" id="address" placeholder="기본 주소" readonly>
+                        <input type="text" th:field="*{detailAddress}" id="detailAddress" placeholder="상세 주소를 입력해 주세요.">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="accomDetail">숙소 설명 <span class="required-indicator">*</span></label>
+                        <textarea th:field="*{accomDetail}" id="accomDetail" rows="7" placeholder="10~1000자 이내로 입력"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">숙소 상태 <span class="required-indicator">*</span></label>
+                        <select th:field="*{status}" id="status">
+                            <option value="">선택해 주세요.</option>
+                            <option th:value="OPEN">운영중</option>
+                            <option th:value="CLOSED">운영중지</option>
+                            <option th:value="READY">준비중</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group file-group">
+                        <label for="accomImgFile">숙소 이미지</label>
+                        <input type="file" name="accomImgFile" id="accomImgFile" multiple>
+                        <p class="field-hint" th:if="${accomFormDto.id != null}">
+                            새 이미지를 선택하면 기존 이미지가 교체됩니다.
+                        </p>
+                        <p class="field-hint" th:if="${accomFormDto.id == null}">
+                            여러 이미지를 한 번에 업로드할 수 있습니다.
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="operationStartDate">운영 시작일 <span class="required-indicator">*</span></label>
+                        <input type="date"
+                               name="operationStartDate"
+                               th:value="${accomFormDto.operationStartDate != null ? #temporals.format(accomFormDto.operationStartDate, 'yyyy-MM-dd') : ''}"
+                               id="operationStartDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="operationEndDate">운영 종료일 <span class="required-indicator">*</span></label>
+                        <input type="date"
+                               name="operationEndDate"
+                               th:value="${accomFormDto.operationEndDate != null ? #temporals.format(accomFormDto.operationEndDate, 'yyyy-MM-dd') : ''}"
+                               id="operationEndDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="checkInTime">체크인 시간 <span class="required-indicator">*</span></label>
+                        <input type="time"
+                               name="checkInTime"
+                               th:value="${accomFormDto.checkInTime != null ? #temporals.format(accomFormDto.checkInTime, 'HH:mm') : ''}"
+                               step="60"
+                               id="checkInTime">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="checkOutTime">체크아웃 시간 <span class="required-indicator">*</span></label>
+                        <input type="time"
+                               name="checkOutTime"
+                               th:value="${accomFormDto.checkOutTime != null ? #temporals.format(accomFormDto.checkOutTime, 'HH:mm') : ''}"
+                               step="60"
+                               id="checkOutTime">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>운영일 선택 <span class="required-indicator">*</span></label>
+                        <p class="field-hint">운영 시작일과 종료일을 선택한 뒤 달력에서 실제 운영할 날짜를 클릭해 주세요.</p>
+
+                        <div class="operation-date-area" id="operationDateArea">
+                            <div class="operation-date-actions">
+                                <button type="button" class="secondary-action" id="selectAllOperationDatesBtn">전체 선택</button>
+                                <button type="button" class="secondary-action" id="clearAllOperationDatesBtn">전체 해제</button>
+                            </div>
+
+                            <div id="operationDateListBox"
+                                 class="operation-date-box">
+                                <p class="operation-date-placeholder">운영 기간을 먼저 선택해 주세요.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a class="secondary-action"
+                       th:href="@{/admin/accoms(page=${currentPage},searchQuery=${returnSearchQuery},accomType=${returnAccomType},grade=${returnGrade},accomStatus=${returnAccomStatus})}">
+                        취소
+                    </a>
+                    <button type="submit"
+                            class="primary-action"
+                            th:text="${accomFormDto.id == null} ? '숙소 등록' : '숙소 수정'">
+                        숙소 등록
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
+
+<script th:inline="javascript">
+    window.accomFormConfig = {
+        initialSelectedDates: /*[[${accomFormDto.operationDateList}]]*/ []
+    };
+</script>
+<script th:src="@{/js/accomform-validation.js}"></script>
+<script th:src="@{/js/accomform-address.js}"></script>
+<script th:src="@{/js/accomform-operation.js}"></script>
+
+</body>
+</html>

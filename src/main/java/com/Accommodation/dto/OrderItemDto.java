@@ -1,29 +1,57 @@
 package com.Accommodation.dto;
 
+import com.Accommodation.constant.BookingStatus;
 import com.Accommodation.entity.OrderItem;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * OrderItemDto (주문 상품 정보용)
- *
- * 주문 내역 화면에서 "어떤 숙소를, 얼마에, 몇 박" 표시할 때 사용합니다.
- * OrderHistDto 안에 리스트로 포함됩니다.
- */
+import java.time.LocalDate;
+
 @Getter
 @Setter
 public class OrderItemDto {
 
-    private String accomNm;    // 숙소명
-    private int count;         // 주문 수량 (박수)
-    private int orderPrice;    // 주문 당시 가격
-    private String imgUrl;     // 숙소 대표 이미지 경로
+    private Long orderItemId;
+    private String accomName;
+    private int count;
+    private int orderPrice;
+    private String imgUrl;
+    private String accomDetail;
+    private String gradeLabel;
+    private LocalDate checkInDate;
+    private LocalDate checkOutDate;
+    private Integer guestCount;
+    private BookingStatus bookingStatus;
 
-    // OrderItem 엔티티 → DTO 변환
     public OrderItemDto(OrderItem orderItem, String imgUrl) {
-        this.accomNm = orderItem.getAccom().getAccomDetail();
+        this.orderItemId = orderItem.getId();
+        this.accomName = orderItem.getAccom().getAccomName();
         this.count = orderItem.getCount();
         this.orderPrice = orderItem.getOrderPrice();
         this.imgUrl = imgUrl;
+        this.accomDetail = orderItem.getAccom().getAccomDetail();
+        this.gradeLabel = toGradeLabel(orderItem);
+        this.checkInDate = orderItem.getCheckInDate();
+        this.checkOutDate = orderItem.getCheckOutDate();
+        this.guestCount = orderItem.getGuestCount();
+        this.bookingStatus = orderItem.getBookingStatus();
+    }
+
+    public int getTotalPrice() {
+        return orderPrice * count;
+    }
+
+    private String toGradeLabel(OrderItem orderItem) {
+        if (orderItem.getAccom().getGrade() == null) {
+            return "";
+        }
+
+        return switch (orderItem.getAccom().getGrade()) {
+            case ONE -> "1성급";
+            case TWO -> "2성급";
+            case THREE -> "3성급";
+            case FOUR -> "4성급";
+            case FIVE -> "5성급";
+        };
     }
 }

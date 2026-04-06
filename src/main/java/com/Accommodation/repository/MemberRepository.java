@@ -1,7 +1,12 @@
 package com.Accommodation.repository;
 
+import com.Accommodation.constant.Role;
 import com.Accommodation.entity.Member;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * 회원 Repository 인터페이스
@@ -28,4 +33,27 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     // 로그인 시 이메일로 회원을 찾아야 하므로 필수!
     // 자동 생성 쿼리: SELECT m FROM Member m WHERE m.email = :email
     Member findByEmail(String email);
+
+    @Query("""
+            SELECT m
+            FROM Member m
+            WHERE m.email <> :excludedEmail
+              AND (:role IS NULL OR m.role = :role)
+              AND (
+                    :searchQuery IS NULL OR :searchQuery = ''
+                    OR (:searchBy = 'name' AND lower(m.name) LIKE lower(concat('%', :searchQuery, '%')))
+                    OR (:searchBy = 'email' AND lower(m.email) LIKE lower(concat('%', :searchQuery, '%')))
+                    OR (:searchBy = 'all' AND (
+                        lower(m.name) LIKE lower(concat('%', :searchQuery, '%'))
+                        OR lower(m.email) LIKE lower(concat('%', :searchQuery, '%'))
+                    ))
+              )
+            """)
+    Page<Member> searchMembers(@Param("searchBy") String searchBy,
+                               @Param("searchQuery") String searchQuery,
+                               @Param("role") Role role,
+                               @Param("excludedEmail") String excludedEmail,
+                               Pageable pageable);
+
+    long countByRole(Role role);
 }

@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long>, OrderRepositoryCustom {
 
     // 회원의 주문 내역을 최신순으로 조회 (페이징)
     @Query("SELECT o FROM Order o WHERE o.member.email = :email ORDER BY o.orderDate DESC")

@@ -1,38 +1,110 @@
 package com.Accommodation.repository;
 
+import com.Accommodation.constant.AccomGrade;
+import com.Accommodation.constant.AccomStatus;
+import com.Accommodation.constant.AccomType;
 import com.Accommodation.dto.AccomSearchDto;
 import com.Accommodation.dto.MainAccomDto;
-
 import com.Accommodation.dto.QMainAccomDto;
+import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.QAccom;
 import com.Accommodation.entity.QAccomImg;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Wildcard;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.thymeleaf.util.StringUtils;
 
 import java.util.List;
 
-public class AccomRepositoryCustomImpl implements AccomRepositoryCustom{
+public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
-    public AccomRepositoryCustomImpl(EntityManager em){
-
+    public AccomRepositoryCustomImpl(EntityManager em) {
         this.queryFactory = new JPAQueryFactory(em);
     }
 
-    private BooleanExpression accomNmLike(String searchQuery){
+    private BooleanExpression accomNameLike(String searchQuery) {
+        return (searchQuery == null || searchQuery.trim().isEmpty())
+                ? null
+                : QAccom.accom.accomName.containsIgnoreCase(searchQuery);
+    }
 
-        return StringUtils.isEmpty(searchQuery)
-                ?null
-                : QAccom.accom.accomNm.like("%"+searchQuery+"%");
+    private BooleanExpression accomTypeEq(AccomType accomType) {
+        return accomType == null ? null : QAccom.accom.accomType.eq(accomType);
+    }
 
+    private BooleanExpression gradeEq(AccomGrade grade) {
+        return grade == null ? null : QAccom.accom.grade.eq(grade);
+    }
+
+    private BooleanExpression statusEq(AccomStatus status) {
+        return status == null ? null : QAccom.accom.status.eq(status);
+    }
+
+    private BooleanExpression priceGoe(Integer minPrice) {
+        return minPrice == null ? null : QAccom.accom.pricePerNight.goe(minPrice);
+    }
+
+    private BooleanExpression ratingGoe(Double minRating) {
+        return minRating == null ? null : QAccom.accom.avgRating.goe(minRating);
+    }
+
+    private BooleanExpression notDeleted() {
+        return QAccom.accom.deleted.isFalse();
+    }
+
+    private com.querydsl.jpa.JPQLQuery<Long> repImageIdSubQuery(QAccom accom) {
+        QAccomImg accomImgSub = new QAccomImg("accomImgSub");
+
+        return JPAExpressions
+                .select(accomImgSub.id.min())
+                .from(accomImgSub)
+                .where(
+                        accomImgSub.accom.eq(accom),
+                        accomImgSub.repImgYn.eq("Y")
+                );
+    }
+
+    @Override
+    public Page<Accom> getAdminAccomPage(AccomSearchDto accomSearchDto, Pageable pageable) {
+
+        QAccom accom = QAccom.accom;
+
+        List<Accom> content = queryFactory
+                .selectFrom(accom)
+                .where(
+                        notDeleted(),
+                        accomNameLike(accomSearchDto.getSearchQuery()),
+                        accomTypeEq(accomSearchDto.getAccomType()),
+                        gradeEq(accomSearchDto.getGrade()),
+                        statusEq(accomSearchDto.getAccomStatus()),
+                        priceGoe(accomSearchDto.getMinPrice()),
+                        ratingGoe(accomSearchDto.getMinRating())
+                )
+                .orderBy(accom.id.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(accom.count())
+                .from(accom)
+                .where(
+                        notDeleted(),
+                        accomNameLike(accomSearchDto.getSearchQuery()),
+                        accomTypeEq(accomSearchDto.getAccomType()),
+                        gradeEq(accomSearchDto.getGrade()),
+                        statusEq(accomSearchDto.getAccomStatus()),
+                        priceGoe(accomSearchDto.getMinPrice()),
+                        ratingGoe(accomSearchDto.getMinRating())
+                )
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total == null ? 0 : total);
     }
 
     @Override
@@ -41,36 +113,53 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom{
         QAccom accom = QAccom.accom;
         QAccomImg accomImg = QAccomImg.accomImg;
 
-        List<MainAccomDto> content = queryFactory.select( new QMainAccomDto(
-                accom.id,
-                accom.accomNm,
-                accom.price,
-                accom.stars,
-                accom.accomDetail,
-                accom.starRating,
-                accomImg.imgName
+        List<MainAccomDto> content = queryFactory
+                .select(new QMainAccomDto(
+                        accom.id,
+                        accom.accomName,
+                        accom.accomType,
+                        accom.grade,
+                        accom.accomDetail,
+                        accomImg.imgUrl,
+                        accom.pricePerNight,
+                        accom.location,
+                        accom.roomCount,
+                        accom.avgRating,
+                        accom.reviewCount
+                ))
+                .from(accom)
+                .join(accomImg).on(
+                        accomImg.accom.eq(accom),
+                        accomImg.id.eq(repImageIdSubQuery(accom))
                 )
-        )
-                .from(accomImg)
-                .join(accomImg.accom, accom)
-                .where(accomImg.repimgYn.eq("Y"))
-                .where(accomNmLike(accomSearchDto.getSearchQuery()))
-                .orderBy(accom.id.desc())
+                .where(
+                        notDeleted(),
+                        accomNameLike(accomSearchDto.getSearchQuery()),
+                        accomTypeEq(accomSearchDto.getAccomType()),
+                        gradeEq(accomSearchDto.getGrade()),
+                        statusEq(accomSearchDto.getAccomStatus()),
+                        priceGoe(accomSearchDto.getMinPrice()),
+                        ratingGoe(accomSearchDto.getMinRating())
+                )
+                .orderBy(accom.avgRating.desc(), accom.reviewCount.desc(), accom.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        long total = queryFactory
-                .select(Wildcard.count)
-                .from(accomImg)
-                .join(accomImg.accom, accom)
-                .where(accomImg.repimgYn.eq("Y"))
-                .where(accomNmLike(accomSearchDto.getSearchQuery()))
+        Long total = queryFactory
+                .select(accom.count())
+                .from(accom)
+                .where(
+                        notDeleted(),
+                        accomNameLike(accomSearchDto.getSearchQuery()),
+                        accomTypeEq(accomSearchDto.getAccomType()),
+                        gradeEq(accomSearchDto.getGrade()),
+                        statusEq(accomSearchDto.getAccomStatus()),
+                        priceGoe(accomSearchDto.getMinPrice()),
+                        ratingGoe(accomSearchDto.getMinRating())
+                )
                 .fetchOne();
 
-
-
-
-        return new PageImpl<>(content, pageable, total);
+        return new PageImpl<>(content, pageable, total == null ? 0 : total);
     }
 }

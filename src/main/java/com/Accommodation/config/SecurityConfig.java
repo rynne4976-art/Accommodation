@@ -17,6 +17,8 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final RoleBasedAuthenticationSuccessHandler roleBasedAuthenticationSuccessHandler;
+
     /**
      * 🔐 비밀번호 암호화 객체 등록
      */
@@ -42,22 +44,30 @@ public class SecurityConfig {
                                 "/",
                                 "/main",
                                 "/error",
+                                "/error/**",
                                 "/members/new",
                                 "/members/login",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
-                                "/accom/**"
+                                "/accom/**",
+                                "/reviews/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
+                )
+                // 미인증 접근은 로그인 페이지로 유도해 일반 웹 흐름에 맞춥니다.
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                        .accessDeniedPage("/error/403")
                 )
 
                 .formLogin(form -> form
                         .loginPage("/members/login")
                         .loginProcessingUrl("/members/login")
-                        .failureUrl("/members/login?error")
-                        .defaultSuccessUrl("/main", true)
+                        // 로그인 실패 메시지 처리를 커스텀 핸들러로 분리합니다.
+                        .failureHandler(new FormLoginAuthenticationFailureHandler())
+                        .successHandler(roleBasedAuthenticationSuccessHandler)
                         .usernameParameter("email")
                         .passwordParameter("password")
                         .permitAll()

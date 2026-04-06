@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>회원 관리</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-common.css}">
+    <script defer th:src="@{/js/admin-list.js}"></script>
+</head>
+<body>
+
+<div th:replace="~{layouts/header :: header}"></div>
+
+<main class="page-wrap">
+    <section class="page-header">
+        <div class="page-header-copy">
+            <span class="page-label">Admin Members</span>
+            <h2>회원 관리</h2>
+            <p>가입 회원의 기본 정보와 권한 상태를 독립 화면에서 확인합니다.</p>
+        </div>
+    </section>
+
+    <div class="admin-list-shell" data-ajax-list data-update-selector=".admin-list-shell">
+        <div class="admin-feedback success" th:if="${param.roleUpdated}">회원 권한이 변경되었습니다.</div>
+        <div class="admin-feedback error" th:if="${param.roleError}" th:text="${param.roleError}">권한 변경 중 오류가 발생했습니다.</div>
+
+        <section class="search-panel">
+            <form class="search-form" data-ajax-form th:action="@{/admin/members}" method="get">
+                <select name="searchBy">
+                    <option value="all" th:selected="${memberSearchDto.searchBy == null or memberSearchDto.searchBy == 'all'}">이름+이메일</option>
+                    <option value="name" th:selected="${memberSearchDto.searchBy == 'name'}">이름</option>
+                    <option value="email" th:selected="${memberSearchDto.searchBy == 'email'}">이메일</option>
+                </select>
+                <input type="text" name="searchQuery" th:value="${memberSearchDto.searchQuery}" placeholder="검색어를 입력하세요">
+                <select name="role">
+                    <option value="" th:selected="${memberSearchDto.role == null}">전체 권한</option>
+                    <option value="USER" th:selected="${memberSearchDto.role != null and memberSearchDto.role.name() == 'USER'}">USER</option>
+                    <option value="ADMIN" th:selected="${memberSearchDto.role != null and memberSearchDto.role.name() == 'ADMIN'}">ADMIN</option>
+                </select>
+                <button type="submit">검색</button>
+            </form>
+        </section>
+
+        <section class="table-panel">
+        <table class="member-table">
+            <colgroup>
+                <col style="width: 8%;">
+                <col style="width: 9%;">
+                <col style="width: 17%;">
+                <col style="width: 14%;">
+                <col style="width: 16%;">
+                <col style="width: 9%;">
+                <col style="width: 15%;">
+                <col style="width: 12%;">
+            </colgroup>
+            <thead>
+            <tr>
+                <th>회원번호</th>
+                <th>이름</th>
+                <th>이메일</th>
+                <th>전화번호</th>
+                <th>주소</th>
+                <th>권한</th>
+                <th>권한 변경</th>
+                <th>가입일</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="empty-row" th:if="${memberPage.totalElements == 0}">
+                <td colspan="8">등록된 회원이 없습니다.</td>
+            </tr>
+            <tr th:each="member : ${memberPage.content}">
+                <td th:text="${member.id}"></td>
+                <td>
+                    <a class="cell-link"
+                       th:href="@{/admin/members/{memberId}(memberId=${member.id}, page=${memberPage.number}, searchBy=${memberSearchDto.searchBy}, searchQuery=${memberSearchDto.searchQuery}, role=${memberSearchDto.role})}"
+                       th:text="${member.name}"
+                       th:title="${member.name}"></a>
+                </td>
+                <td th:text="${member.email}" th:title="${member.email}"></td>
+                <td th:text="${member.formattedNumber}"></td>
+                <td th:text="${member.address}" th:title="${member.address}"></td>
+                <td>
+                    <span class="role-badge" th:text="${member.role}"></span>
+                </td>
+                <td class="role-change-cell">
+                    <form class="role-form" data-ajax-form th:action="@{/admin/members/{memberId}/role(memberId=${member.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <input type="hidden" name="page" th:value="${memberPage.number}">
+                        <input type="hidden" name="searchBy" th:value="${memberSearchDto.searchBy}">
+                        <input type="hidden" name="searchQuery" th:value="${memberSearchDto.searchQuery}">
+                        <input type="hidden" name="filterRole" th:value="${memberSearchDto.role}">
+                        <select name="role" class="role-select">
+                            <option value="USER" th:selected="${member.role.name() == 'USER'}">USER</option>
+                            <option value="ADMIN" th:selected="${member.role.name() == 'ADMIN'}">ADMIN</option>
+                        </select>
+                        <button type="submit" class="role-submit">저장</button>
+                    </form>
+                </td>
+                <td th:text="${#temporals.format(member.regTime, 'yyyy-MM-dd')}"></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="pager" th:if="${memberPage.totalPages > 0}"
+             th:with="currentPage=${memberPage.number},
+                      totalPages=${memberPage.totalPages},
+                      startPage=${T(java.lang.Math).max(0, currentPage - 2)},
+                      endPage=${T(java.lang.Math).min(totalPages - 1, startPage + 4)},
+                      adjustedStart=${T(java.lang.Math).max(0, endPage - 4)}">
+            <a class="pager-nav" th:if="${memberPage.hasPrevious()}"
+               th:href="@{/admin/members(page=${memberPage.number - 1}, searchBy=${memberSearchDto.searchBy}, searchQuery=${memberSearchDto.searchQuery}, role=${memberSearchDto.role})}">이전</a>
+            <span class="pager-nav pager-nav-disabled" th:unless="${memberPage.hasPrevious()}">이전</span>
+
+            <a th:if="${adjustedStart > 0}"
+               th:href="@{/admin/members(page=0, searchBy=${memberSearchDto.searchBy}, searchQuery=${memberSearchDto.searchQuery}, role=${memberSearchDto.role})}">1</a>
+            <span class="pager-ellipsis" th:if="${adjustedStart > 1}">...</span>
+
+            <a th:each="pageNum : ${#numbers.sequence(adjustedStart, endPage)}"
+               th:classappend="${pageNum == memberPage.number} ? ' pager-current'"
+               th:href="@{/admin/members(page=${pageNum}, searchBy=${memberSearchDto.searchBy}, searchQuery=${memberSearchDto.searchQuery}, role=${memberSearchDto.role})}"
+               th:text="${pageNum + 1}"></a>
+
+            <span class="pager-ellipsis" th:if="${endPage < totalPages - 2}">...</span>
+            <a th:if="${endPage < totalPages - 1}"
+               th:href="@{/admin/members(page=${totalPages - 1}, searchBy=${memberSearchDto.searchBy}, searchQuery=${memberSearchDto.searchQuery}, role=${memberSearchDto.role})}"
+               th:text="${totalPages}"></a>
+
+            <a class="pager-nav" th:if="${memberPage.hasNext()}"
+               th:href="@{/admin/members(page=${memberPage.number + 1}, searchBy=${memberSearchDto.searchBy}, searchQuery=${memberSearchDto.searchQuery}, role=${memberSearchDto.role})}">다음</a>
+            <span class="pager-nav pager-nav-disabled" th:unless="${memberPage.hasNext()}">다음</span>
+        </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
+
+</body>
+</html>
