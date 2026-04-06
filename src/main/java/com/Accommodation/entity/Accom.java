@@ -13,7 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "accom")
+@Table(
+        name = "accom",
+        indexes = {
+                @Index(name = "idx_accom_deleted_status_type_grade", columnList = "deleted, status, accom_type, grade"),
+                @Index(name = "idx_accom_deleted_rating_review_id", columnList = "deleted, avg_rating, review_count, id")
+        }
+)
 @Getter
 @Setter
 @ToString
