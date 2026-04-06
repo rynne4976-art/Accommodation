@@ -44,17 +44,26 @@ if (tabs.length) {
     const sameDate = (a, b) => a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
     const formatDate = (date) => `${date.getMonth() + 1}.${String(date.getDate()).padStart(2, "0")} ${weekdays[date.getDay()]}`;
     const closePopups = () => [ui.calendar, ui.guest].forEach((el) => el.classList.remove("open"));
+    const emptyDateText = "날짜를 선택해주세요!";
+    const selectingDateText = "체크인 날짜 - 체크아웃 날짜";
 
     function renderDate() {
-        const text = !state.start
-            ? "체크인 날짜 - 체크아웃 날짜"
+        const hasCompleteRange = Boolean(state.start && state.end);
+        const isCalendarOpen = ui.calendar.classList.contains("open");
+        const triggerText = hasCompleteRange
+            ? `${formatDate(state.start)} - ${formatDate(state.end)} (${Math.round((state.end - state.start) / 86400000)}박)`
+            : isCalendarOpen
+                ? selectingDateText
+                : emptyDateText;
+        const summaryText = !state.start
+            ? selectingDateText
             : !state.end
                 ? `${formatDate(state.start)} - 체크아웃 날짜`
-                : `${formatDate(state.start)} - ${formatDate(state.end)} (${Math.round((state.end - state.start) / 86400000)}박)`;
+                : triggerText;
 
-        ui.dateLabel.textContent = text;
-        ui.summary.textContent = text;
-        ui.dateTrigger.classList.toggle("is-placeholder", !state.start);
+        ui.dateLabel.textContent = triggerText;
+        ui.summary.textContent = summaryText;
+        ui.dateTrigger.classList.toggle("is-placeholder", !hasCompleteRange);
     }
 
     function renderGuest() {
@@ -93,7 +102,12 @@ if (tabs.length) {
             }
             if (state.start && state.end && date > state.start && date < state.end) button.classList.add("in-range");
             if (sameDate(date, state.start) || sameDate(date, state.end)) button.classList.add("selected");
-            if (!button.disabled) button.addEventListener("click", () => pickDate(date));
+            if (!button.disabled) {
+                button.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    pickDate(date);
+                });
+            }
 
             container.appendChild(button);
         }
@@ -114,7 +128,11 @@ if (tabs.length) {
             state.end = sameDate(date, state.start) ? addDays(date, 1) : date;
         }
 
-        if (state.end) ui.calendar.classList.remove("open");
+        if (state.end) {
+            ui.calendar.classList.remove("open");
+        } else {
+            ui.calendar.classList.add("open");
+        }
         renderDate();
         renderCalendar();
     }
@@ -130,7 +148,16 @@ if (tabs.length) {
             const opened = popup.classList.contains("open");
             closePopups();
             if (!opened) popup.classList.add("open");
+            if (popup === ui.calendar) renderDate();
         });
+    });
+
+    ui.calendar?.addEventListener("click", (event) => {
+        event.stopPropagation();
+    });
+
+    ui.guest?.addEventListener("click", (event) => {
+        event.stopPropagation();
     });
 
     [["prevMonthBtn", -1], ["nextMonthBtn", 1]].forEach(([id, diff]) => {
@@ -160,11 +187,12 @@ if (tabs.length) {
     });
 
     document.addEventListener("click", (e) => {
-        if (!e.target.closest(".booking-shell")) closePopups();
+        if (!e.target.closest(".booking-shell")) {
+            closePopups();
+            renderDate();
+        }
     });
 
-    state.start = addDays(baseToday, 4);
-    state.end = addDays(baseToday, 5);
     renderDate();
     renderGuest();
     renderCalendar();

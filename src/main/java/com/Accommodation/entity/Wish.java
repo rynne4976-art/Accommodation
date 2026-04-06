@@ -25,4 +25,7 @@ public class Wish extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "accom_id", nullable = false)
     private Accom accom;
+
+    @Column(name = "wish_emotion", length = 30, nullable = false)
+    private String wishEmotion = "GO_WANT";
 }

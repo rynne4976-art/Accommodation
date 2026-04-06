@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Accommodation</title>
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/main.css}">
@@ -12,7 +14,7 @@
 
 <section class="hero">
     <div class="hero-overlay">
-        <h1 class="hero-copy">원하는 숙소를 빠르고 편하게 찾아보세요</h1>
+        <h1 class="hero-copy">원하는 숙소를 빠르고 편하게 찾아보세요!</h1>
 
         <div class="booking-shell">
             <div class="booking-tabs">
@@ -20,8 +22,9 @@
                 <button class="booking-tab active" type="button" data-booking-tab="global">해외 숙소</button>
             </div>
 
-            <form class="booking-bar" th:action="@{/main}" method="get">
-                <label class="booking-field">
+            <form class="booking-bar" th:action="@{/searchList}" method="get">
+
+            <label class="booking-field">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M10 4a6 6 0 1 0 3.874 10.582l4.272 4.272 1.414-1.414-4.272-4.272A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/>
                     </svg>
@@ -32,7 +35,7 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2Zm11 8H6v10h12V10Zm0-4H6v2h12V6Z"/>
                     </svg>
-                    <span id="dateRangeLabel">체크인 날짜 - 체크아웃 날짜</span>
+                    <span id="dateRangeLabel">날짜를 선택해주세요!</span>
                 </button>
 
                 <button class="booking-action is-placeholder" id="guestTrigger" type="button">
@@ -72,7 +75,7 @@
 
                 <div class="calendar-footer">
                     <button class="calendar-reset" id="calendarResetBtn" type="button">일정 초기화</button>
-                    <span class="calendar-summary" id="calendarSummary">체크인 날짜 - 체크아웃 날짜</span>
+                    <span class="calendar-summary" id="calendarSummary">날짜를 선택해주세요!</span>
                 </div>
             </div>
 
@@ -155,7 +158,12 @@
     <div class="accom-slider" data-accom-slider th:if="${accomList != null and !#lists.isEmpty(accomList)}">
         <article class="card accom-card" th:each="accom : ${accomList}">
             <div class="accom-card__visual">
-                <button class="accom-card__wish" type="button" aria-label="찜" aria-pressed="false" data-wish-button>
+                <button class="accom-card__wish"
+                        type="button"
+                        aria-label="찜"
+                        aria-pressed="false"
+                        th:attr="data-accom-id=${accom.id}"
+                        data-wish-button>
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M12 20.5 4.8 13.8a4.9 4.9 0 0 1 6.9-6.9L12 7.2l.3-.3a4.9 4.9 0 0 1 6.9 6.9Z"/>
                     </svg>
@@ -221,13 +229,6 @@
 
 <div th:replace="~{layouts/footer :: footer}"></div>
 <script th:src="@{/js/main.js}"></script>
-<script>
-    document.querySelectorAll("[data-wish-button]").forEach((button) => {
-        button.addEventListener("click", () => {
-            const active = button.classList.toggle("is-active");
-            button.setAttribute("aria-pressed", active ? "true" : "false");
-        });
-    });
-</script>
+<script th:src="@{/js/wish.js}"></script>
 </body>
 </html>

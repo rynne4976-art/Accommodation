@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layouts}">
+<head>
+    <meta charset="UTF-8">
+    <title>교통/렌트카</title>
+    <link rel="stylesheet" th:href="@{/css/transport.css}">
+</head>
+
+<div layout:fragment="content">
+    <section class="transport-page">
+        <div class="transport-shell">
+            <header class="transport-hero">
+                <p class="transport-hero__eyebrow">Move Smarter</p>
+                <h1 class="transport-hero__title">교통/렌트카</h1>
+                <p class="transport-hero__subtitle">
+                    숙소 위치를 기준으로 주요 교통 거점과의 이동 감각을 빠르게 확인하고,
+                    함께 볼 만한 렌트카 정보도 한 화면에서 비교할 수 있습니다.
+                </p>
+
+                <div class="transport-tabs" aria-label="교통 카테고리">
+                    <button class="transport-tabs__item is-active" type="button">전체</button>
+                    <button class="transport-tabs__item" type="button">공항 이동</button>
+                    <button class="transport-tabs__item" type="button">기차역</button>
+                    <button class="transport-tabs__item" type="button">렌트카</button>
+                </div>
+            </header>
+
+            <section class="transport-overview">
+                <div class="transport-overview__main">
+                    <span class="transport-overview__badge">숙소 기준 계산</span>
+                    <h2 th:if="${selectedAccom != null}" th:text="${selectedAccom.accomName}">선택한 숙소</h2>
+                    <h2 th:if="${selectedAccom == null}">숙소를 선택하면 교통 정보를 계산합니다.</h2>
+                    <p th:if="${selectedAccom != null}" th:text="${selectedAccom.location}">숙소 주소</p>
+                    <p th:if="${selectedAccom == null}">
+                        숙소 상세 페이지에서 이동하면 해당 숙소 주소 기준으로 가장 가까운 공항과 역,
+                        추천 이동 방식을 바로 확인할 수 있습니다.
+                    </p>
+                    <input type="hidden"
+                           id="transportAccomLocation"
+                           th:value="${selectedAccom != null ? selectedAccom.location : ''}">
+                </div>
+
+                <div class="transport-overview__aside">
+                    <article class="transport-mini-card">
+                        <strong>계산 기준</strong>
+                        <p>네이버 지도 주소 변환 결과와 주요 교통 거점 좌표를 기준으로 계산합니다.</p>
+                    </article>
+                    <article class="transport-mini-card">
+                        <strong>안내 방식</strong>
+                        <p>직선거리와 대략적인 이동 시간 감각을 먼저 보여주고 렌트카 후보를 함께 제공합니다.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="transport-board">
+                <div class="transport-board__head">
+                    <div>
+                        <h2>숙소 기준 이동 정보</h2>
+                        <p id="transportStatus">숙소 주소를 기준으로 교통 정보를 계산할 준비가 되어 있습니다.</p>
+                    </div>
+                    <button class="transport-board__sort" type="button">거리 기준</button>
+                </div>
+
+                <div class="transport-filter-row">
+                    <button class="transport-filter is-active" type="button">전체</button>
+                    <button class="transport-filter" type="button">가까운 공항</button>
+                    <button class="transport-filter" type="button">가까운 역</button>
+                    <button class="transport-filter" type="button">추천 이동</button>
+                    <button class="transport-filter" type="button">렌트카</button>
+                </div>
+
+                <div id="transportMetricCards" class="transport-metric-grid">
+                    <article class="transport-metric-card transport-metric-card--placeholder">
+                        <span class="transport-metric-card__label">가장 가까운 공항</span>
+                        <strong class="transport-metric-card__headline">숙소 선택 필요</strong>
+                        <p class="transport-metric-card__copy">숙소 상세에서 이동하면 주소 기준 결과가 표시됩니다.</p>
+                    </article>
+                    <article class="transport-metric-card transport-metric-card--placeholder">
+                        <span class="transport-metric-card__label">가장 가까운 역</span>
+                        <strong class="transport-metric-card__headline">숙소 선택 필요</strong>
+                        <p class="transport-metric-card__copy">공항과 역은 직선거리 기준으로 계산됩니다.</p>
+                    </article>
+                    <article class="transport-metric-card transport-metric-card--placeholder">
+                        <span class="transport-metric-card__label">이동 추천</span>
+                        <strong class="transport-metric-card__headline">숙소 선택 필요</strong>
+                        <p class="transport-metric-card__copy">렌트카 추천은 교통 거점과의 거리 감각을 함께 반영합니다.</p>
+                    </article>
+                </div>
+
+                <div class="transport-board__message">
+                    <h3>렌트카 추천 보드</h3>
+                    <p>현재 등록된 렌트카 목록 중에서 먼저 보기 좋은 항목을 아래에 배치했습니다.</p>
+                </div>
+
+                <div class="transport-board__grid" th:if="${carList != null and !#lists.isEmpty(carList)}">
+                    <article class="transport-car-card" th:each="car : ${carList}">
+                        <div class="transport-car-card__visual">
+                            <div class="transport-car-card__visual-top">
+                                <span class="transport-car-card__company" th:text="${car.carCompany}">렌트카 업체</span>
+                                <span class="transport-car-card__visual-badge" th:text="${car.carCategory}">차종</span>
+                            </div>
+                            <strong class="transport-car-card__visual-name" th:text="${car.carName}">차량명</strong>
+                            <span class="transport-car-card__visual-file"
+                                  th:text="${car.carImg != null ? car.carImg : 'image pending'}">image.jpg</span>
+                        </div>
+
+                        <div class="transport-car-card__body">
+                            <div class="transport-car-card__meta">
+                                <span class="transport-car-card__people"
+                                      th:text="'정원 ' + ${car.carUsePeople} + '명'">정원 4명</span>
+                            </div>
+                            <h3 class="transport-car-card__name" th:text="${car.carName}">차량명</h3>
+                            <p class="transport-car-card__info" th:text="${car.carInfo}">차량 설명</p>
+                            <div class="transport-car-card__bottom">
+                                <strong class="transport-car-card__price"
+                                        th:text="${#numbers.formatInteger(car.carPrice, 3, 'COMMA')} + '원'">80,000원</strong>
+                                <button class="transport-car-card__button" type="button">자세히 보기</button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="transport-board__grid" th:if="${carList == null or #lists.isEmpty(carList)}">
+                    <div class="transport-placeholder-card"></div>
+                    <div class="transport-placeholder-card"></div>
+                    <div class="transport-placeholder-card"></div>
+                </div>
+            </section>
+        </div>
+    </section>
+
+    <script th:inline="javascript">
+        window.transportPageConfig = {
+            hasSelectedAccom: /*[[${selectedAccom != null}]]*/ false
+        };
+    </script>
+    <script th:src="@{/js/transport.js}"></script>
+    <script type="text/javascript"
+            th:src="|https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${naverMapClientId}&submodules=geocoder&callback=initTransportPage|">
+    </script>
+</div>
+</html>

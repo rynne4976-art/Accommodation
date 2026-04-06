@@ -1,0 +1,412 @@
+.transport-page {
+    min-height: calc(100vh - 180px);
+    padding: 32px 20px 72px;
+    background:
+        radial-gradient(circle at 10% 16%, rgba(180, 148, 255, 0.18), transparent 26%),
+        linear-gradient(180deg, #f7f8fd 0%, #f4f6fb 100%);
+}
+
+.transport-shell {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+}
+
+.transport-hero {
+    margin-bottom: 24px;
+}
+
+.transport-hero__eyebrow {
+    margin: 0 0 10px;
+    color: #6d47ff;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.transport-hero__title {
+    margin: 0;
+    color: #1f2940;
+    font-size: clamp(2rem, 5vw, 3.3rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+}
+
+.transport-hero__subtitle {
+    width: min(720px, 100%);
+    margin: 12px 0 0;
+    color: #667085;
+    font-size: 1.02rem;
+    line-height: 1.65;
+}
+
+.transport-tabs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.transport-tabs__item,
+.transport-filter,
+.transport-board__sort {
+    border: 0;
+    background: #fff;
+    color: #5f6880;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.transport-tabs__item {
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+}
+
+.transport-tabs__item.is-active,
+.transport-filter.is-active {
+    background: linear-gradient(135deg, #a374ff, #7b3ff2);
+    color: #fff;
+}
+
+.transport-overview {
+    display: grid;
+    grid-template-columns: 1.35fr 0.85fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.transport-overview__main,
+.transport-mini-card,
+.transport-board {
+    border: 1px solid rgba(226, 232, 240, 0.92);
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.05);
+}
+
+.transport-overview__main {
+    padding: 24px 26px;
+}
+
+.transport-overview__badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(123, 63, 242, 0.12);
+    color: #6d47ff;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.transport-overview__main h2 {
+    margin: 14px 0 10px;
+    color: #222b41;
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+.transport-overview__main p {
+    margin: 0;
+    color: #667085;
+    line-height: 1.7;
+}
+
+.transport-overview__aside {
+    display: grid;
+    gap: 16px;
+}
+
+.transport-mini-card {
+    padding: 22px;
+}
+
+.transport-mini-card strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #243044;
+    font-size: 1.15rem;
+    font-weight: 900;
+}
+
+.transport-mini-card p {
+    margin: 0;
+    color: #667085;
+    line-height: 1.6;
+}
+
+.transport-board {
+    padding: 24px;
+}
+
+.transport-board__head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.transport-board__head h2 {
+    margin: 0;
+    color: #202a40;
+    font-size: 1.8rem;
+    font-weight: 900;
+}
+
+.transport-board__head p {
+    margin: 8px 0 0;
+    color: #667085;
+}
+
+#transportStatus[data-tone="loading"] {
+    color: #6d47ff;
+}
+
+#transportStatus[data-tone="success"] {
+    color: #2f6f52;
+}
+
+#transportStatus[data-tone="error"] {
+    color: #c2410c;
+}
+
+.transport-board__sort {
+    min-width: 92px;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 14px;
+    box-shadow: inset 0 0 0 1px #d8deea;
+}
+
+.transport-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.transport-filter {
+    min-height: 38px;
+    padding: 0 15px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px #e1e6f0;
+}
+
+.transport-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.transport-metric-card {
+    padding: 20px 22px;
+    border-radius: 22px;
+    border: 1px solid rgba(226, 232, 240, 0.92);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 247, 255, 0.92));
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+}
+
+.transport-metric-card--placeholder {
+    opacity: 0.82;
+}
+
+.transport-metric-card__label {
+    display: block;
+    margin-bottom: 10px;
+    color: #7b8798;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.transport-metric-card__headline {
+    display: block;
+    color: #1f2940;
+    font-size: 1.12rem;
+    font-weight: 900;
+    line-height: 1.4;
+}
+
+.transport-metric-card__copy {
+    margin: 10px 0 0;
+    color: #667085;
+    font-size: 0.92rem;
+    line-height: 1.65;
+}
+
+.transport-board__message {
+    margin-bottom: 16px;
+    padding: 20px 22px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(123, 63, 242, 0.08), rgba(255, 255, 255, 0.72));
+    border: 1px dashed rgba(123, 63, 242, 0.28);
+}
+
+.transport-board__message h3 {
+    margin: 0 0 8px;
+    color: #26324a;
+    font-size: 1.12rem;
+    font-weight: 900;
+}
+
+.transport-board__message p {
+    margin: 0;
+    color: #667085;
+    line-height: 1.65;
+}
+
+.transport-board__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.transport-placeholder-card {
+    min-height: 220px;
+    border-radius: 22px;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 255, 0.94)),
+        linear-gradient(135deg, #eef2ff, #fff9f3);
+}
+
+.transport-car-card {
+    overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+}
+
+.transport-car-card__visual {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 160px;
+    padding: 18px;
+    background:
+        linear-gradient(160deg, rgba(123, 63, 242, 0.14), rgba(255, 255, 255, 0.1)),
+        linear-gradient(135deg, #edf2ff, #fff8ef);
+}
+
+.transport-car-card__visual-top,
+.transport-car-card__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.transport-car-card__visual-badge {
+    align-self: flex-start;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #6d47ff;
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+.transport-car-card__visual-name {
+    color: #243044;
+    font-size: 1.35rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+}
+
+.transport-car-card__visual-file {
+    color: #7b8798;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.transport-car-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px;
+}
+
+.transport-car-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.transport-car-card__company {
+    color: #5b46d8;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.transport-car-card__people {
+    color: #6b7280;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.transport-car-card__name {
+    margin: 0;
+    color: #1f2940;
+    font-size: 1.08rem;
+    font-weight: 900;
+}
+
+.transport-car-card__info {
+    margin: 0;
+    color: #667085;
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+
+.transport-car-card__price {
+    color: #202a40;
+    font-size: 1.12rem;
+    font-weight: 900;
+}
+
+.transport-car-card__button {
+    min-width: 98px;
+    height: 38px;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7b3ff2, #9258ff);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+@media (max-width: 960px) {
+    .transport-overview,
+    .transport-metric-grid,
+    .transport-board__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .transport-board__head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 768px) {
+    .transport-page {
+        padding: 24px 16px 56px;
+    }
+
+    .transport-overview__main,
+    .transport-mini-card,
+    .transport-board {
+        padding: 20px;
+    }
+}
