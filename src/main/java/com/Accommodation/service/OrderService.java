@@ -50,13 +50,6 @@ public class OrderService {
     private final OrderStayDateRepository orderStayDateRepository;
 
     // ── 장바구니 → 예약 확정 (CartService 에서 호출) ─────────────────────────
-    /**
-     * CartItem 을 Order 로 전환한다.
-     * <ul>
-     *   <li>추가 요금(surchargePerNight) 계산 후 OrderItem 에 기록</li>
-     *   <li>OrderStayDate 생성 (만실 카운트 기준)</li>
-     * </ul>
-     */
     public Long createOrderFromCartItem(CartItem cartItem, String email) {
 
         Accom accom = accomRepository.findWithOperationInfoById(cartItem.getAccom().getId())
@@ -83,7 +76,7 @@ public class OrderService {
         orderItem.setGuestCount(adultCount + childCount);
         orderItem.setCheckInDate(cartItem.getCheckInDate());
         orderItem.setCheckOutDate(cartItem.getCheckOutDate());
-        orderItem.setBookingStatus(BookingStatus.CONFIRMED);
+        orderItem.setBookingStatus(BookingStatus.CONFIRMED);   // 확정만 점유 반영
 
         syncStayDates(orderItem, accom, cartItem.getCheckInDate(), cartItem.getCheckOutDate());
 
@@ -98,11 +91,7 @@ public class OrderService {
         return order.getId();
     }
 
-    // ── 직접 예약 (레거시 – 관리자 또는 테스트용) ────────────────────────────
-    /**
-     * OrderDto 를 받아 바로 예약 확정하는 레거시 흐름.
-     * 일반 사용자는 장바구니(CartService) 경유를 권장한다.
-     */
+    // ── 직접 예약 (레거시 – 관리자/테스트용) ────────────────────────────────
     public Long order(OrderDto orderDto, String email) {
 
         Accom accom = accomRepository.findWithOperationInfoById(orderDto.getAccomId())
@@ -116,10 +105,7 @@ public class OrderService {
         int adultCount = orderDto.getAdultCount();
         int childCount = orderDto.getChildCount();
 
-        // 인원 유효성 (유형별)
         GuestPricingUtils.validateGuestCount(accom.getAccomType(), adultCount, childCount);
-
-        // 날짜·운영일·만실 검증
         validateBooking(accom, orderDto.getCheckInDate(), orderDto.getCheckOutDate(),
                 adultCount + childCount, null);
 
@@ -153,7 +139,6 @@ public class OrderService {
 
     // ── 주문 취소 ────────────────────────────────────────────────────────────
     public void cancelOrder(Long orderId, String email) {
-
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(EntityNotFoundException::new);
 
@@ -161,6 +146,7 @@ public class OrderService {
             throw new IllegalArgumentException("주문 취소 권한이 없습니다.");
         }
 
+        // Order.cancelOrder() 내부에서 FSM + COMPLETED 방어 처리
         order.cancelOrder();
     }
 
@@ -173,27 +159,18 @@ public class OrderService {
             return;
         }
 
-        if (order.getOrderStatus() == OrderStatus.CANCEL && status == OrderStatus.ORDER) {
-            throw new IllegalArgumentException("취소된 예약은 다시 예약 완료 상태로 변경할 수 없습니다.");
-        }
-
         if (status == OrderStatus.CANCEL) {
+            // cancelOrder() 가 FSM + COMPLETED 방어를 내부에서 처리
             order.cancelOrder();
             return;
         }
 
-        order.setOrderStatus(status);
-
-        if (status == OrderStatus.ORDER) {
-            for (OrderItem item : order.getOrderItems()) {
-                item.setBookingStatus(BookingStatus.CONFIRMED);
-            }
-        }
+        // CANCEL → ORDER 복구는 FSM 상 불가 (운영 정책상 허용 안 함)
+        throw new IllegalArgumentException("관리자도 취소된 주문을 복구할 수 없습니다.");
     }
 
-    // ── 주문 수정 (체크인/체크아웃/인원 변경) ────────────────────────────────
+    // ── 주문 수정 (체크인/체크아웃 변경) ─────────────────────────────────────
     public void updateOrder(Long orderId, OrderUpdateDto dto, String email) {
-
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(EntityNotFoundException::new);
 
@@ -201,11 +178,16 @@ public class OrderService {
             throw new IllegalArgumentException("수정 권한이 없습니다.");
         }
 
-        if (order.getOrderStatus() == OrderStatus.CANCEL) {
+        if (!order.getOrderStatus().canCancel()) {
             throw new IllegalStateException("취소된 주문은 수정할 수 없습니다.");
         }
 
         for (OrderItem item : order.getOrderItems()) {
+            // COMPLETED 항목은 수정 불가
+            if (!item.getBookingStatus().canCancel()) {
+                throw new IllegalStateException("이용 완료된 예약은 수정할 수 없습니다.");
+            }
+
             Accom accom = accomRepository.findWithOperationInfoById(item.getAccom().getId())
                     .orElseThrow(EntityNotFoundException::new);
 
@@ -215,6 +197,7 @@ public class OrderService {
             item.setCheckInDate(dto.getCheckInDate());
             item.setCheckOutDate(dto.getCheckOutDate());
             item.setCount((int) ChronoUnit.DAYS.between(dto.getCheckInDate(), dto.getCheckOutDate()));
+            // 날짜 변경 후 CONFIRMED 유지 (FSM상 이미 CONFIRMED → 재설정)
             item.setBookingStatus(BookingStatus.CONFIRMED);
 
             syncStayDates(item, accom, dto.getCheckInDate(), dto.getCheckOutDate());
@@ -232,36 +215,32 @@ public class OrderService {
             return Collections.emptyList();
         }
 
-        return orderStayDateRepository.findSoldOutDates(accomId, roomCount, OrderStatus.CANCEL);
+        // CONFIRMED 기준으로만 만실 판단
+        return orderStayDateRepository.findSoldOutDates(accomId, roomCount, BookingStatus.CONFIRMED);
     }
 
     // ── 주문 내역 조회 (페이징) ──────────────────────────────────────────────
     @Transactional(readOnly = true)
     public List<OrderHistDto> getOrderList(String email, Pageable pageable) {
-
         List<Order> orders = orderRepository.findOrders(email, pageable);
-        List<OrderHistDto> orderHistDtos = new ArrayList<>();
+        List<OrderHistDto> result = new ArrayList<>();
 
         for (Order order : orders) {
-            OrderHistDto orderHistDto = new OrderHistDto(order);
-
-            for (OrderItem orderItem : order.getOrderItems()) {
-                String imgUrl = orderItem.getAccom().getAccomImgList().stream()
+            OrderHistDto dto = new OrderHistDto(order);
+            for (OrderItem item : order.getOrderItems()) {
+                String imgUrl = item.getAccom().getAccomImgList().stream()
                         .filter(img -> "Y".equals(img.getRepImgYn()))
                         .map(AccomImg::getImgUrl)
-                        .findFirst()
-                        .orElse("");
-
-                orderHistDto.addOrderItemDto(new OrderItemDto(orderItem, imgUrl));
+                        .findFirst().orElse("");
+                dto.addOrderItemDto(new OrderItemDto(item, imgUrl));
             }
-            orderHistDtos.add(orderHistDto);
+            result.add(dto);
         }
-        return orderHistDtos;
+        return result;
     }
 
     @Transactional(readOnly = true)
     public OrderHistDto getOrderDetail(Long orderId, String email) {
-
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(EntityNotFoundException::new);
 
@@ -269,19 +248,15 @@ public class OrderService {
             throw new IllegalArgumentException("주문 상세 조회 권한이 없습니다.");
         }
 
-        OrderHistDto orderHistDto = new OrderHistDto(order);
-
-        for (OrderItem orderItem : order.getOrderItems()) {
-            String imgUrl = orderItem.getAccom().getAccomImgList().stream()
+        OrderHistDto dto = new OrderHistDto(order);
+        for (OrderItem item : order.getOrderItems()) {
+            String imgUrl = item.getAccom().getAccomImgList().stream()
                     .filter(img -> "Y".equals(img.getRepImgYn()))
                     .map(AccomImg::getImgUrl)
-                    .findFirst()
-                    .orElse("");
-
-            orderHistDto.addOrderItemDto(new OrderItemDto(orderItem, imgUrl));
+                    .findFirst().orElse("");
+            dto.addOrderItemDto(new OrderItemDto(item, imgUrl));
         }
-
-        return orderHistDto;
+        return dto;
     }
 
     @Transactional(readOnly = true)
@@ -289,23 +264,52 @@ public class OrderService {
         return orderRepository.countOrder(email);
     }
 
-    // ── 만실 날짜 여부 확인 (CartService 에서 호출) ──────────────────────────
-    /**
-     * 특정 날짜에 해당 숙소가 만실(CONFIRMED 기준)인지 반환한다.
-     */
+    // ── 만실 여부 (CartService 에서 호출) ────────────────────────────────────
     @Transactional(readOnly = true)
     public boolean isSoldOut(Long accomId, int roomCount, LocalDate date) {
-        long reserved = orderStayDateRepository.countReservedByDate(
-                accomId, date, OrderStatus.CANCEL, null);
-        return reserved >= roomCount;
+        long confirmed = orderStayDateRepository.countConfirmedByDate(
+                accomId, date, BookingStatus.CONFIRMED, null);
+        return confirmed >= roomCount;
+    }
+
+    @Transactional(readOnly = true)
+    public int getRemainingRooms(Long accomId, LocalDate checkInDate, LocalDate checkOutDate) {
+        if (checkInDate == null || checkOutDate == null) {
+            throw new IllegalArgumentException("泥댄겕??/泥댄겕?꾩썐 ?좎쭨???꾩닔?낅땲??");
+        }
+        if (!checkOutDate.isAfter(checkInDate)) {
+            throw new IllegalArgumentException("泥댄겕?꾩썐 ?좎쭨??泥댄겕???좎쭨蹂대떎 ?댄썑?ъ빞 ?⑸땲??");
+        }
+
+        Accom accom = accomRepository.findById(accomId)
+                .orElseThrow(EntityNotFoundException::new);
+
+        Integer roomCount = accom.getRoomCount();
+        if (roomCount == null || roomCount <= 0) {
+            return 0;
+        }
+
+        int minRemaining = roomCount;
+        LocalDate cursor = checkInDate;
+        while (cursor.isBefore(checkOutDate)) {
+            long confirmed = orderStayDateRepository.countConfirmedByDate(
+                    accomId, cursor, BookingStatus.CONFIRMED, null);
+            int remaining = Math.max(0, roomCount - (int) confirmed);
+            if (remaining < minRemaining) {
+                minRemaining = remaining;
+            }
+            if (minRemaining == 0) {
+                break;
+            }
+            cursor = cursor.plusDays(1);
+        }
+        return minRemaining;
     }
 
     // ── 예약 유효성 검증 (공통) ───────────────────────────────────────────────
     /**
      * 날짜·운영 정책·만실 여부를 검증한다.
-     * CartService 의 장바구니 추가 및 확정 단계 모두 이 메서드를 사용한다.
-     *
-     * @param excludeOrderItemId 수정 시 본인 OrderItem 을 만실 카운트에서 제외할 ID (없으면 null)
+     * 만실 카운트는 CONFIRMED 상태만 기준으로 한다.
      */
     public void validateBooking(Accom accom,
                                 LocalDate checkInDate,
@@ -316,19 +320,15 @@ public class OrderService {
         if (!"Y".equals(accom.getReserveStatCd())) {
             throw new OutOfStockException("현재 예약이 불가능한 숙소입니다.");
         }
-
         if (checkInDate == null || checkOutDate == null) {
             throw new IllegalArgumentException("체크인/체크아웃 날짜를 입력해 주세요.");
         }
-
         if (!checkOutDate.isAfter(checkInDate)) {
             throw new IllegalArgumentException("체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.");
         }
-
         if (totalGuestCount < 1) {
             throw new IllegalArgumentException("투숙 인원은 1명 이상이어야 합니다.");
         }
-
         if (totalGuestCount > accom.getGuestCount()) {
             throw new IllegalArgumentException(
                     "투숙 인원이 최대 수용 인원(" + accom.getGuestCount() + "명)을 초과합니다.");
@@ -340,7 +340,6 @@ public class OrderService {
         }
 
         List<LocalDate> stayDates = buildStayDates(checkInDate, checkOutDate);
-
         if (stayDates.isEmpty()) {
             throw new IllegalArgumentException("숙박 날짜를 다시 선택해 주세요.");
         }
@@ -354,7 +353,6 @@ public class OrderService {
             throw new IllegalArgumentException("운영 종료일 이후 날짜는 예약할 수 없습니다.");
         }
 
-        // 오늘 체크인인데 이미 체크인 시간이 지난 경우 예약 불가
         if (policy.getCheckInTime() != null) {
             LocalDate today = LocalDate.now();
             if (checkInDate.isEqual(today) && !LocalTime.now().isBefore(policy.getCheckInTime())) {
@@ -369,24 +367,18 @@ public class OrderService {
         LocalDate today = LocalDate.now();
 
         for (LocalDate stayDate : stayDates) {
-
             if (checkInDate.isBefore(today)) {
                 throw new IllegalArgumentException("오늘 이전 날짜는 예약할 수 없습니다.");
             }
-
             if (!operationDateSet.contains(stayDate)) {
-                throw new IllegalArgumentException(
-                        "선택한 날짜 중 운영하지 않는 날짜가 포함되어 있습니다.");
+                throw new IllegalArgumentException("선택한 날짜 중 운영하지 않는 날짜가 포함되어 있습니다.");
             }
 
-            long reservedCount = orderStayDateRepository.countReservedByDate(
-                    accom.getId(),
-                    stayDate,
-                    OrderStatus.CANCEL,
-                    excludeOrderItemId
-            );
+            // ✅ CONFIRMED 기준 만실 카운트
+            long confirmedCount = orderStayDateRepository.countConfirmedByDate(
+                    accom.getId(), stayDate, BookingStatus.CONFIRMED, excludeOrderItemId);
 
-            if (reservedCount >= accom.getRoomCount()) {
+            if (confirmedCount >= accom.getRoomCount()) {
                 throw new IllegalArgumentException(
                         "선택한 날짜 중 예약이 마감된 날짜가 있습니다: " + stayDate);
             }
@@ -394,28 +386,24 @@ public class OrderService {
     }
 
     // ── 내부 공통 로직 ──────────────────────────────────────────────────────
-    private void syncStayDates(OrderItem orderItem,
-                               Accom accom,
-                               LocalDate checkInDate,
-                               LocalDate checkOutDate) {
-
+    private void syncStayDates(OrderItem orderItem, Accom accom,
+                               LocalDate checkInDate, LocalDate checkOutDate) {
         orderItem.clearStayDates();
-
-        for (LocalDate stayDate : buildStayDates(checkInDate, checkOutDate)) {
-            OrderStayDate orderStayDate = new OrderStayDate();
-            orderStayDate.setAccom(accom);
-            orderStayDate.setStayDate(stayDate);
-            orderItem.addStayDate(orderStayDate);
+        for (LocalDate d : buildStayDates(checkInDate, checkOutDate)) {
+            OrderStayDate osd = new OrderStayDate();
+            osd.setAccom(accom);
+            osd.setStayDate(d);
+            orderItem.addStayDate(osd);
         }
     }
 
     private List<LocalDate> buildStayDates(LocalDate checkInDate, LocalDate checkOutDate) {
-        List<LocalDate> stayDates = new ArrayList<>();
+        List<LocalDate> list = new ArrayList<>();
         LocalDate cursor = checkInDate;
         while (cursor.isBefore(checkOutDate)) {
-            stayDates.add(cursor);
+            list.add(cursor);
             cursor = cursor.plusDays(1);
         }
-        return stayDates;
+        return list;
     }
 }

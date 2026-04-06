@@ -389,18 +389,30 @@
     display: flex;
     gap: 12px;
     margin-top: 22px;
+    flex-wrap: nowrap;
+}
+
+.order-form-actions .btn-back,
+.order-form-actions .btn-order {
+    white-space: nowrap;
+    min-width: 0;
 }
 
 .btn-order,
 .btn-back {
     flex: 1;
-    padding: 13px 14px;
+    padding: 13px 10px;
     border-radius: 10px;
-    font-size: 1rem;
+    font-size: 0.95rem; /* 살짝 줄임 */
     font-weight: 700;
     text-align: center;
-    text-decoration: none;
     cursor: pointer;
+
+    /* 잘림 방지 핵심 코드 */
+    white-space: nowrap;  /* 한 줄로 표시 */
+    display: flex;        /* 중앙 정렬을 위해 추가 */
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-order {

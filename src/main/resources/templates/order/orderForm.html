@@ -179,13 +179,18 @@
                     <span id="surchargePrice">0원</span>
                 </div>
                 <div class="order-form-total order-form-total--final">
-                    <span>총 숙박비</span>
+                    <span>TOTAL</span>
                     <span id="totalPrice">0원</span>
+                </div>
+
+                <div class="summary-row">
+                    <span class="summary-label">잔여객실수</span>
+                    <span class="summary-value" id="summaryRemaining">-</span>
                 </div>
 
                 <div class="order-form-actions">
                     <a class="btn-back" th:href="@{/accom/{id}(id=${accom.id})}">돌아가기</a>
-                    <button type="button" class="btn-order" onclick="submitToCart()">장바구니 담기</button>
+                    <button type="button" class="btn-order" onclick="submitToCart()">장바구니</button>
                 </div>
             </aside>
         </div>
@@ -221,6 +226,8 @@
         let selectedCheckOut = initialCheckOut;
         let previewCheckOut  = null;
         let nights     = 0;
+        let lastAvailabilityKey = '';
+        let availabilityController = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('guestHintMax').textContent = effectiveMax;
@@ -477,6 +484,7 @@
             const checkInEl  = document.getElementById('summaryCheckIn');
             const checkOutEl = document.getElementById('summaryCheckOut');
             const nightsEl   = document.getElementById('summaryNights');
+            const remainingEl = document.getElementById('summaryRemaining');
             const basePriceEl    = document.getElementById('basePrice');
             const surchargePriceEl = document.getElementById('surchargePrice');
             const surchargeRow   = document.getElementById('surchargeRow');
@@ -519,9 +527,53 @@
             }
 
             totalEl.textContent = grandTotal.toLocaleString('ko-KR') + '원';
+            updateAvailability(remainingEl);
         }
 
         // ── 장바구니 담기 ────────────────────────────────────────────────────
+        async function updateAvailability(remainingEl) {
+            if (!selectedCheckIn || !selectedCheckOut) {
+                remainingEl.textContent = '-';
+                lastAvailabilityKey = '';
+                return;
+            }
+            const key = `${selectedCheckIn}_${selectedCheckOut}`;
+            if (key === lastAvailabilityKey) {
+                return;
+            }
+            lastAvailabilityKey = key;
+
+            if (availabilityController) {
+                availabilityController.abort();
+            }
+            availabilityController = new AbortController();
+
+            try {
+                const response = await fetch(
+                    `/orders/accom/${accomId}/availability?checkInDate=${encodeURIComponent(selectedCheckIn)}&checkOutDate=${encodeURIComponent(selectedCheckOut)}`,
+                    { signal: availabilityController.signal }
+                );
+                if (!response.ok) {
+                    const message = await response.text();
+                    throw new Error(message || 'availability fetch failed');
+                }
+                const data = await response.json();
+                const remaining = typeof data.remainingRooms === 'number' ? data.remainingRooms : null;
+                if (remaining === null) {
+                    remainingEl.textContent = '-';
+                } else if (remaining <= 0) {
+                    remainingEl.textContent = '0실';
+                } else {
+                    remainingEl.textContent = `${remaining}실`;
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    return;
+                }
+                remainingEl.textContent = '-';
+            }
+        }
+
         async function submitToCart() {
             if (!selectedCheckIn || !selectedCheckOut) {
                 alert('체크인과 체크아웃 날짜를 선택해 주세요.');

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Collections;
 import java.util.List;
 
@@ -73,6 +74,19 @@ public class OrderController {
                 policy != null ? policy.getCheckOutTime() : null);
 
         return "order/orderForm";
+    }
+
+    @GetMapping("/orders/accom/{accomId}/availability")
+    @ResponseBody
+    public ResponseEntity<?> getAvailability(@PathVariable Long accomId,
+                                             @RequestParam LocalDate checkInDate,
+                                             @RequestParam LocalDate checkOutDate) {
+        try {
+            int remaining = orderService.getRemainingRooms(accomId, checkInDate, checkOutDate);
+            return new ResponseEntity<>(Map.of("remainingRooms", remaining), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     // ── 주문 생성 (AJAX POST) ─────────────────────────────────────────────────
