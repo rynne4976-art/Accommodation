@@ -18,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
-@Transactional
 public class NotificationService {
 
     private static final long DEFAULT_TIMEOUT = 60L * 60L * 1000L;
@@ -89,6 +88,7 @@ public class NotificationService {
                 .toList();
     }
 
+    @Transactional
     public void markAsRead(String email, Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new IllegalArgumentException("알림 정보를 찾을 수 없습니다."));
@@ -100,6 +100,7 @@ public class NotificationService {
         notification.setRead(true);
     }
 
+    @Transactional
     public String markAsReadAndGetTargetUrl(String email, Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new IllegalArgumentException("알림 정보를 찾을 수 없습니다."));
