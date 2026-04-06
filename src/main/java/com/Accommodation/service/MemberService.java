@@ -90,6 +90,17 @@ public class MemberService {
     }
 
     /**
+     * 예약에 필요한 기본 정보(연락처·주소)가 모두 입력되어 있는지 확인합니다.
+     */
+    @Transactional(readOnly = true)
+    public boolean hasRequiredReservationInfo(String email) {
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) return false;
+        return member.getNumber() != null && !member.getNumber().isBlank()
+            && member.getAddress() != null && !member.getAddress().isBlank();
+    }
+
+    /**
      * 🔍 이메일 중복 체크
      *
      * ▶ 이미 존재하는 이메일이면 예외 발생

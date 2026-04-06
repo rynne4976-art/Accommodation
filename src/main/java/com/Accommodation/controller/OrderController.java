@@ -6,6 +6,7 @@ import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.AccomOperationDay;
 import com.Accommodation.entity.AccomOperationPolicy;
 import com.Accommodation.service.AccomService;
+import com.Accommodation.service.MemberService;
 import com.Accommodation.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,13 +31,18 @@ public class OrderController {
 
     private final OrderService orderService;
     private final AccomService accomService;
+    private final MemberService memberService;
 
     // ── 예약 폼 페이지 (GET) ──────────────────────────────────────────────────
     @GetMapping("/orders/accom/{accomId}")
     public String orderForm(@PathVariable Long accomId,
                             @RequestParam(required = false) LocalDate checkInDate,
                             @RequestParam(required = false) LocalDate checkOutDate,
+                            Principal principal,
                             Model model) {
+        if (!memberService.hasRequiredReservationInfo(principal.getName())) {
+            return "redirect:/members/mypage/edit?reservationInfoRequired=true";
+        }
 
         Accom accom = accomService.getAccomDtl(accomId);
         AccomOperationPolicy policy = accom.getOperationPolicy();
@@ -44,9 +50,9 @@ public class OrderController {
         List<String> operationDays = accom.getOperationDayList() == null
                 ? Collections.emptyList()
                 : accom.getOperationDayList().stream()
-                  .map(AccomOperationDay::getOperationDate)
-                  .map(LocalDate::toString)
-                  .toList();
+                .map(AccomOperationDay::getOperationDate)
+                .map(LocalDate::toString)
+                .toList();
 
         List<String> soldOutDays = orderService.getSoldOutDates(accomId).stream()
                 .map(LocalDate::toString)
@@ -75,6 +81,10 @@ public class OrderController {
     public ResponseEntity<?> order(@RequestBody @Valid OrderDto orderDto,
                                    BindingResult bindingResult,
                                    Principal principal) {
+        if (!memberService.hasRequiredReservationInfo(principal.getName())) {
+            return new ResponseEntity<>("예약을 위해 연락처와 주소를 먼저 입력해주세요.", HttpStatus.BAD_REQUEST);
+        }
+
         if (bindingResult.hasErrors()) {
             StringBuilder sb = new StringBuilder();
             for (FieldError error : bindingResult.getFieldErrors()) {
