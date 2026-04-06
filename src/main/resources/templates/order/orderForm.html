@@ -166,6 +166,9 @@
                     <p class="order-form-hint" id="guestHint">최대 <span id="guestHintMax"></span>명까지 가능합니다.</p>
                 </div>
 
+                <!-- 인원 추가요금 안내 -->
+                <div class="surcharge-guide" id="surchargeGuide"></div>
+
                 <input type="hidden" id="hiddenCheckInDate" name="checkInDate">
                 <input type="hidden" id="hiddenCheckOutDate" name="checkOutDate">
 
@@ -181,11 +184,6 @@
                 <div class="order-form-total order-form-total--final">
                     <span>TOTAL</span>
                     <span id="totalPrice">0원</span>
-                </div>
-
-                <div class="summary-row">
-                    <span class="summary-label">잔여객실수</span>
-                    <span class="summary-value" id="summaryRemaining">-</span>
                 </div>
 
                 <div class="order-form-actions">
@@ -221,6 +219,11 @@
         const operationDaySet = new Set(operationDays);
         const soldOutDaySet   = new Set(soldOutDays);
 
+        // ── 월별 잔여 객실 캐시 ──────────────────────────────────────────────
+        // key: "YYYY-M", value: { "YYYY-MM-DD": remainingRooms }
+        const monthlyRoomsCache = {};
+        let dailyRooms = {};   // 현재 렌더링된 달의 잔여 객실 수
+
         let currentMonth   = null;
         let selectedCheckIn  = initialCheckIn;
         let selectedCheckOut = initialCheckOut;
@@ -231,15 +234,46 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('guestHintMax').textContent = effectiveMax;
+
+            // 인원 추가요금 안내 문구 (숙소 유형별)
+            const surchargeFromPerson = isSmallType ? 3 : 5;
+            document.getElementById('surchargeGuide').innerHTML =
+                `<span class="surcharge-guide__icon">💡</span>` +
+                `<span><strong>${surchargeFromPerson}인 이상</strong>부터 성인 1인당 1박 요금의 <strong>10%</strong>, 아동 1인당 <strong>5%</strong> 추가 요금이 부과됩니다.</span>`;
+
             initCalendarMonth();
-            renderCalendar();
+            renderCalendar();          // 잔여 객실 fetch 전 1차 렌더
             updateSummary();
+            fetchMonthlyRooms(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
 
             setInterval(() => {
-                renderCalendar();
+                // 매 1분마다 현재 달 캐시 무효화 후 갱신
+                const key = `${currentMonth.getFullYear()}-${currentMonth.getMonth() + 1}`;
+                delete monthlyRoomsCache[key];
+                fetchMonthlyRooms(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
                 updateSummary();
             }, 60000);
         });
+
+        // ── 월별 잔여 객실 fetch ─────────────────────────────────────────────
+        async function fetchMonthlyRooms(year, month) {
+            const key = `${year}-${month}`;
+            if (monthlyRoomsCache[key]) {
+                dailyRooms = monthlyRoomsCache[key];
+                return;
+            }
+            try {
+                const res = await fetch(
+                    `/orders/accom/${accomId}/monthly-availability?year=${year}&month=${month}`
+                );
+                if (res.ok) {
+                    const data = await res.json();
+                    monthlyRoomsCache[key] = data;
+                    dailyRooms = data;
+                }
+            } catch (_) { /* 네트워크 오류 시 기존 UI 유지 */ }
+            renderCalendar();
+        }
 
         // ── 캘린더 ──────────────────────────────────────────────────────────
         function initCalendarMonth() {
@@ -262,7 +296,8 @@
             if (operationStartDate && moved < firstDayOfMonth(operationStartDate)) return;
             if (operationEndDate   && moved > firstDayOfMonth(operationEndDate))   return;
             currentMonth = moved;
-            renderCalendar();
+            dailyRooms = {};   // 이전 달 데이터 초기화 후 fetch
+            fetchMonthlyRooms(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
         }
 
         function renderCalendar() {
@@ -313,14 +348,30 @@
 
                 const badge = document.createElement('div');
                 badge.className = 'calendar-day__badge';
-                if (isSoldOut)                         badge.textContent = '마감';
-                else if (isPastDate)                   badge.textContent = '지난날';
-                else if (isClosedByCheckInTime)        badge.textContent = '비운영';
-                else if (!isOperationDay)              badge.textContent = '비운영';
-                else if (selectedCheckIn  === dateString) badge.textContent = '체크인';
-                else if (selectedCheckOut === dateString) badge.textContent = '체크아웃';
-                else if (isBetweenSelectedRange(dateString)) badge.textContent = '선택';
-                else                                   badge.textContent = '운영';
+                if (isSoldOut) {
+                    badge.textContent = '마감';
+                } else if (isPastDate) {
+                    badge.textContent = '지난날';
+                } else if (isClosedByCheckInTime || !isOperationDay) {
+                    badge.textContent = '비운영';
+                } else if (selectedCheckIn === dateString) {
+                    badge.textContent = '체크인';
+                } else if (selectedCheckOut === dateString) {
+                    badge.textContent = '체크아웃';
+                } else if (isBetweenSelectedRange(dateString)) {
+                    badge.textContent = '선택';
+                } else {
+                    // 운영일: 잔여 객실 수 표시
+                    const remaining = dailyRooms[dateString];
+                    if (remaining !== undefined) {
+                        badge.textContent = `남은 객실: ${remaining}개`;
+                        if (remaining < 3) {
+                            badge.classList.add('is-low-stock');
+                        }
+                    } else {
+                        badge.textContent = '운영';
+                    }
+                }
                 cell.appendChild(badge);
 
                 if (selectable || selectedCheckIn === dateString || selectedCheckOut === dateString) {

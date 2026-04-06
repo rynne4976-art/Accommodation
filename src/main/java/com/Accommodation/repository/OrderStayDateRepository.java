@@ -49,4 +49,24 @@ public interface OrderStayDateRepository extends JpaRepository<OrderStayDate, Lo
     List<LocalDate> findSoldOutDates(@Param("accomId") Long accomId,
                                      @Param("roomCount") long roomCount,
                                      @Param("confirmedStatus") BookingStatus confirmedStatus);
+
+    /**
+     * 날짜 범위 내 날짜별 CONFIRMED 예약 건수 일괄 조회 (월별 달력 표시용)
+     *
+     * N번 쿼리 대신 한 번의 GROUP BY 쿼리로 처리한다.
+     * result[0] = stayDate (LocalDate), result[1] = count (Long)
+     */
+    @Query("""
+            SELECT osd.stayDate, COUNT(osd.id)
+            FROM OrderStayDate osd
+            WHERE osd.accom.id = :accomId
+              AND osd.stayDate >= :from
+              AND osd.stayDate < :to
+              AND osd.orderItem.bookingStatus = :confirmedStatus
+            GROUP BY osd.stayDate
+            """)
+    List<Object[]> countConfirmedPerDateRange(@Param("accomId") Long accomId,
+                                              @Param("from") LocalDate from,
+                                              @Param("to") LocalDate to,
+                                              @Param("confirmedStatus") BookingStatus confirmedStatus);
 }

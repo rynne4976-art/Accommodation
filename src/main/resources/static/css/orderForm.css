@@ -149,6 +149,10 @@
     position: relative;
     cursor: pointer;
     transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .calendar-day:hover {
@@ -195,25 +199,38 @@
 .calendar-day__num {
     font-size: 0.94rem;
     font-weight: 700;
+    align-self: center;
 }
 
 .calendar-day__badge {
-    position: absolute;
-    bottom: 8px;
-    left: 6px;
-    right: 6px;
+    width: 100%;
     font-size: 0.68rem;
     text-align: center;
     padding: 3px 4px;
     border-radius: 999px;
-    background: rgba(255,255,255,0.75);
+    background: rgba(241, 245, 249, 0.85);
+    line-height: 1.3;
+    word-break: keep-all;
 }
 
 .calendar-day.is-selected .calendar-day__badge,
 .calendar-day.is-in-range .calendar-day__badge,
 .calendar-day.is-preview .calendar-day__badge {
-    background: rgba(255,255,255,0.92);
-    color: #111827;
+    background: rgba(255, 255, 255, 0.25);
+    color: inherit;
+}
+
+/* 잔여 객실 3개 미만 - 빨간색 강조 */
+.calendar-day__badge.is-low-stock {
+    background: #fee2e2;
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.calendar-day.is-selected .calendar-day__badge.is-low-stock,
+.calendar-day.is-in-range .calendar-day__badge.is-low-stock {
+    background: rgba(254, 226, 226, 0.92);
+    color: #b91c1c;
 }
 
 .calendar-legend {
@@ -366,6 +383,25 @@
     color: #dc2626;
 }
 
+.surcharge-guide {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    color: #92400e;
+    line-height: 1.6;
+}
+
+.surcharge-guide__icon {
+    flex-shrink: 0;
+    font-size: 0.88rem;
+}
+
 .order-form-total {
     display: flex;
     justify-content: space-between;
@@ -447,7 +483,7 @@
     }
 
     .calendar-day {
-        min-height: 66px;
+        min-height: 72px;
     }
 
     .order-form-actions {

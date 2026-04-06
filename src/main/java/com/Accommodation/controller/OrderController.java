@@ -89,6 +89,24 @@ public class OrderController {
         }
     }
 
+    /**
+     * 월별 날짜별 잔여 객실 수 조회 (캘린더 badge 표시용)
+     * GET /orders/accom/{accomId}/monthly-availability?year=2026&month=4
+     * → { "2026-04-01": 3, "2026-04-05": 0, ... }  (운영일만 포함)
+     */
+    @GetMapping("/orders/accom/{accomId}/monthly-availability")
+    @ResponseBody
+    public ResponseEntity<?> getMonthlyAvailability(@PathVariable Long accomId,
+                                                     @RequestParam int year,
+                                                     @RequestParam int month) {
+        try {
+            Map<String, Integer> availability = orderService.getMonthlyAvailability(accomId, year, month);
+            return new ResponseEntity<>(availability, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     // ── 주문 생성 (AJAX POST) ─────────────────────────────────────────────────
     @PostMapping("/order")
     @ResponseBody

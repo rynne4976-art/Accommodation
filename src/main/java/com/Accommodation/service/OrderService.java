@@ -34,8 +34,10 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -304,6 +306,57 @@ public class OrderService {
             cursor = cursor.plusDays(1);
         }
         return minRemaining;
+    }
+
+    /**
+     * 월별 날짜별 잔여 객실 수 조회 (캘린더 badge 표시용)
+     *
+     * <p>한 달치 CONFIRMED 건수를 GROUP BY 단일 쿼리로 가져온 뒤,
+     * 운영일만 남은 객실 수(roomCount - confirmedCount)로 변환해 반환한다.</p>
+     *
+     * @return key=날짜문자열(yyyy-MM-dd), value=잔여 객실 수
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Integer> getMonthlyAvailability(Long accomId, int year, int month) {
+        Accom accom = accomRepository.findById(accomId)
+                .orElseThrow(EntityNotFoundException::new);
+
+        Integer roomCount = accom.getRoomCount();
+        if (roomCount == null || roomCount <= 0) {
+            return Collections.emptyMap();
+        }
+
+        LocalDate from = LocalDate.of(year, month, 1);
+        LocalDate to   = from.plusMonths(1);
+
+        // 날짜별 CONFIRMED 건수 일괄 조회
+        List<Object[]> rows = orderStayDateRepository.countConfirmedPerDateRange(
+                accomId, from, to, BookingStatus.CONFIRMED);
+
+        Map<LocalDate, Long> confirmedByDate = new HashMap<>();
+        for (Object[] row : rows) {
+            confirmedByDate.put((LocalDate) row[0], (Long) row[1]);
+        }
+
+        // 운영일만 결과에 포함
+        Set<LocalDate> operationDaySet = new HashSet<>();
+        if (accom.getOperationDayList() != null) {
+            for (var opDay : accom.getOperationDayList()) {
+                operationDaySet.add(opDay.getOperationDate());
+            }
+        }
+
+        Map<String, Integer> result = new HashMap<>();
+        LocalDate cursor = from;
+        while (cursor.isBefore(to)) {
+            if (operationDaySet.contains(cursor)) {
+                long confirmed = confirmedByDate.getOrDefault(cursor, 0L);
+                int remaining  = Math.max(0, roomCount - (int) confirmed);
+                result.put(cursor.toString(), remaining);
+            }
+            cursor = cursor.plusDays(1);
+        }
+        return result;
     }
 
     // ── 예약 유효성 검증 (공통) ───────────────────────────────────────────────
