@@ -9,8 +9,12 @@ import com.Accommodation.dto.QMainAccomDto;
 import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.QAccom;
 import com.Accommodation.entity.QAccomImg;
+import com.Accommodation.entity.QAccomOperationDay;
 import com.Accommodation.entity.QAccomOperationPolicy;
+import com.Accommodation.entity.QReview;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -19,6 +23,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.time.LocalDate;
 
 public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
 
@@ -51,11 +56,32 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
     }
 
     private BooleanExpression ratingGoe(Double minRating) {
-        return minRating == null ? null : QAccom.accom.avgRating.goe(minRating);
+        QAccom accom = QAccom.accom;
+        return minRating == null ? null : avgRatingExpression(accom).goe(minRating);
     }
 
     private BooleanExpression notDeleted() {
         return QAccom.accom.deleted.isFalse();
+    }
+
+    private BooleanExpression availableForStay(LocalDate checkInDate, LocalDate checkOutDate) {
+        if (checkInDate == null || checkOutDate == null || !checkOutDate.isAfter(checkInDate)) {
+            return null;
+        }
+
+        QAccom accom = QAccom.accom;
+        QAccomOperationDay operationDay = new QAccomOperationDay("operationDaySub");
+        long requiredStayDays = checkOutDate.toEpochDay() - checkInDate.toEpochDay();
+
+        return JPAExpressions
+                .select(operationDay.count())
+                .from(operationDay)
+                .where(
+                        operationDay.accom.eq(accom),
+                        operationDay.operationDate.goe(checkInDate),
+                        operationDay.operationDate.lt(checkOutDate)
+                )
+                .eq(requiredStayDays);
     }
 
     private com.querydsl.jpa.JPQLQuery<Long> repImageIdSubQuery(QAccom accom) {
@@ -68,6 +94,34 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         accomImgSub.accom.eq(accom),
                         accomImgSub.repImgYn.eq("Y")
                 );
+    }
+
+    private NumberExpression<Double> avgRatingExpression(QAccom accom) {
+        QReview review = new QReview("reviewAvgSub");
+
+        return Expressions.numberTemplate(
+                Double.class,
+                "coalesce(({0}), {1})",
+                JPAExpressions
+                        .select(review.rating.avg())
+                        .from(review)
+                        .where(review.accom.eq(accom)),
+                0.0
+        );
+    }
+
+    private NumberExpression<Long> reviewCountExpression(QAccom accom) {
+        QReview review = new QReview("reviewCountSub");
+
+        return Expressions.numberTemplate(
+                Long.class,
+                "coalesce(({0}), {1})",
+                JPAExpressions
+                        .select(review.count())
+                        .from(review)
+                        .where(review.accom.eq(accom)),
+                0L
+        );
     }
 
     @Override
@@ -84,7 +138,8 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         gradeEq(accomSearchDto.getGrade()),
                         statusEq(accomSearchDto.getAccomStatus()),
                         priceGoe(accomSearchDto.getMinPrice()),
-                        ratingGoe(accomSearchDto.getMinRating())
+                        ratingGoe(accomSearchDto.getMinRating()),
+                        availableForStay(accomSearchDto.getCheckInDate(), accomSearchDto.getCheckOutDate())
                 )
                 .orderBy(accom.id.desc())
                 .offset(pageable.getOffset())
@@ -101,7 +156,8 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         gradeEq(accomSearchDto.getGrade()),
                         statusEq(accomSearchDto.getAccomStatus()),
                         priceGoe(accomSearchDto.getMinPrice()),
-                        ratingGoe(accomSearchDto.getMinRating())
+                        ratingGoe(accomSearchDto.getMinRating()),
+                        availableForStay(accomSearchDto.getCheckInDate(), accomSearchDto.getCheckOutDate())
                 )
                 .fetchOne();
 
@@ -114,6 +170,8 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
         QAccom accom = QAccom.accom;
         QAccomImg accomImg = QAccomImg.accomImg;
         QAccomOperationPolicy policy = QAccomOperationPolicy.accomOperationPolicy;
+        NumberExpression<Double> avgRatingExpr = avgRatingExpression(accom);
+        NumberExpression<Long> reviewCountExpr = reviewCountExpression(accom);
 
         List<MainAccomDto> content = queryFactory
                 .select(new QMainAccomDto(
@@ -126,8 +184,8 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         accom.pricePerNight,
                         accom.location,
                         accom.roomCount,
-                        accom.avgRating,
-                        accom.reviewCount,
+                        avgRatingExpr,
+                        reviewCountExpr.intValue(),
                         policy.checkInTime,
                         policy.checkOutTime
                 ))
@@ -144,9 +202,10 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         gradeEq(accomSearchDto.getGrade()),
                         statusEq(accomSearchDto.getAccomStatus()),
                         priceGoe(accomSearchDto.getMinPrice()),
-                        ratingGoe(accomSearchDto.getMinRating())
+                        ratingGoe(accomSearchDto.getMinRating()),
+                        availableForStay(accomSearchDto.getCheckInDate(), accomSearchDto.getCheckOutDate())
                 )
-                .orderBy(accom.avgRating.desc(), accom.reviewCount.desc(), accom.id.desc())
+                .orderBy(avgRatingExpr.desc(), reviewCountExpr.desc(), accom.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -161,7 +220,8 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         gradeEq(accomSearchDto.getGrade()),
                         statusEq(accomSearchDto.getAccomStatus()),
                         priceGoe(accomSearchDto.getMinPrice()),
-                        ratingGoe(accomSearchDto.getMinRating())
+                        ratingGoe(accomSearchDto.getMinRating()),
+                        availableForStay(accomSearchDto.getCheckInDate(), accomSearchDto.getCheckOutDate())
                 )
                 .fetchOne();
 

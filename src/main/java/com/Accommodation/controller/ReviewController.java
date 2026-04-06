@@ -1,12 +1,18 @@
 package com.Accommodation.controller;
 
 import com.Accommodation.dto.ReviewFormDto;
+import com.Accommodation.entity.Review;
+import com.Accommodation.service.AccomService;
 import com.Accommodation.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -19,6 +25,21 @@ import java.util.Map;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final AccomService accomService;
+
+    @GetMapping("/reviews/accom/{accomId}")
+    public String reviewList(@PathVariable("accomId") Long accomId,
+                             @RequestParam(value = "page", defaultValue = "1") int page,
+                             Model model) {
+        Pageable pageable = PageRequest.of(Math.max(page - 1, 0), 5);
+        Page<Review> reviewPage = reviewService.getReviewPage(accomId, pageable);
+
+        model.addAttribute("accom", accomService.getAccomDtl(accomId));
+        model.addAttribute("reviewPage", reviewPage);
+        model.addAttribute("reviewList", reviewPage.getContent());
+        model.addAttribute("currentPath", "/reviews/accom/" + accomId);
+        return "review/reviewList";
+    }
 
     @PostMapping("/reviews/new")
     public String saveReview(@Valid @ModelAttribute ReviewFormDto reviewFormDto,

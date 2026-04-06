@@ -220,8 +220,11 @@
 
             <div class="detail-section-card review-section-card">
                 <div class="review-score-box">
-                    <strong th:text="${#numbers.formatDecimal(accom.avgRating, 1, 1)}">0.0</strong>
-                    <span>평균 별점</span>
+                    <strong>
+                        <span class="review-score-star">★</span>
+                        <span th:text="${#numbers.formatDecimal(accom.avgRating, 1, 1)}">0.0</span>
+                        <small th:text="'(' + ${#numbers.formatInteger(accom.reviewCount, 1, 'COMMA')} + ')'">(0)</small>
+                    </strong>
                 </div>
 
                 <div class="review-summary-copy">
@@ -246,35 +249,53 @@
                             onclick="openMyReviewModal()">
                         내 리뷰 보기
                     </button>
+
+                    <a class="detail-action secondary"
+                       th:href="@{/reviews/accom/{accomId}(accomId=${accom.id})}">
+                        리뷰 전체보기
+                    </a>
                 </div>
             </div>
 
-            <div class="review-list-block" th:if="${reviewList != null and !#lists.isEmpty(reviewList)}">
-                <article class="detail-section-card review-list-card" th:each="review : ${reviewList}">
-                    <div class="review-card-top">
-                        <div>
-                            <p class="review-card-author" th:text="${review.member.name}">회원명</p>
+            <div class="review-slider-shell" th:if="${reviewList != null and !#lists.isEmpty(reviewList)}">
+                <div class="review-slider-controls">
+                    <button type="button" class="review-slider-button" data-review-prev>&lt;</button>
+                    <button type="button" class="review-slider-button" data-review-next>&gt;</button>
+                </div>
+
+                <div class="review-list-block" data-review-slider>
+                    <article class="detail-section-card review-list-card" th:each="review : ${reviewList}">
+                        <div class="review-card-top">
+                            <div class="review-card-headline">
+                                <div class="review-card-stars" aria-label="회원 별점">
+                                    <span class="review-star"
+                                          th:each="i : ${#numbers.sequence(1,5)}"
+                                          th:classappend="${i <= review.rating} ? ' filled' : ''">★</span>
+                                </div>
+                                <p class="review-card-author" th:text="${review.member.name}">회원명</p>
+                            </div>
+
                             <p class="review-card-date"
-                               th:text="${#temporals.format(review.regTime, 'yyyy-MM-dd HH:mm')}">2026-04-02 10:00</p>
+                               th:text="${#temporals.format(review.regTime, 'yyyy.MM.dd')}">2026.04.02</p>
                         </div>
 
-                        <div class="review-card-rating">
-                            <span>별점</span>
-                            <strong th:text="${review.rating} + ' / 5'">5 / 5</strong>
+                        <div class="review-card-body">
+                            <div class="review-card-copy">
+                                <p class="review-card-content" th:text="${review.content}">
+                                    리뷰 내용
+                                </p>
+                            </div>
+
+                            <div class="review-card-image-item"
+                                 th:if="${review.reviewImgList != null and !#lists.isEmpty(review.reviewImgList)}">
+                                <img th:src="${review.reviewImgList[0].imgUrl}" alt="리뷰 이미지">
+                                <span class="review-card-image-count"
+                                      th:if="${#lists.size(review.reviewImgList) > 1}"
+                                      th:text="${#lists.size(review.reviewImgList)} + '장'">2장</span>
+                            </div>
                         </div>
-                    </div>
-
-                    <p class="review-card-content" th:text="${review.content}">
-                        리뷰 내용
-                    </p>
-
-                    <div class="review-card-images"
-                         th:if="${review.reviewImgList != null and !#lists.isEmpty(review.reviewImgList)}">
-                        <img th:each="img : ${review.reviewImgList}"
-                             th:src="${img.imgUrl}"
-                             alt="리뷰 이미지">
-                    </div>
-                </article>
+                    </article>
+                </div>
             </div>
 
             <div class="detail-section-card review-empty-card"
@@ -413,7 +434,10 @@
     <div id="myReviewModal" class="review-modal" aria-hidden="true">
         <div class="review-modal-backdrop" onclick="closeMyReviewModal()"></div>
 
-        <div class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="myReviewModalTitle">
+        <div class="review-modal-dialog review-modal-dialog-compact"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="myReviewModalTitle">
             <button type="button" class="review-modal-close" onclick="closeMyReviewModal()">닫기</button>
 
             <div class="review-modal-header">
@@ -426,100 +450,106 @@
                   th:action="${myReview != null} ? @{/reviews/{reviewId}/update(reviewId=${myReview.id})} : '#'"
                   method="post"
                   enctype="multipart/form-data"
-                  class="review-modal-form">
+                  class="review-modal-form review-modal-form-compact">
 
                 <div th:if="${myReview != null}">
                     <input type="hidden" name="accomId" th:value="${accom.id}">
                     <input type="hidden" name="rating" id="editModalReviewRating" th:value="${myReview.rating}">
 
-                    <div class="review-modal-group">
-                        <label>별점</label>
-                        <div class="modal-star-rating" id="editModalStarRating">
-                            <button type="button" onclick="setEditModalRating(1)">★</button>
-                            <button type="button" onclick="setEditModalRating(2)">★</button>
-                            <button type="button" onclick="setEditModalRating(3)">★</button>
-                            <button type="button" onclick="setEditModalRating(4)">★</button>
-                            <button type="button" onclick="setEditModalRating(5)">★</button>
-                        </div>
-                    </div>
+                    <div class="my-review-layout">
+                        <div class="my-review-main-column">
+                            <div class="review-modal-group">
+                                <label>별점</label>
+                                <div class="modal-star-rating" id="editModalStarRating">
+                                    <button type="button" onclick="setEditModalRating(1)">★</button>
+                                    <button type="button" onclick="setEditModalRating(2)">★</button>
+                                    <button type="button" onclick="setEditModalRating(3)">★</button>
+                                    <button type="button" onclick="setEditModalRating(4)">★</button>
+                                    <button type="button" onclick="setEditModalRating(5)">★</button>
+                                </div>
+                            </div>
 
-                    <div class="review-modal-group">
-                        <label for="editModalReviewContent">리뷰 내용</label>
-                        <textarea name="content"
-                                  id="editModalReviewContent"
-                                  rows="6"
-                                  placeholder="리뷰 내용을 입력해 주세요."
-                                  th:text="${myReview.content}"></textarea>
-                    </div>
+                            <div class="review-modal-group">
+                                <label for="editModalReviewContent">리뷰 내용</label>
+                                <textarea name="content"
+                                          id="editModalReviewContent"
+                                          rows="5"
+                                          placeholder="리뷰 내용을 입력해 주세요."
+                                          th:text="${myReview.content}"></textarea>
+                            </div>
 
-                    <div class="review-modal-group">
-                        <label>기존 리뷰 이미지</label>
+                            <div class="review-modal-actions">
+                                <button type="button"
+                                        class="modal-action primary"
+                                        th:onclick="|submitReviewUpdateAjax(${myReview.id}, ${accom.id})|">
+                                    수정하기
+                                </button>
 
-                        <div class="existing-review-image-actions"
-                             th:if="${myReview.reviewImgList != null and !#lists.isEmpty(myReview.reviewImgList)}">
-                            <button type="button"
-                                    class="modal-action tertiary"
-                                    onclick="toggleAllExistingReviewImages(true)">
-                                전체 선택
-                            </button>
-                            <button type="button"
-                                    class="modal-action tertiary"
-                                    onclick="toggleAllExistingReviewImages(false)">
-                                전체 해제
-                            </button>
-                            <button type="button"
-                                    class="modal-action secondary"
-                                    th:onclick="|deleteSelectedReviewImagesAjax(${myReview.id}, ${accom.id})|">
-                                선택 이미지 삭제
-                            </button>
-                        </div>
-
-                        <div class="modal-preview-list"
-                             th:if="${myReview.reviewImgList != null and !#lists.isEmpty(myReview.reviewImgList)}">
-                            <div class="modal-preview-item"
-                                 th:attr="data-review-image-item=${img.id},data-review-image-id=${img.id}"
-                                 th:each="img : ${myReview.reviewImgList}">
-                                <label class="existing-review-image-select">
-                                    <input type="checkbox"
-                                           class="existing-review-image-checkbox"
-                                           th:value="${img.id}">
-                                    선택
-                                </label>
-                                <img th:src="${img.imgUrl}" alt="리뷰 이미지">
-                                <span th:text="${img.oriImgName}">리뷰 이미지</span>
+                                <button type="button"
+                                        class="modal-action secondary"
+                                        th:onclick="|deleteReviewAjax(${myReview.id}, ${accom.id})|">
+                                    삭제하기
+                                </button>
                             </div>
                         </div>
 
-                        <div id="existingReviewImageEmptyState"
-                             class="detail-section-card review-empty-card"
-                             th:if="${myReview.reviewImgList == null or #lists.isEmpty(myReview.reviewImgList)}">
-                            <p>등록된 리뷰 이미지가 없습니다.</p>
+                        <div class="my-review-side-column">
+                            <div class="review-modal-group">
+                                <label>기존 리뷰 이미지</label>
+
+                                <div class="existing-review-image-actions"
+                                     th:if="${myReview.reviewImgList != null and !#lists.isEmpty(myReview.reviewImgList)}">
+                                    <button type="button"
+                                            class="modal-action tertiary"
+                                            onclick="toggleAllExistingReviewImages(true)">
+                                        전체 선택
+                                    </button>
+                                    <button type="button"
+                                            class="modal-action tertiary"
+                                            onclick="toggleAllExistingReviewImages(false)">
+                                        전체 해제
+                                    </button>
+                                    <button type="button"
+                                            class="modal-action secondary"
+                                            th:onclick="|deleteSelectedReviewImagesAjax(${myReview.id}, ${accom.id})|">
+                                        선택 삭제
+                                    </button>
+                                </div>
+
+                                <div class="modal-preview-list"
+                                     th:if="${myReview.reviewImgList != null and !#lists.isEmpty(myReview.reviewImgList)}">
+                                    <div class="modal-preview-item"
+                                         th:attr="data-review-image-item=${img.id},data-review-image-id=${img.id}"
+                                         th:each="img : ${myReview.reviewImgList}">
+                                        <label class="existing-review-image-select">
+                                            <input type="checkbox"
+                                                   class="existing-review-image-checkbox"
+                                                   th:value="${img.id}">
+                                            선택
+                                        </label>
+                                        <img th:src="${img.imgUrl}" alt="리뷰 이미지">
+                                        <span th:text="${img.oriImgName}">리뷰 이미지</span>
+                                    </div>
+                                </div>
+
+                                <div id="existingReviewImageEmptyState"
+                                     class="review-empty-card review-empty-inline"
+                                     th:if="${myReview.reviewImgList == null or #lists.isEmpty(myReview.reviewImgList)}">
+                                    <p>등록된 리뷰 이미지가 없습니다.</p>
+                                </div>
+                            </div>
+
+                            <div class="review-modal-group">
+                                <label for="editModalReviewImages">리뷰 이미지 추가</label>
+                                <input type="file"
+                                       name="reviewImgFileList"
+                                       id="editModalReviewImages"
+                                       accept="image/*"
+                                       multiple
+                                       onchange="handleEditReviewFiles(this)">
+                                <div id="editModalReviewPreviewList" class="modal-preview-list"></div>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="review-modal-group">
-                        <label for="editModalReviewImages">리뷰 이미지 추가</label>
-                        <input type="file"
-                               name="reviewImgFileList"
-                               id="editModalReviewImages"
-                               accept="image/*"
-                               multiple
-                               onchange="handleEditReviewFiles(this)">
-                        <div id="editModalReviewPreviewList" class="modal-preview-list"></div>
-                    </div>
-
-                    <div class="review-modal-actions">
-                        <button type="button"
-                                class="modal-action primary"
-                                th:onclick="|submitReviewUpdateAjax(${myReview.id}, ${accom.id})|">
-                            수정하기
-                        </button>
-
-                        <button type="button"
-                                class="modal-action secondary"
-                                th:onclick="|deleteReviewAjax(${myReview.id}, ${accom.id})|">
-                            삭제하기
-                        </button>
                     </div>
                 </div>
 
@@ -563,6 +593,7 @@
     </script>
     <script th:src="@{/js/accomdtl-calendar.js}"></script>
     <script th:src="@{/js/accomdtl-modal.js}"></script>
+    <script th:src="@{/js/accomdtl-review-slider.js}"></script>
     <script th:src="@{/js/accomdtl-map.js}"></script>
     <script type="text/javascript"
             th:src="|https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${naverMapClientId}&submodules=geocoder&callback=initNaverMap|">
