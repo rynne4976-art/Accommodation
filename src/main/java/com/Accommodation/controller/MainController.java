@@ -4,6 +4,7 @@ import com.Accommodation.constant.AccomType;
 import com.Accommodation.dto.AccomSearchDto;
 import com.Accommodation.dto.MainAccomDto;
 import com.Accommodation.service.AccomService;
+import org.springframework.web.bind.annotation.CookieValue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,7 +14,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -159,6 +164,37 @@ public class MainController {
         model.addAttribute("currentPath", "/searchList");
 
         return "category/searchList";
+    }
+
+    @GetMapping("/recent-viewed")
+    public String recentViewed(@CookieValue(value = "recentViewedAccoms", required = false) String recentViewedCookie,
+                               Model model) {
+        List<Long> recentViewedIds = parseRecentViewedIds(recentViewedCookie);
+        List<MainAccomDto> recentViewedList = accomService.getRecentViewedAccomList(recentViewedIds);
+
+        model.addAttribute("recentViewedList", recentViewedList);
+        model.addAttribute("recentViewedCount", recentViewedList.size());
+        return "recent/recentViewedList";
+    }
+
+    private List<Long> parseRecentViewedIds(String recentViewedCookie) {
+        if (recentViewedCookie == null || recentViewedCookie.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.stream(recentViewedCookie.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .map(value -> {
+                    try {
+                        return Long.parseLong(value);
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                })
+                .filter(id -> id != null)
+                .limit(20)
+                .collect(Collectors.toList());
     }
 
 

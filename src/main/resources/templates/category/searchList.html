@@ -38,6 +38,10 @@
 
     <section class="type-filter-panel">
         <form class="type-filter-form" th:action="@{/searchList}" method="get">
+            <input type="hidden" name="checkInDate"
+                   th:value="${accomSearchDto != null and accomSearchDto.checkInDate != null ? #temporals.format(accomSearchDto.checkInDate, 'yyyy-MM-dd') : ''}">
+            <input type="hidden" name="checkOutDate"
+                   th:value="${accomSearchDto != null and accomSearchDto.checkOutDate != null ? #temporals.format(accomSearchDto.checkOutDate, 'yyyy-MM-dd') : ''}">
             <input type="text"
                    name="searchQuery"
                    placeholder="여행지 또는 숙소명을 입력하세요"
@@ -187,7 +191,9 @@
                           accomType=${accomSearchDto != null and accomSearchDto.accomType != null ? accomSearchDto.accomType.name() : null},
                           grade=${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : null},
                           minPrice=${accomSearchDto != null ? accomSearchDto.minPrice : null},
-                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null})}">이전 5개</a>
+                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null},
+                          checkInDate=${accomSearchDto != null ? accomSearchDto.checkInDate : null},
+                          checkOutDate=${accomSearchDto != null ? accomSearchDto.checkOutDate : null})}">이전 5개</a>
 
         <span class="pager-nav pager-nav-disabled" th:if="${!accomPage.hasPrevious()}">이전</span>
         <a class="pager-nav"
@@ -197,7 +203,9 @@
                           accomType=${accomSearchDto != null and accomSearchDto.accomType != null ? accomSearchDto.accomType.name() : null},
                           grade=${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : null},
                           minPrice=${accomSearchDto != null ? accomSearchDto.minPrice : null},
-                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null})}">이전</a>
+                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null},
+                          checkInDate=${accomSearchDto != null ? accomSearchDto.checkInDate : null},
+                          checkOutDate=${accomSearchDto != null ? accomSearchDto.checkOutDate : null})}">이전</a>
 
         <a th:each="pageNum : ${#numbers.sequence(startPage, endPage)}"
            th:classappend="${pageNum == currentPage} ? ' pager-current'"
@@ -206,7 +214,9 @@
                           accomType=${accomSearchDto != null and accomSearchDto.accomType != null ? accomSearchDto.accomType.name() : null},
                           grade=${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : null},
                           minPrice=${accomSearchDto != null ? accomSearchDto.minPrice : null},
-                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null})}"
+                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null},
+                          checkInDate=${accomSearchDto != null ? accomSearchDto.checkInDate : null},
+                          checkOutDate=${accomSearchDto != null ? accomSearchDto.checkOutDate : null})}"
            th:text="${pageNum}">1</a>
 
         <span class="pager-nav pager-nav-disabled" th:if="${!accomPage.hasNext()}">다음</span>
@@ -217,7 +227,9 @@
                           accomType=${accomSearchDto != null and accomSearchDto.accomType != null ? accomSearchDto.accomType.name() : null},
                           grade=${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : null},
                           minPrice=${accomSearchDto != null ? accomSearchDto.minPrice : null},
-                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null})}">다음</a>
+                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null},
+                          checkInDate=${accomSearchDto != null ? accomSearchDto.checkInDate : null},
+                          checkOutDate=${accomSearchDto != null ? accomSearchDto.checkOutDate : null})}">다음</a>
 
         <span class="pager-nav pager-nav-disabled" th:if="${endPage >= totalPages}">다음 5개</span>
         <a class="pager-nav"
@@ -227,7 +239,9 @@
                           accomType=${accomSearchDto != null and accomSearchDto.accomType != null ? accomSearchDto.accomType.name() : null},
                           grade=${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : null},
                           minPrice=${accomSearchDto != null ? accomSearchDto.minPrice : null},
-                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null})}">다음 5개</a>
+                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null},
+                          checkInDate=${accomSearchDto != null ? accomSearchDto.checkInDate : null},
+                          checkOutDate=${accomSearchDto != null ? accomSearchDto.checkOutDate : null})}">다음 5개</a>
     </div>
 </section>
 

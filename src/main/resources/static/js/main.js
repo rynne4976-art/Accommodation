@@ -15,6 +15,8 @@ if (tabs.length) {
         dateTrigger: $("dateTrigger"),
         guestTrigger: $("guestTrigger"),
         dateLabel: $("dateRangeLabel"),
+        checkInInput: $("checkInDateInput"),
+        checkOutInput: $("checkOutDateInput"),
         guestLabel: $("guestDisplay"),
         calendar: $("calendarPopup"),
         guest: $("guestPopup"),
@@ -43,6 +45,19 @@ if (tabs.length) {
     const addDays = (date, days) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
     const sameDate = (a, b) => a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
     const formatDate = (date) => `${date.getMonth() + 1}.${String(date.getDate()).padStart(2, "0")} ${weekdays[date.getDay()]}`;
+    const formatIsoDate = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const parseIsoDate = (value) => {
+        if (!value) {
+            return null;
+        }
+
+        const [year, month, day] = value.split("-").map(Number);
+        if (!year || !month || !day) {
+            return null;
+        }
+
+        return new Date(year, month - 1, day);
+    };
     const closePopups = () => [ui.calendar, ui.guest].forEach((el) => el.classList.remove("open"));
     const emptyDateText = "날짜를 선택해주세요!";
     const selectingDateText = "체크인 날짜 - 체크아웃 날짜";
@@ -64,6 +79,12 @@ if (tabs.length) {
         ui.dateLabel.textContent = triggerText;
         ui.summary.textContent = summaryText;
         ui.dateTrigger.classList.toggle("is-placeholder", !hasCompleteRange);
+        if (ui.checkInInput) {
+            ui.checkInInput.value = state.start ? formatIsoDate(state.start) : "";
+        }
+        if (ui.checkOutInput) {
+            ui.checkOutInput.value = state.end ? formatIsoDate(state.end) : "";
+        }
     }
 
     function renderGuest() {
@@ -128,11 +149,7 @@ if (tabs.length) {
             state.end = sameDate(date, state.start) ? addDays(date, 1) : date;
         }
 
-        if (state.end) {
-            ui.calendar.classList.remove("open");
-        } else {
-            ui.calendar.classList.add("open");
-        }
+        ui.calendar.classList.add("open");
         renderDate();
         renderCalendar();
     }
@@ -192,6 +209,12 @@ if (tabs.length) {
             renderDate();
         }
     });
+
+    state.start = parseIsoDate(ui.checkInInput?.value);
+    state.end = parseIsoDate(ui.checkOutInput?.value);
+    if (state.start) {
+        state.month = new Date(state.start.getFullYear(), state.start.getMonth(), 1);
+    }
 
     renderDate();
     renderGuest();

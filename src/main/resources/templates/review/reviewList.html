@@ -36,13 +36,16 @@
     </section>
 
     <section class="accom-detail-info-card review-page-list">
-        <div th:if="${reviewList != null and !#lists.isEmpty(reviewList)}" class="review-page-grid">
-            <article class="review-page-card" th:each="review : ${reviewList}">
+        <div th:if="${reviewList != null and !#lists.isEmpty(reviewList)}" class="review-page-stack">
+            <article class="review-page-card review-page-card-full" th:each="review : ${reviewList}">
                 <div class="review-card-top">
-                    <div class="review-card-stars" aria-label="회원 별점">
-                        <span class="review-star"
-                              th:each="i : ${#numbers.sequence(1,5)}"
-                              th:classappend="${i <= review.rating} ? ' filled' : ''">★</span>
+                    <div class="review-page-headline">
+                        <div class="review-card-stars" aria-label="회원 별점">
+                            <span class="review-star"
+                                  th:each="i : ${#numbers.sequence(1,5)}"
+                                  th:classappend="${i <= review.rating} ? ' filled' : ''">★</span>
+                        </div>
+                        <p class="review-card-author" th:text="${review.member.name}">회원명</p>
                     </div>
                     <p class="review-card-date" th:text="${#temporals.format(review.regTime, 'yyyy.MM.dd')}">2026.04.02</p>
                 </div>
@@ -70,6 +73,7 @@
                             <img th:each="img : ${review.reviewImgList}"
                                  class="review-image-slider-item"
                                  th:src="${img.imgUrl}"
+                                 th:attr="data-review-modal-image=${img.imgUrl},data-review-modal-group=${review.id}"
                                  alt="리뷰 이미지">
                         </div>
 
@@ -85,8 +89,55 @@
         <div class="review-empty-card review-empty-inline" th:if="${reviewList == null or #lists.isEmpty(reviewList)}">
             <p>등록된 리뷰가 없습니다.</p>
         </div>
+
+        <div class="pager review-pager"
+             th:if="${reviewPage != null and reviewPage.totalPages > 0}"
+             th:with="currentPage=${reviewPage.number + 1},
+                      totalPages=${reviewPage.totalPages},
+                      startPage=${((currentPage - 1) / 5) * 5 + 1},
+                      endPage=${T(java.lang.Math).min(totalPages, startPage + 4)}">
+
+            <span class="pager-nav pager-nav-disabled" th:if="${startPage <= 1}">이전 5개</span>
+            <a class="pager-nav"
+               th:if="${startPage > 1}"
+               th:href="@{${currentPath}(page=${startPage - 1})}">이전 5개</a>
+
+            <span class="pager-nav pager-nav-disabled" th:if="${!reviewPage.hasPrevious()}">이전</span>
+            <a class="pager-nav"
+               th:if="${reviewPage.hasPrevious()}"
+               th:href="@{${currentPath}(page=${currentPage - 1})}">이전</a>
+
+            <a th:each="pageNum : ${#numbers.sequence(startPage, endPage)}"
+               th:classappend="${pageNum == currentPage} ? ' pager-current'"
+               th:href="@{${currentPath}(page=${pageNum})}"
+               th:text="${pageNum}">1</a>
+
+            <span class="pager-nav pager-nav-disabled" th:if="${!reviewPage.hasNext()}">다음</span>
+            <a class="pager-nav"
+               th:if="${reviewPage.hasNext()}"
+               th:href="@{${currentPath}(page=${currentPage + 1})}">다음</a>
+
+            <span class="pager-nav pager-nav-disabled" th:if="${endPage >= totalPages}">다음 5개</span>
+            <a class="pager-nav"
+               th:if="${endPage < totalPages}"
+               th:href="@{${currentPath}(page=${endPage + 1})}">다음 5개</a>
+        </div>
     </section>
 </main>
+
+<div id="reviewImageViewerModal" class="review-modal review-image-viewer-modal" aria-hidden="true">
+    <div class="review-modal-backdrop" data-review-image-close></div>
+
+    <div class="review-modal-dialog review-image-viewer-dialog" role="dialog" aria-modal="true" aria-label="리뷰 이미지 전체보기">
+        <button type="button" class="review-modal-close" data-review-image-close>닫기</button>
+
+        <div class="review-image-viewer-shell">
+            <button type="button" class="review-image-viewer-nav" data-review-image-modal-prev>&lt;</button>
+            <img id="reviewImageViewerTarget" class="review-image-viewer-target" alt="리뷰 확대 이미지">
+            <button type="button" class="review-image-viewer-nav" data-review-image-modal-next>&gt;</button>
+        </div>
+    </div>
+</div>
 
 <div th:replace="~{layouts/footer :: footer}"></div>
 <script th:src="@{/js/review-list-slider.js}"></script>

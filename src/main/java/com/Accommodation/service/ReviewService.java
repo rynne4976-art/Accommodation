@@ -14,6 +14,8 @@ import com.Accommodation.repository.ReviewImgRepository;
 import com.Accommodation.repository.ReviewRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -120,6 +122,13 @@ public class ReviewService {
         List<Review> reviewList = reviewRepository.findByAccomIdOrderByRegTimeDesc(accomId);
         reviewList.forEach(this::applyAccessibleImageUrls);
         return reviewList;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Review> getReviewPage(Long accomId, Pageable pageable) {
+        Page<Review> reviewPage = reviewRepository.findByAccomIdOrderByRegTimeDesc(accomId, pageable);
+        reviewPage.getContent().forEach(this::applyAccessibleImageUrls);
+        return reviewPage;
     }
 
     @Transactional(readOnly = true)

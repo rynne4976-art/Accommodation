@@ -9,6 +9,7 @@ import com.Accommodation.entity.AccomOperationDay;
 import com.Accommodation.entity.AccomOperationPolicy;
 import com.Accommodation.repository.AccomImgRepository;
 import com.Accommodation.repository.AccomRepository;
+import com.Accommodation.repository.ReviewRepository;
 import com.Accommodation.validation.AccomValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -34,6 +36,7 @@ public class AccomService {
     private final AccomRepository accomRepository;
     private final AccomImgService accomImgService;
     private final AccomImgRepository accomImgRepository;
+    private final ReviewRepository reviewRepository;
     private final S3FileService s3FileService;
     private final AccomValidator accomValidator;
 
@@ -80,6 +83,11 @@ public class AccomService {
                 )
         );
 
+        long reviewCount = reviewRepository.countByAccomId(accomId);
+        Double avgRating = reviewRepository.findAverageRatingByAccomId(accomId);
+        accom.setReviewCount((int) reviewCount);
+        accom.setAvgRating(avgRating != null ? avgRating : 0.0);
+
         return accom;
     }
 
@@ -98,7 +106,30 @@ public class AccomService {
 
     @Transactional(readOnly = true)
     public Page<MainAccomDto> getMainAccomPage(AccomSearchDto accomSearchDto, Pageable pageable) {
-        return accomRepository.getMainAccomPage(accomSearchDto, pageable);
+        Page<MainAccomDto> accomPage = accomRepository.getMainAccomPage(accomSearchDto, pageable);
+        accomPage.getContent().forEach(this::applyReviewSummary);
+        return accomPage;
+    }
+
+    @Transactional(readOnly = true)
+    public List<MainAccomDto> getRecentViewedAccomList(List<Long> accomIds) {
+        List<MainAccomDto> recentViewedList = new ArrayList<>();
+
+        if (accomIds == null || accomIds.isEmpty()) {
+            return recentViewedList;
+        }
+
+        for (Long accomId : accomIds) {
+            if (accomId == null) {
+                continue;
+            }
+
+            accomRepository.findWithOperationInfoById(accomId)
+                    .filter(accom -> !Boolean.TRUE.equals(accom.getDeleted()))
+                    .ifPresent(accom -> recentViewedList.add(toMainAccomDto(accom)));
+        }
+
+        return recentViewedList;
     }
 
     public Long updateAccom(Long accomId,
@@ -221,5 +252,49 @@ public class AccomService {
             operationDay.setOperationDate(requestedDate);
             accom.addOperationDay(operationDay);
         }
+    }
+
+    private void applyReviewSummary(MainAccomDto mainAccomDto) {
+        if (mainAccomDto == null || mainAccomDto.getId() == null) {
+            return;
+        }
+
+        long reviewCount = reviewRepository.countByAccomId(mainAccomDto.getId());
+        Double avgRating = reviewRepository.findAverageRatingByAccomId(mainAccomDto.getId());
+
+        mainAccomDto.setReviewCount((int) reviewCount);
+        mainAccomDto.setAvgRating(avgRating != null ? avgRating : 0.0);
+    }
+
+    private MainAccomDto toMainAccomDto(Accom accom) {
+        List<AccomImg> accomImgList = accomImgRepository.findByAccomIdOrderByIdAsc(accom.getId());
+        String imgUrl = null;
+
+        if (!accomImgList.isEmpty()) {
+            AccomImg repImage = accomImgList.stream()
+                    .filter(img -> "Y".equalsIgnoreCase(img.getRepImgYn()))
+                    .findFirst()
+                    .orElse(accomImgList.get(0));
+            imgUrl = s3FileService.getProxyImageUrl(repImage.getImgName());
+        }
+
+        MainAccomDto dto = new MainAccomDto(
+                accom.getId(),
+                accom.getAccomName(),
+                accom.getAccomType(),
+                accom.getGrade(),
+                accom.getAccomDetail(),
+                imgUrl,
+                accom.getPricePerNight(),
+                accom.getLocation(),
+                accom.getRoomCount(),
+                accom.getAvgRating(),
+                accom.getReviewCount(),
+                accom.getOperationPolicy() != null ? accom.getOperationPolicy().getCheckInTime() : null,
+                accom.getOperationPolicy() != null ? accom.getOperationPolicy().getCheckOutTime() : null
+        );
+
+        applyReviewSummary(dto);
+        return dto;
     }
 }

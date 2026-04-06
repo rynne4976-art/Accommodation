@@ -507,6 +507,26 @@ thead {
     }
 }
 
+.action-column,
+.action-cell {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.action-cell {
+    overflow: visible;
+    text-overflow: clip;
+}
+
+.action-cell .table-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    padding: 10px 12px;
+    white-space: nowrap;
+}
+
 @media (max-width: 640px) {
     .dashboard-grid {
         grid-template-columns: 1fr;

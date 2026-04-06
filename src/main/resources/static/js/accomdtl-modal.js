@@ -65,6 +65,28 @@
         });
     }
 
+    function renderReadOnlyStars(container, rating) {
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = '';
+
+        for (let i = 1; i <= 5; i += 1) {
+            const star = document.createElement('span');
+            star.className = 'review-star' + (i <= rating ? ' filled' : '');
+            star.textContent = '★';
+            container.appendChild(star);
+        }
+    }
+
+    function initReadOnlyStarRatings() {
+        document.querySelectorAll('[data-readonly-rating-container]').forEach(function (container) {
+            const rating = Number(container.getAttribute('data-rating') || 0);
+            renderReadOnlyStars(container, rating);
+        });
+    }
+
     function setModalRating(rating) {
         const ratingInput = document.getElementById('modalReviewRating');
         if (ratingInput) {
@@ -487,6 +509,7 @@
 
         setModalRating(Number(document.getElementById('modalReviewRating')?.value || 0));
         setEditModalRating(Number(document.getElementById('editModalReviewRating')?.value || 0));
+        initReadOnlyStarRatings();
         syncExistingReviewImageEmptyState();
 
         document.addEventListener('keydown', function (event) {

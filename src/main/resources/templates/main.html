@@ -23,6 +23,10 @@
             </div>
 
             <form class="booking-bar" th:action="@{/searchList}" method="get">
+                <input type="hidden" name="checkInDate" id="checkInDateInput"
+                       th:value="${accomSearchDto != null and accomSearchDto.checkInDate != null ? #temporals.format(accomSearchDto.checkInDate, 'yyyy-MM-dd') : ''}">
+                <input type="hidden" name="checkOutDate" id="checkOutDateInput"
+                       th:value="${accomSearchDto != null and accomSearchDto.checkOutDate != null ? #temporals.format(accomSearchDto.checkOutDate, 'yyyy-MM-dd') : ''}">
 
             <label class="booking-field">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
