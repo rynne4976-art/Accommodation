@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.util.StringUtils;
 
 /**
  * 🧾 Member (회원 엔티티)
@@ -26,7 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Table(name = "member")
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"password", "socialProviderId", "number", "address"})
 public class Member extends BaseTimeEntity {
 
     /**
@@ -57,6 +58,18 @@ public class Member extends BaseTimeEntity {
      */
     @Column(nullable = false)
     private String password;
+
+    /**
+     * 소셜 로그인 제공자 (예: google)
+     */
+    @Column(length = 30)
+    private String socialProvider;
+
+    /**
+     * 소셜 로그인 제공자 내 사용자 식별값
+     */
+    @Column(length = 100)
+    private String socialProviderId;
 
     /**
      * 휴대폰 번호
@@ -117,5 +130,14 @@ public class Member extends BaseTimeEntity {
         this.name = memberUpdateDto.getName();
         setNumber(memberUpdateDto.getNumber());
         this.address = memberUpdateDto.getFullAddress();
+    }
+
+    public void linkSocialAccount(String socialProvider, String socialProviderId) {
+        this.socialProvider = socialProvider;
+        this.socialProviderId = socialProviderId;
+    }
+
+    public boolean isSocialMember() {
+        return StringUtils.hasText(socialProvider);
     }
 }

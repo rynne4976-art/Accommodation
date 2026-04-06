@@ -1,5 +1,6 @@
 package com.Accommodation.dto;
 
+import com.Accommodation.constant.SocialMemberDefaults;
 import com.Accommodation.entity.Member;
 import com.Accommodation.util.AddressUtils;
 import jakarta.validation.constraints.NotBlank;
@@ -35,9 +36,9 @@ public class MemberUpdateDto {
 
         MemberUpdateDto dto = new MemberUpdateDto();
         dto.setName(member.getName());
-        dto.setNumber(member.getNumber());
-        dto.setPostcode(parsedAddress.getPostcode());
-        dto.setAddress(parsedAddress.getAddress());
+        dto.setNumber(SocialMemberDefaults.DEFAULT_NUMBER.equals(member.getNumber()) ? "" : member.getNumber());
+        dto.setPostcode(SocialMemberDefaults.DEFAULT_ADDRESS.equals(member.getAddress()) ? "" : parsedAddress.getPostcode());
+        dto.setAddress(SocialMemberDefaults.DEFAULT_ADDRESS.equals(member.getAddress()) ? "" : parsedAddress.getAddress());
         dto.setDetailAddress(parsedAddress.getDetailAddress());
         return dto;
     }

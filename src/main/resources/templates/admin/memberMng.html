@@ -28,7 +28,7 @@
         <section class="search-panel">
             <form class="search-form" data-ajax-form th:action="@{/admin/members}" method="get">
                 <select name="searchBy">
-                    <option value="all" th:selected="${memberSearchDto.searchBy == null or memberSearchDto.searchBy == 'all'}">이름+이메일</option>
+                    <option value="all" th:selected="${memberSearchDto.searchBy == null or memberSearchDto.searchBy == 'all'}">검색 조건</option>
                     <option value="name" th:selected="${memberSearchDto.searchBy == 'name'}">이름</option>
                     <option value="email" th:selected="${memberSearchDto.searchBy == 'email'}">이메일</option>
                 </select>
@@ -38,7 +38,10 @@
                     <option value="USER" th:selected="${memberSearchDto.role != null and memberSearchDto.role.name() == 'USER'}">USER</option>
                     <option value="ADMIN" th:selected="${memberSearchDto.role != null and memberSearchDto.role.name() == 'ADMIN'}">ADMIN</option>
                 </select>
-                <button type="submit">검색</button>
+                <div class="search-form-actions">
+                    <a th:href="@{/admin/members}" class="search-form-reset">초기화</a>
+                    <button type="submit">조회</button>
+                </div>
             </form>
         </section>
 

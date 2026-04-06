@@ -3,12 +3,16 @@ package com.Accommodation.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.util.StringUtils;
+
+import com.Accommodation.service.CustomOAuth2UserService;
+import com.Accommodation.service.GoogleOidcUserService;
 
 /**
  * 🧾 SecurityConfig (보안 설정)
@@ -18,14 +22,9 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 public class SecurityConfig {
 
     private final RoleBasedAuthenticationSuccessHandler roleBasedAuthenticationSuccessHandler;
-
-    /**
-     * 🔐 비밀번호 암호화 객체 등록
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final GoogleOidcUserService googleOidcUserService;
+    private final Environment environment;
 
     /**
      * 🌐 보안 필터 설정
@@ -33,25 +32,27 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        return http
+        HttpSecurity security = http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 )
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
+                        .requestMatchers(HttpMethod.GET,
                                 "/",
                                 "/main",
+                                "/main/**",
                                 "/error",
                                 "/error/**",
+                                "/images/**",
+                                "/accom/**"
+                        ).permitAll()
+                        .requestMatchers(
                                 "/members/new",
                                 "/members/login",
                                 "/css/**",
-                                "/js/**",
-                                "/images/**",
-                                "/accom/**",
-                                "/reviews/**"
+                                "/js/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
@@ -77,8 +78,32 @@ public class SecurityConfig {
                         .logoutUrl("/members/logout")
                         .logoutSuccessUrl("/main?logout")
                         .permitAll()
-                )
+                );
 
-                .build();
+        if (isSocialLoginEnabled()) {
+            security.oauth2Login(oauth2 -> oauth2
+                    .loginPage("/members/login")
+                    .userInfoEndpoint(userInfo -> userInfo
+                            .userService(customOAuth2UserService)
+                            .oidcUserService(googleOidcUserService::loadUser)
+                    )
+                    .successHandler(roleBasedAuthenticationSuccessHandler)
+            );
+        }
+
+        return security.build();
+    }
+
+    private boolean isSocialLoginEnabled() {
+        return isGoogleLoginEnabled() || isKakaoLoginEnabled();
+    }
+
+    private boolean isGoogleLoginEnabled() {
+        return StringUtils.hasText(environment.getProperty("spring.security.oauth2.client.registration.google.client-id"))
+                && StringUtils.hasText(environment.getProperty("spring.security.oauth2.client.registration.google.client-secret"));
+    }
+
+    private boolean isKakaoLoginEnabled() {
+        return StringUtils.hasText(environment.getProperty("spring.security.oauth2.client.registration.kakao.client-id"));
     }
 }

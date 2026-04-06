@@ -6,6 +6,7 @@ import com.Accommodation.dto.MemberSearchDto;
 import com.Accommodation.dto.OrderSearchDto;
 import com.Accommodation.service.AdminService;
 import com.Accommodation.service.OrderService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -13,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,8 +57,18 @@ public class AdminController {
     public String memberDetail(@PathVariable("memberId") Long memberId,
                                @RequestParam(value = "page", defaultValue = "0") int page,
                                MemberSearchDto memberSearchDto,
+                               RedirectAttributes redirectAttributes,
                                Model model) {
-        model.addAttribute("member", adminService.getMemberDetail(memberId));
+        try {
+            model.addAttribute("member", adminService.getMemberDetail(memberId));
+        } catch (EntityNotFoundException e) {
+            redirectAttributes.addAttribute("page", page);
+            redirectAttributes.addAttribute("searchBy", memberSearchDto.getSearchBy());
+            redirectAttributes.addAttribute("searchQuery", memberSearchDto.getSearchQuery());
+            redirectAttributes.addAttribute("role", memberSearchDto.getRole());
+            redirectAttributes.addAttribute("roleError", e.getMessage());
+            return "redirect:/admin/members";
+        }
         model.addAttribute("page", page);
         model.addAttribute("memberSearchDto", memberSearchDto);
         return "admin/memberDetail";
@@ -74,7 +86,7 @@ public class AdminController {
         try {
             adminService.updateMemberRole(memberId, role, userDetails.getUsername());
             redirectAttributes.addAttribute("roleUpdated", "true");
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException | EntityNotFoundException e) {
             redirectAttributes.addAttribute("roleError", e.getMessage());
         }
 
@@ -110,8 +122,11 @@ public class AdminController {
         try {
             orderService.updateOrderStatusByAdmin(orderId, status);
             redirectAttributes.addAttribute("orderUpdated", "true");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addAttribute("orderError", e.getMessage());
+        } catch (IllegalArgumentException | EntityNotFoundException e) {
+            redirectAttributes.addAttribute(
+                    "orderError",
+                    StringUtils.hasText(e.getMessage()) ? e.getMessage() : "예약 정보를 찾을 수 없습니다."
+            );
         }
 
         redirectAttributes.addAttribute("page", page);

@@ -12,7 +12,7 @@
 </head>
 <body>
 
-<div th:replace="layouts/header :: header"></div>
+<div th:replace="~{layouts/header :: header}"></div>
 
 <main class="auth-wrap">
     <section class="auth-card">
@@ -86,7 +86,7 @@
     </section>
 </main>
 
-<div th:replace="layouts/footer :: footer"></div>
+<div th:replace="~{layouts/footer :: footer}"></div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

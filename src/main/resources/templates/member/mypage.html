@@ -72,12 +72,12 @@
             font-weight: 700;
         }
 
-        .order-card__badge--order {
+        .order-status-order {
             background: #eff6ff;
             color: #1d4ed8;
         }
 
-        .order-card__badge--cancel {
+        .order-status-cancel {
             background: #fff1f0;
             color: #cf1322;
         }
@@ -278,7 +278,7 @@
     </style>
 </head>
 <body>
-<div th:replace="layouts/header :: header"></div>
+<div th:replace="~{layouts/header :: header}"></div>
 
     <main class="mypage-wrap">
         <section class="mypage-hero">
@@ -299,6 +299,9 @@
             <div class="mypage-alert success" th:if="${param.passwordUpdated}">
                 비밀번호가 변경되었습니다.
             </div>
+            <div class="mypage-alert success" th:if="${profileUpdatedMessage}">
+                <span th:text="${profileUpdatedMessage}">안내 메시지</span>
+            </div>
 
             <div class="mypage-grid">
                 <div class="mypage-item">
@@ -311,7 +314,7 @@
                 </div>
                 <div class="mypage-item">
                     <span class="mypage-item-label">휴대폰 번호</span>
-                    <strong th:text="${member.formattedNumber}">010-0000-0000</strong>
+                    <strong th:text="${member.number == T(com.Accommodation.constant.SocialMemberDefaults).DEFAULT_NUMBER ? '입력된 정보 없음' : member.formattedNumber}">010-0000-0000</strong>
                 </div>
                 <div class="mypage-item">
                     <span class="mypage-item-label">가입일</span>
@@ -319,13 +322,13 @@
                 </div>
                 <div class="mypage-item mypage-item-wide">
                     <span class="mypage-item-label">주소</span>
-                    <strong th:text="${member.address}">서울시 강남구</strong>
+                    <strong th:text="${member.address == T(com.Accommodation.constant.SocialMemberDefaults).DEFAULT_ADDRESS ? '입력된 정보 없음' : member.address}">서울시 강남구</strong>
                 </div>
             </div>
 
             <div class="mypage-action-row">
                 <a th:href="@{/members/mypage/edit}" class="mypage-action-link">정보 수정</a>
-                <a th:href="@{/members/mypage/password}" class="mypage-action-link mypage-action-link-secondary">비밀번호 변경</a>
+                <a th:if="${!member.socialMember}" th:href="@{/members/mypage/password}" class="mypage-action-link mypage-action-link-secondary">비밀번호 변경</a>
             </div>
         </section>
     </main>
@@ -340,28 +343,30 @@
             <p>예약 내역이 없습니다.</p>
         </div>
 
-        <div th:each="order : ${orders}" class="order-card">
+        <div th:each="order : ${orders}"
+             th:with="firstItem=${#lists.isEmpty(order.orderItemDtos) ? null : order.orderItemDtos[0]}"
+             class="order-card">
 
             <div class="order-card__top">
                 <span class="order-card__date"
                       th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">날짜</span>
                 <span class="order-card__badge"
-                      th:classappend="${order.orderStatus.name() == 'CANCEL'} ? 'order-card__badge--cancel' : 'order-card__badge--order'"
-                      th:text="${order.orderStatus.name() == 'ORDER'} ? '예약 완료' : '예약 취소'">상태</span>
+                      th:classappend="${order.orderStatus.name() == 'CANCEL' ? ' order-status-cancel' : ' order-status-order'}"
+                      th:text="${order.orderStatus.name() == 'ORDER' ? '예약 완료' : '예약 취소'}">상태</span>
             </div>
 
             <div th:each="item : ${order.orderItemDtos}" class="order-item">
                 <img class="order-item__img"
-                     th:src="${#strings.isEmpty(item.imgUrl)} ? '/images/no-image.png' : ${item.imgUrl}"
+                     th:src="${#strings.isEmpty(item.imgUrl) ? '/images/no-image.png' : item.imgUrl}"
                      th:alt="${item.accomName}">
                 <div class="order-item__info">
                     <div class="order-item__name" th:text="${item.accomName}">숙소명</div>
                     <div class="order-item__meta">
                         <span th:if="${item.checkInDate != null}"
-                              th:text="${item.checkInDate} + ' ~ ' + ${item.checkOutDate} + ' (' + ${item.count} + '박)'"></span>
+                              th:text="|${item.checkInDate} ~ ${item.checkOutDate} (${item.count}박)|"></span>
                         <span th:if="${item.checkInDate == null}" th:text="${item.count} + '박'"></span>
                         <br>
-                        <span th:if="${item.guestCount != null}" th:text="'투숙 ' + ${item.guestCount} + '명'"></span>
+                        <span th:if="${item.guestCount != null}" th:text="|투숙 ${item.guestCount}명|"></span>
                     </div>
                 </div>
                 <div class="order-item__price"
@@ -372,9 +377,9 @@
                 <button class="btn-order-action btn-order-edit"
                         th:disabled="${order.orderStatus.name() == 'CANCEL'}"
                         th:data-order-id="${order.orderId}"
-                        th:data-checkin="${order.orderItemDtos[0].checkInDate}"
-                        th:data-checkout="${order.orderItemDtos[0].checkOutDate}"
-                        th:data-guest="${order.orderItemDtos[0].guestCount}"
+                        th:data-checkin="${firstItem != null ? firstItem.checkInDate : ''}"
+                        th:data-checkout="${firstItem != null ? firstItem.checkOutDate : ''}"
+                        th:data-guest="${firstItem != null and firstItem.guestCount != null ? firstItem.guestCount : 1}"
                         onclick="openEditModal(this)">
                     예약 수정
                 </button>
@@ -422,7 +427,7 @@
         </div>
     </div>
 
-<div th:replace="layouts/footer :: footer"></div>
+<div th:replace="~{layouts/footer :: footer}"></div>
 
 <script th:inline="javascript">
     let currentOrderId = null;

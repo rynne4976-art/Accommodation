@@ -30,11 +30,6 @@
                   data-ajax-form
                   th:action="@{/admin/accoms}"
                   method="get">
-                <input type="text"
-                       name="searchQuery"
-                       placeholder="숙소명을 입력하십시오."
-                       th:value="${accomSearchDto.searchQuery}">
-
                 <select name="accomType">
                     <option value="">전체 유형</option>
                     <option value="HOTEL" th:selected="${accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'HOTEL'}">호텔</option>
@@ -43,6 +38,11 @@
                     <option value="RESORT" th:selected="${accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'RESORT'}">리조트</option>
                     <option value="GUESTHOUSE" th:selected="${accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'GUESTHOUSE'}">게스트하우스</option>
                 </select>
+
+                <input type="text"
+                       name="searchQuery"
+                       placeholder="숙소명을 입력하십시오."
+                       th:value="${accomSearchDto.searchQuery}">
 
                 <select name="grade">
                     <option value="">전체 등급</option>
@@ -61,6 +61,7 @@
                 </select>
 
                 <div class="search-form-actions">
+                    <a th:href="@{/admin/accoms}" class="search-form-reset">초기화</a>
                     <button type="submit">조회</button>
                 </div>
             </form>
@@ -70,16 +71,16 @@
         <table class="accom-table">
             <colgroup>
                 <col style="width: 6%;">
-                <col style="width: 16%;">
+                <col style="width: 15%;">
                 <col style="width: 8%;">
-                <col style="width: 8%;">
-                <col style="width: 10%;">
-                <col style="width: 8%;">
+                <col style="width: 7%;">
+                <col style="width: 9%;">
+                <col style="width: 7%;">
                 <col style="width: 11%;">
-                <col style="width: 13%;">
+                <col style="width: 11%;">
                 <col style="width: 8%;">
-                <col style="width: 6%;">
-                <col style="width: 6%;">
+                <col style="width: 9%;">
+                <col style="width: 9%;">
             </colgroup>
             <thead>
             <tr>

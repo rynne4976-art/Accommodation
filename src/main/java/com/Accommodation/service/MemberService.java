@@ -1,8 +1,10 @@
 package com.Accommodation.service;
 
+import com.Accommodation.constant.SocialMemberDefaults;
 import com.Accommodation.dto.MemberFormDto;
 import com.Accommodation.dto.MemberUpdateDto;
 import com.Accommodation.dto.PasswordChangeDto;
+import com.Accommodation.constant.Role;
 import com.Accommodation.entity.Member;
 import com.Accommodation.repository.MemberRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -10,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.util.UUID;
 
 /**
  * 🧾 MemberService (회원 서비스)
@@ -87,6 +92,36 @@ public class MemberService {
         }
 
         member.setPassword(passwordEncoder.encode(passwordChangeDto.getNewPassword()));
+    }
+
+    public Member upsertSocialMember(String provider, String email, String name, String providerId) {
+        Member member = memberRepository.findByEmail(email);
+
+        if (member == null) {
+            member = new Member();
+            member.setName(StringUtils.hasText(name) ? name : "소셜 사용자");
+            member.setEmail(email);
+            member.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+            member.setNumber(SocialMemberDefaults.DEFAULT_NUMBER);
+            member.setAddress(SocialMemberDefaults.DEFAULT_ADDRESS);
+            member.setRole(Role.USER);
+        }
+
+        member.linkSocialAccount(provider, providerId);
+        return memberRepository.save(member);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasRequiredReservationInfo(String email) {
+        Member member = getMemberByEmail(email);
+        return hasRequiredReservationInfo(member);
+    }
+
+    private boolean hasRequiredReservationInfo(Member member) {
+        return StringUtils.hasText(member.getNumber())
+                && !SocialMemberDefaults.DEFAULT_NUMBER.equals(member.getNumber())
+                && StringUtils.hasText(member.getAddress())
+                && !SocialMemberDefaults.DEFAULT_ADDRESS.equals(member.getAddress());
     }
 
     /**
