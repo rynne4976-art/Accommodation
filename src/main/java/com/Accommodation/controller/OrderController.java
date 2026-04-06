@@ -6,6 +6,7 @@ import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.AccomOperationDay;
 import com.Accommodation.entity.AccomOperationPolicy;
 import com.Accommodation.service.AccomService;
+import com.Accommodation.service.MemberService;
 import com.Accommodation.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,13 +32,18 @@ public class OrderController {
 
     private final OrderService orderService;
     private final AccomService accomService;
+    private final MemberService memberService;
 
     // ── 예약 폼 페이지 (GET) ──────────────────────────────────────────────────
     @GetMapping("/orders/accom/{accomId}")
     public String orderForm(@PathVariable Long accomId,
                             @RequestParam(required = false) LocalDate checkInDate,
                             @RequestParam(required = false) LocalDate checkOutDate,
+                            Principal principal,
                             Model model) {
+        if (!memberService.hasRequiredReservationInfo(principal.getName())) {
+            return "redirect:/members/mypage/edit?reservationInfoRequired=true";
+        }
 
         Accom accom = accomService.getAccomDtl(accomId);
         AccomOperationPolicy policy = accom.getOperationPolicy();
@@ -44,9 +51,9 @@ public class OrderController {
         List<String> operationDays = accom.getOperationDayList() == null
                 ? Collections.emptyList()
                 : accom.getOperationDayList().stream()
-                  .map(AccomOperationDay::getOperationDate)
-                  .map(LocalDate::toString)
-                  .toList();
+                .map(AccomOperationDay::getOperationDate)
+                .map(LocalDate::toString)
+                .toList();
 
         List<String> soldOutDays = orderService.getSoldOutDates(accomId).stream()
                 .map(LocalDate::toString)
@@ -69,12 +76,47 @@ public class OrderController {
         return "order/orderForm";
     }
 
+    @GetMapping("/orders/accom/{accomId}/availability")
+    @ResponseBody
+    public ResponseEntity<?> getAvailability(@PathVariable Long accomId,
+                                             @RequestParam LocalDate checkInDate,
+                                             @RequestParam LocalDate checkOutDate) {
+        try {
+            int remaining = orderService.getRemainingRooms(accomId, checkInDate, checkOutDate);
+            return new ResponseEntity<>(Map.of("remainingRooms", remaining), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * 월별 날짜별 잔여 객실 수 조회 (캘린더 badge 표시용)
+     * GET /orders/accom/{accomId}/monthly-availability?year=2026&month=4
+     * → { "2026-04-01": 3, "2026-04-05": 0, ... }  (운영일만 포함)
+     */
+    @GetMapping("/orders/accom/{accomId}/monthly-availability")
+    @ResponseBody
+    public ResponseEntity<?> getMonthlyAvailability(@PathVariable Long accomId,
+                                                     @RequestParam int year,
+                                                     @RequestParam int month) {
+        try {
+            Map<String, Integer> availability = orderService.getMonthlyAvailability(accomId, year, month);
+            return new ResponseEntity<>(availability, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     // ── 주문 생성 (AJAX POST) ─────────────────────────────────────────────────
     @PostMapping("/order")
     @ResponseBody
     public ResponseEntity<?> order(@RequestBody @Valid OrderDto orderDto,
                                    BindingResult bindingResult,
                                    Principal principal) {
+        if (!memberService.hasRequiredReservationInfo(principal.getName())) {
+            return new ResponseEntity<>("예약을 위해 연락처와 주소를 먼저 입력해주세요.", HttpStatus.BAD_REQUEST);
+        }
+
         if (bindingResult.hasErrors()) {
             StringBuilder sb = new StringBuilder();
             for (FieldError error : bindingResult.getFieldErrors()) {

@@ -36,9 +36,25 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    // 주문 취소
+    /**
+     * 주문 취소 (FSM 적용)
+     *
+     * 1) OrderStatus FSM 검증 → CANCEL 종단에서 재취소 시도 차단
+     * 2) COMPLETED 항목 포함 시 취소 불가 (이용 완료 후 취소 차단)
+     * 3) 모든 OrderItem을 원자적으로 CANCELLED 처리
+     */
     public void cancelOrder() {
-        this.orderStatus = OrderStatus.CANCEL;
+        // COMPLETED 항목 포함 여부 먼저 검증 (상태 변경 전에 체크)
+        boolean hasCompleted = orderItems.stream()
+                .anyMatch(item -> !item.getBookingStatus().canCancel());
+        if (hasCompleted) {
+            throw new IllegalStateException("이미 이용 완료된 예약이 포함되어 있어 취소할 수 없습니다.");
+        }
+
+        // OrderStatus FSM: ORDER.cancel() → CANCEL, CANCEL.cancel() → 예외
+        this.orderStatus = this.orderStatus.cancel();
+
+        // 모든 OrderItem 원자적 취소
         for (OrderItem orderItem : orderItems) {
             orderItem.cancel();
         }
