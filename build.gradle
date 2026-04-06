@@ -109,7 +109,7 @@ dependencies {
 	// ══════════════════════════════════════════════════════════
 	// ── [Phase 11] OAuth2 소셜 로그인 (카카오/네이버/구글) ──
 	// ══════════════════════════════════════════════════════════
-	// implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	// ↑ OAuth2 Client: 소셜 로그인(카카오, 네이버, 구글)을 위한 라이브러리
 	//   Spring Security OAuth2와 통합되어 소셜 인증 자동 처리
 	//   비유: 네이버/카카오 로그인 버튼을 자동으로 처리해주는 도우미

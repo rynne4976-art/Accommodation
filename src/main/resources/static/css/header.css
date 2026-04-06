@@ -334,6 +334,11 @@
     white-space:nowrap;
 }
 
+.icon-link-current{
+    color:#7b3ff2;
+    cursor:default;
+}
+
 .category-menu{
     display:flex;
     gap:30px;

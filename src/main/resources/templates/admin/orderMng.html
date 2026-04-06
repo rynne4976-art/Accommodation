@@ -20,27 +20,31 @@
         </div>
     </section>
 
-    <section class="table-panel">
-        <div class="admin-feedback success" th:if="${param.orderUpdated}">예약 상태가 변경되었습니다.</div>
-        <div class="admin-feedback error" th:if="${param.orderError}" th:text="${param.orderError}">예약 상태 변경 중 오류가 발생했습니다.</div>
+    <div class="admin-feedback success" th:if="${param.orderUpdated}">예약 상태가 변경되었습니다.</div>
+    <div class="admin-feedback error" th:if="${param.orderError}" th:text="${param.orderError}">예약 상태 변경 중 오류가 발생했습니다.</div>
 
-        <section class="search-panel">
-            <form class="search-form" th:action="@{/admin/orders}" method="get">
-                <select name="searchBy">
-                    <option value="all" th:selected="${orderSearchDto.searchBy == null or orderSearchDto.searchBy == 'all'}">예약번호+이메일+회원명</option>
-                    <option value="orderId" th:selected="${orderSearchDto.searchBy == 'orderId'}">예약번호</option>
-                    <option value="email" th:selected="${orderSearchDto.searchBy == 'email'}">이메일</option>
-                    <option value="memberName" th:selected="${orderSearchDto.searchBy == 'memberName'}">회원명</option>
-                </select>
-                <input type="text" name="searchQuery" th:value="${orderSearchDto.searchQuery}" placeholder="예약번호, 이메일, 회원명을 입력하세요">
-                <select name="orderStatus">
-                    <option value="" th:selected="${orderSearchDto.orderStatus == null}">전체 상태</option>
-                    <option value="ORDER" th:selected="${orderSearchDto.orderStatus != null and orderSearchDto.orderStatus.name() == 'ORDER'}">예약 완료</option>
-                    <option value="CANCEL" th:selected="${orderSearchDto.orderStatus != null and orderSearchDto.orderStatus.name() == 'CANCEL'}">예약 취소</option>
-                </select>
-                <button type="submit">검색</button>
-            </form>
-        </section>
+    <section class="search-panel">
+        <form class="search-form" th:action="@{/admin/orders}" method="get">
+            <select name="searchBy">
+                <option value="all" th:selected="${orderSearchDto.searchBy == null or orderSearchDto.searchBy == 'all'}">검색 조건</option>
+                <option value="orderId" th:selected="${orderSearchDto.searchBy == 'orderId'}">예약번호</option>
+                <option value="email" th:selected="${orderSearchDto.searchBy == 'email'}">이메일</option>
+                <option value="memberName" th:selected="${orderSearchDto.searchBy == 'memberName'}">회원명</option>
+            </select>
+            <input type="text" name="searchQuery" th:value="${orderSearchDto.searchQuery}" placeholder="예약번호, 이메일, 회원명을 입력하세요">
+            <select name="orderStatus">
+                <option value="" th:selected="${orderSearchDto.orderStatus == null}">전체 상태</option>
+                <option value="ORDER" th:selected="${orderSearchDto.orderStatus != null and orderSearchDto.orderStatus.name() == 'ORDER'}">예약 완료</option>
+                <option value="CANCEL" th:selected="${orderSearchDto.orderStatus != null and orderSearchDto.orderStatus.name() == 'CANCEL'}">예약 취소</option>
+            </select>
+            <div class="search-form-actions">
+                <a th:href="@{/admin/orders}" class="search-form-reset">초기화</a>
+                <button type="submit">조회</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="table-panel">
 
         <table class="order-table">
             <colgroup>

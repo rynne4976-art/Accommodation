@@ -197,6 +197,8 @@ body {
 .search-form-actions {
     display: flex;
     justify-content: flex-end;
+    gap: 10px;
+    min-width: 108px;
 }
 
 .search-form input,
@@ -219,6 +221,26 @@ body {
     border-radius: 10px;
     text-decoration: none;
     font-weight: 700;
+}
+
+.search-form button {
+    min-width: 108px;
+    text-align: center;
+}
+
+.search-form-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 108px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid #d0d7e2;
+    background: #f8fafc;
+    color: #475467;
+    font-weight: 700;
+    text-decoration: none;
+    box-sizing: border-box;
 }
 
 .admin-card a,

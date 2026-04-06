@@ -102,9 +102,13 @@ public class MemberController {
 
     @GetMapping("/members/mypage/edit")
     public String editMyPage(@AuthenticationPrincipal UserDetails userDetails,
+                             @RequestParam(value = "reservationInfoRequired", required = false) String reservationInfoRequired,
                              Model model) {
         Member member = memberService.getMemberByEmail(userDetails.getUsername());
         model.addAttribute("memberUpdateDto", MemberUpdateDto.from(member));
+        if (reservationInfoRequired != null) {
+            model.addAttribute("reservationInfoRequiredMessage", "예약을 진행하려면 휴대폰 번호와 주소를 먼저 입력해주세요.");
+        }
         return "member/mypageEdit";
     }
 
@@ -123,7 +127,14 @@ public class MemberController {
     }
 
     @GetMapping("/members/mypage/password")
-    public String changePasswordForm(Model model) {
+    public String changePasswordForm(@AuthenticationPrincipal UserDetails userDetails,
+                                     RedirectAttributes redirectAttributes,
+                                     Model model) {
+        Member member = memberService.getMemberByEmail(userDetails.getUsername());
+        if (member.isSocialMember()) {
+            redirectAttributes.addFlashAttribute("profileUpdatedMessage", "소셜 로그인 회원은 비밀번호를 변경할 수 없습니다.");
+            return "redirect:/members/mypage";
+        }
         model.addAttribute("passwordChangeDto", new PasswordChangeDto());
         return "member/passwordEdit";
     }
@@ -134,6 +145,12 @@ public class MemberController {
                                  BindingResult bindingResult,
                                  Model model,
                                  RedirectAttributes redirectAttributes) {
+        Member member = memberService.getMemberByEmail(userDetails.getUsername());
+        if (member.isSocialMember()) {
+            redirectAttributes.addFlashAttribute("profileUpdatedMessage", "소셜 로그인 회원은 비밀번호를 변경할 수 없습니다.");
+            return "redirect:/members/mypage";
+        }
+
         if (!passwordChangeDto.getNewPassword().equals(passwordChangeDto.getConfirmPassword())) {
             bindingResult.rejectValue("confirmPassword", "password.mismatch", "새 비밀번호 확인이 일치하지 않습니다.");
         }

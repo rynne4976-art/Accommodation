@@ -179,6 +179,98 @@ body {
     cursor: pointer;
 }
 
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 22px 0 18px;
+    color: #98a2b3;
+    font-size: 13px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e4e7ec;
+}
+
+.social-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 50px;
+    border-radius: 14px;
+    border: 1px solid #d9dee7;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    color: #1f2937;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    box-sizing: border-box;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.social-login:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+}
+
+.social-login__mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.social-login__icon {
+    width: 18px;
+    height: 18px;
+}
+
+.social-login__text {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    color: #344054;
+}
+
+.social-login--kakao {
+    margin-top: 12px;
+    border-color: #e5c74d;
+    background: linear-gradient(180deg, #fee500 0%, #f9df02 100%);
+    color: #191919;
+}
+
+.social-login--kakao:hover {
+    background: linear-gradient(180deg, #fee500 0%, #f2d700 100%);
+    border-color: #d9ba37;
+}
+
+.social-login__mark--kakao {
+    border-color: rgba(25, 25, 25, 0.12);
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.social-login__icon--kakao {
+    width: auto;
+    height: auto;
+    font-size: 15px;
+    font-weight: 900;
+    color: #191919;
+}
+
 .auth-links {
     margin-top: 20px;
     text-align: center;

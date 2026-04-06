@@ -9,13 +9,17 @@
     <title>회원정보 수정</title>
 </head>
 <body>
-<div th:replace="layouts/header :: header"></div>
+<div th:replace="~{layouts/header :: header}"></div>
 
 <main class="auth-wrap">
     <section class="auth-card">
         <span class="auth-label">Edit Profile</span>
         <h2>회원정보 수정</h2>
         <p class="auth-description">이름, 휴대폰 번호, 주소를 수정할 수 있습니다.</p>
+
+        <div class="auth-alert error" th:if="${reservationInfoRequiredMessage}">
+            <p th:text="${reservationInfoRequiredMessage}"></p>
+        </div>
 
         <form class="auth-form" th:action="@{/members/mypage/edit}" th:object="${memberUpdateDto}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -67,7 +71,7 @@
     </section>
 </main>
 
-<div th:replace="layouts/footer :: footer"></div>
+<div th:replace="~{layouts/footer :: footer}"></div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
