@@ -16,6 +16,7 @@ public class CartListItemDto {
     private final Long accomId;
     private final String accomName;
     private final AccomType accomType;
+    private final String accomTypeName;
     private final LocalDate checkInDate;
     private final LocalDate checkOutDate;
 
@@ -44,6 +45,7 @@ public class CartListItemDto {
         this.accomId       = cartItem.getAccom().getId();
         this.accomName     = cartItem.getAccom().getAccomName();
         this.accomType     = cartItem.getAccom().getAccomType();
+        this.accomTypeName = GuestPricingUtils.getTypeName(cartItem.getAccom().getAccomType());
         this.checkInDate   = cartItem.getCheckInDate();
         this.checkOutDate  = cartItem.getCheckOutDate();
         this.nights        = (int) ChronoUnit.DAYS.between(cartItem.getCheckInDate(), cartItem.getCheckOutDate());

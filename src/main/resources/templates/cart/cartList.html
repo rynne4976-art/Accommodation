@@ -56,11 +56,7 @@
                             <div class="cart-item__top">
                                 <div>
                                     <span class="cart-item__type"
-                                          th:text="${item.accomType.name() == 'HOTEL'      ? '호텔'
-                                                  : item.accomType.name() == 'RESORT'     ? '리조트'
-                                                  : item.accomType.name() == 'PENSION'    ? '펜션'
-                                                  : item.accomType.name() == 'MOTEL'      ? '모텔'
-                                                  : '게스트하우스'}">유형</span>
+                                          th:text="${item.accomTypeName}">유형</span>
                                     <a class="cart-item__name"
                                        th:href="@{/accom/{id}(id=${item.accomId})}"
                                        th:text="${item.accomName}">숙소명</a>
