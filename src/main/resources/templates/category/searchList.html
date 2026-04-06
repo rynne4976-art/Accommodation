@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>searchList</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/type-list.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+</head>
+<body>
+<div th:replace="~{layouts/header :: header}"></div>
+
+<section class="hero type-hero">
+    <div class="hero-overlay">
+        <p class="hero-eyebrow">Search Results</p>
+        <h1 class="hero-copy">숙소 검색 결과</h1>
+        <p class="hero-subcopy">
+            <span th:if="${accomSearchDto != null and accomSearchDto.searchQuery != null and !#strings.isEmpty(accomSearchDto.searchQuery)}">
+                <strong th:text="${accomSearchDto.searchQuery}">검색어</strong>
+                검색 결과를 확인해보세요.
+            </span>
+            <span th:unless="${accomSearchDto != null and accomSearchDto.searchQuery != null and !#strings.isEmpty(accomSearchDto.searchQuery)}">
+                조건에 맞는 숙소를 확인해보세요.
+            </span>
+        </p>
+    </div>
+</section>
+
+<section class="accommodation accom-section type-accom-section">
+    <div class="accom-section__head">
+        <div>
+            <p class="accom-section__eyebrow">searchList</p>
+            <h2>검색된 숙소 목록</h2>
+            <p class="accom-section__sub">검색어와 필터 조건에 맞는 숙소만 모아서 보여드립니다.</p>
+        </div>
+    </div>
+
+    <section class="type-filter-panel">
+        <form class="type-filter-form" th:action="@{/searchList}" method="get">
+            <input type="text"
+                   name="searchQuery"
+                   placeholder="여행지 또는 숙소명을 입력하세요"
+                   th:value="${accomSearchDto != null ? accomSearchDto.searchQuery : ''}">
+            <select name="accomType">
+                <option value="">전체 유형</option>
+                <option value="HOTEL" th:selected="${accomSearchDto != null and accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'HOTEL'}">호텔</option>
+                <option value="MOTEL" th:selected="${accomSearchDto != null and accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'MOTEL'}">모텔</option>
+                <option value="PENSION" th:selected="${accomSearchDto != null and accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'PENSION'}">펜션</option>
+                <option value="RESORT" th:selected="${accomSearchDto != null and accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'RESORT'}">리조트</option>
+                <option value="GUESTHOUSE" th:selected="${accomSearchDto != null and accomSearchDto.accomType != null and accomSearchDto.accomType.name() == 'GUESTHOUSE'}">게스트하우스</option>
+            </select>
+            <select name="grade">
+                <option value="">전체 등급</option>
+                <option value="ONE" th:selected="${accomSearchDto != null and accomSearchDto.grade != null and accomSearchDto.grade.name() == 'ONE'}">1등급</option>
+                <option value="TWO" th:selected="${accomSearchDto != null and accomSearchDto.grade != null and accomSearchDto.grade.name() == 'TWO'}">2등급</option>
+                <option value="THREE" th:selected="${accomSearchDto != null and accomSearchDto.grade != null and accomSearchDto.grade.name() == 'THREE'}">3등급</option>
+                <option value="FOUR" th:selected="${accomSearchDto != null and accomSearchDto.grade != null and accomSearchDto.grade.name() == 'FOUR'}">4등급</option>
+                <option value="FIVE" th:selected="${accomSearchDto != null and accomSearchDto.grade != null and accomSearchDto.grade.name() == 'FIVE'}">5등급</option>
+            </select>
+            <input type="number"
+                   name="minPrice"
+                   min="0"
+                   step="1000"
+                   placeholder="최소 가격"
+                   th:value="${accomSearchDto != null and accomSearchDto.minPrice != null ? accomSearchDto.minPrice : ''}">
+            <select name="minRating">
+                <option value="">전체 평점</option>
+                <option value="2.0" th:selected="${accomSearchDto != null and accomSearchDto.minRating != null and accomSearchDto.minRating == 2.0}">2.0 이상</option>
+                <option value="3.0" th:selected="${accomSearchDto != null and accomSearchDto.minRating != null and accomSearchDto.minRating == 3.0}">3.0 이상</option>
+                <option value="4.0" th:selected="${accomSearchDto != null and accomSearchDto.minRating != null and accomSearchDto.minRating == 4.0}">4.0 이상</option>
+                <option value="4.5" th:selected="${accomSearchDto != null and accomSearchDto.minRating != null and accomSearchDto.minRating == 4.5}">4.5 이상</option>
+            </select>
+            <div class="type-filter-actions">
+                <button type="submit">조회</button>
+            </div>
+        </form>
+    </section>
+
+    <div class="type-list-wrap" th:if="${accomList != null and !#lists.isEmpty(accomList)}">
+        <article class="type-card" th:each="accom : ${accomList}">
+            <div class="type-card-left">
+                <div class="type-media-block">
+                    <div class="type-thumb-box">
+                        <img class="type-thumb"
+                             th:if="${accom.imgUrl != null and !#strings.isEmpty(accom.imgUrl)}"
+                             th:src="${accom.imgUrl}"
+                             th:alt="${accom.accomName}">
+                        <div class="type-thumb type-thumb--placeholder"
+                             th:unless="${accom.imgUrl != null and !#strings.isEmpty(accom.imgUrl)}">
+                            <span th:text="${accom.grade}">GRADE</span>
+                        </div>
+                    </div>
+
+                    <div class="type-info">
+                        <p class="type-category"
+                           th:text="${accom.accomType != null ? (accom.accomType.name() == 'HOTEL' ? '호텔' : accom.accomType.name() == 'MOTEL' ? '모텔' : accom.accomType.name() == 'PENSION' ? '펜션' : accom.accomType.name() == 'RESORT' ? '리조트' : accom.accomType.name() == 'GUESTHOUSE' ? '게스트하우스' : accom.accomType) : '숙소'}">숙소</p>
+                        <h3 class="type-room-name" th:text="${accom.accomName}">숙소명</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="type-card-right">
+                <div class="type-side-head">
+                    <p class="type-stay-title">숙박</p>
+                    <a class="type-detail-link"
+                       th:href="@{/accom/{accomId}(accomId=${accom.id})}">상세보기</a>
+                </div>
+
+                <div class="type-info-grid">
+                    <div class="type-info-column">
+                        <p class="type-meta-row">
+                            <span class="type-meta-icon type-meta-icon--star" aria-hidden="true">★</span>
+                            <span th:text="${accom.grade != null ? (accom.grade.name() == 'ONE' ? '1성급' : accom.grade.name() == 'TWO' ? '2성급' : accom.grade.name() == 'THREE' ? '3성급' : accom.grade.name() == 'FOUR' ? '4성급' : accom.grade.name() == 'FIVE' ? '5성급' : accom.grade) : '등급 정보'}">등급</span>
+                        </p>
+                        <p class="type-meta-row">
+                            <span class="type-meta-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 20s6-4.5 6-10a6 6 0 1 0-12 0c0 5.5 6 10 6 10z"></path>
+                                    <circle cx="12" cy="10" r="2.2"></circle>
+                                </svg>
+                            </span>
+                            <span th:text="${accom.location}">위치</span>
+                        </p>
+                        <p class="type-meta-row">
+                            <span class="type-meta-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="8"></circle>
+                                    <path d="M12 8v4l3 2"></path>
+                                </svg>
+                            </span>
+                            <span th:text="${'체크인 ' + (accom.checkInTime != null ? #temporals.format(accom.checkInTime, 'HH:mm') : '--:--') + ' / 체크아웃 ' + (accom.checkOutTime != null ? #temporals.format(accom.checkOutTime, 'HH:mm') : '--:--')}">체크인 --:-- / 체크아웃 --:--</span>
+                        </p>
+                        <p class="type-meta-row">
+                            <span class="type-meta-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M4 7.5h16"></path>
+                                    <path d="M6 19h12a1 1 0 0 0 1-1V7.5H5V18a1 1 0 0 0 1 1z"></path>
+                                    <path d="M9 11.5h6"></path>
+                                    <path d="M9 15h4"></path>
+                                </svg>
+                            </span>
+                            <span th:text="${'운영객실 ' + (accom.roomCount != null ? #numbers.formatInteger(accom.roomCount, 1, 'COMMA') : 0) + '개'}">운영객실 0개</span>
+                        </p>
+                    </div>
+
+                    <div class="type-info-column type-info-column--right">
+                        <p class="type-stay-time"
+                           th:text="${accom.reviewCount != null ? '리뷰 ' + #numbers.formatInteger(accom.reviewCount, 1, 'COMMA') + '개 · 평점 ' + #numbers.formatDecimal(accom.avgRating != null ? accom.avgRating : 0.0, 1, 1) : '리뷰 0개 · 평점 0.0'}">리뷰 0개 · 평점 0.0</p>
+                        <p class="type-stock"
+                           th:classappend="${accom.roomCount != null and accom.roomCount > 0} ? ' is-open' : ' is-soldout'"
+                           th:text="${accom.roomCount != null and accom.roomCount > 0 ? '남은객실 ' + #numbers.formatInteger(accom.roomCount, 1, 'COMMA') + '개' : '예약 마감'}">남은객실 0개</p>
+
+                        <div class="type-price-box">
+                            <span class="type-sale-price">1박 기준 요금</span>
+                            <strong th:text="${#numbers.formatInteger(accom.pricePerNight, 3, 'COMMA')} + '원'">0원</strong>
+                        </div>
+
+                        <div class="type-card-bottom">
+                            <div class="type-action-box">
+                                <a class="type-book-btn"
+                                   th:href="@{/accom/{accomId}(accomId=${accom.id})}">예약하기</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <div class="type-empty-state" th:if="${accomList == null or #lists.isEmpty(accomList)}">
+        <p>검색 조건에 맞는 숙소가 없습니다.</p>
+    </div>
+
+    <div class="pager type-pager"
+         th:if="${accomPage != null and accomPage.totalPages > 0}"
+         th:with="currentPage=${accomPage.number + 1},
+                  totalPages=${accomPage.totalPages},
+                  startPage=${((currentPage - 1) / 5) * 5 + 1},
+                  endPage=${T(java.lang.Math).min(totalPages, startPage + 4)}">
+
+        <span class="pager-nav pager-nav-disabled" th:if="${startPage <= 1}">이전 5개</span>
+        <a class="pager-nav"
+           th:if="${startPage > 1}"
+           th:href="@{${currentPath}(page=${startPage - 1},
+                          searchQuery=${accomSearchDto != null ? accomSearchDto.searchQuery : null},
+                          accomType=${accomSearchDto != null and accomSearchDto.accomType != null ? accomSearchDto.accomType.name() : null},
+                          grade=${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : null},
+                          minPrice=${accomSearchDto != null ? accomSearchDto.minPrice : null},
+                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null})}">이전 5개</a>
+
+        <span class="pager-nav pager-nav-disabled" th:if="${!accomPage.hasPrevious()}">이전</span>
+        <a class="pager-nav"
+           th:if="${accomPage.hasPrevious()}"
+           th:href="@{${currentPath}(page=${currentPage - 1},
+                          searchQuery=${accomSearchDto != null ? accomSearchDto.searchQuery : null},
+                          accomType=${accomSearchDto != null and accomSearchDto.accomType != null ? accomSearchDto.accomType.name() : null},
+                          grade=${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : null},
+                          minPrice=${accomSearchDto != null ? accomSearchDto.minPrice : null},
+                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null})}">이전</a>
+
+        <a th:each="pageNum : ${#numbers.sequence(startPage, endPage)}"
+           th:classappend="${pageNum == currentPage} ? ' pager-current'"
+           th:href="@{${currentPath}(page=${pageNum},
+                          searchQuery=${accomSearchDto != null ? accomSearchDto.searchQuery : null},
+                          accomType=${accomSearchDto != null and accomSearchDto.accomType != null ? accomSearchDto.accomType.name() : null},
+                          grade=${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : null},
+                          minPrice=${accomSearchDto != null ? accomSearchDto.minPrice : null},
+                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null})}"
+           th:text="${pageNum}">1</a>
+
+        <span class="pager-nav pager-nav-disabled" th:if="${!accomPage.hasNext()}">다음</span>
+        <a class="pager-nav"
+           th:if="${accomPage.hasNext()}"
+           th:href="@{${currentPath}(page=${currentPage + 1},
+                          searchQuery=${accomSearchDto != null ? accomSearchDto.searchQuery : null},
+                          accomType=${accomSearchDto != null and accomSearchDto.accomType != null ? accomSearchDto.accomType.name() : null},
+                          grade=${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : null},
+                          minPrice=${accomSearchDto != null ? accomSearchDto.minPrice : null},
+                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null})}">다음</a>
+
+        <span class="pager-nav pager-nav-disabled" th:if="${endPage >= totalPages}">다음 5개</span>
+        <a class="pager-nav"
+           th:if="${endPage < totalPages}"
+           th:href="@{${currentPath}(page=${endPage + 1},
+                          searchQuery=${accomSearchDto != null ? accomSearchDto.searchQuery : null},
+                          accomType=${accomSearchDto != null and accomSearchDto.accomType != null ? accomSearchDto.accomType.name() : null},
+                          grade=${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : null},
+                          minPrice=${accomSearchDto != null ? accomSearchDto.minPrice : null},
+                          minRating=${accomSearchDto != null ? accomSearchDto.minRating : null})}">다음 5개</a>
+    </div>
+</section>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
+</body>
+</html>

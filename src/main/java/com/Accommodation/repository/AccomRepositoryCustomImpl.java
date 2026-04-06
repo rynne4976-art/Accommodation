@@ -9,6 +9,7 @@ import com.Accommodation.dto.QMainAccomDto;
 import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.QAccom;
 import com.Accommodation.entity.QAccomImg;
+import com.Accommodation.entity.QAccomOperationPolicy;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -112,6 +113,7 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
 
         QAccom accom = QAccom.accom;
         QAccomImg accomImg = QAccomImg.accomImg;
+        QAccomOperationPolicy policy = QAccomOperationPolicy.accomOperationPolicy;
 
         List<MainAccomDto> content = queryFactory
                 .select(new QMainAccomDto(
@@ -125,13 +127,16 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         accom.location,
                         accom.roomCount,
                         accom.avgRating,
-                        accom.reviewCount
+                        accom.reviewCount,
+                        policy.checkInTime,
+                        policy.checkOutTime
                 ))
                 .from(accom)
                 .join(accomImg).on(
                         accomImg.accom.eq(accom),
                         accomImg.id.eq(repImageIdSubQuery(accom))
                 )
+                .leftJoin(policy).on(policy.accom.eq(accom))
                 .where(
                         notDeleted(),
                         accomNameLike(accomSearchDto.getSearchQuery()),

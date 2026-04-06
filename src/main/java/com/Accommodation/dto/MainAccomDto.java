@@ -6,6 +6,8 @@ import com.querydsl.core.annotations.QueryProjection;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalTime;
+
 @Getter
 @Setter
 public class MainAccomDto {
@@ -21,11 +23,14 @@ public class MainAccomDto {
     private Integer roomCount;
     private Double avgRating;
     private Integer reviewCount;
+    private LocalTime checkInTime;
+    private LocalTime checkOutTime;
 
     @QueryProjection
     public MainAccomDto(Long id, String accomName, AccomType accomType, AccomGrade grade, String accomDetail,
                         String imgUrl, Integer pricePerNight, String location,
-                        Integer roomCount, Double avgRating, Integer reviewCount) {
+                        Integer roomCount, Double avgRating, Integer reviewCount,
+                        LocalTime checkInTime, LocalTime checkOutTime) {
         this.id = id;
         this.accomName = accomName;
         this.accomType = accomType;
@@ -37,5 +42,7 @@ public class MainAccomDto {
         this.roomCount = roomCount;
         this.avgRating = avgRating;
         this.reviewCount = reviewCount;
+        this.checkInTime = checkInTime;
+        this.checkOutTime = checkOutTime;
     }
 }
