@@ -1,15 +1,16 @@
 package com.Accommodation.dto;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 
+/** 장바구니 추가 요청 DTO */
 @Getter
 @Setter
-public class OrderDto {
+public class CartItemDto {
 
     @NotNull(message = "숙소 ID는 필수입니다.")
     private Long accomId;
@@ -27,15 +28,4 @@ public class OrderDto {
     /** 아동 수 (0명 이상) */
     @Min(value = 0, message = "아동 수는 0명 이상이어야 합니다.")
     private int childCount = 0;
-
-    /** 총 투숙 인원 */
-    public int getTotalGuestCount() {
-        return adultCount + childCount;
-    }
-
-    /** 박 수 (checkInDate ~ checkOutDate) */
-    public int getCount() {
-        if (checkInDate == null || checkOutDate == null) return 0;
-        return (int) ChronoUnit.DAYS.between(checkInDate, checkOutDate);
-    }
 }

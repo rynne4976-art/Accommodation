@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -111,5 +112,42 @@ public class NotificationService {
 
         notification.setRead(true);
         return notification.getTargetUrl();
+    }
+
+    /**
+     * 만실 알림 – 장바구니에 해당 날짜를 담은 다른 사용자에게 SSE 및 DB 알림 전송
+     *
+     * @param email     수신 대상 이메일
+     * @param accomName 만실이 된 숙소명
+     * @param soldOutDate 만실이 된 날짜
+     */
+    public void sendSoldOutAlert(String email, String accomName, LocalDate soldOutDate) {
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            return;
+        }
+
+        Notification notification = new Notification();
+        notification.setMember(member);
+        notification.setMessage(
+                "'" + accomName + "' " + soldOutDate + " 날짜가 만실되었습니다. "
+                + "장바구니에서 해당 항목을 확인해 주세요.");
+        notification.setTargetUrl("/cart");
+        notification.setRead(false);
+        notificationRepository.save(notification);
+
+        SseEmitter emitter = emitters.get(email);
+        if (emitter == null) {
+            return;
+        }
+
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("sold-out")
+                    .data(new NotificationDto(notification)));
+        } catch (IOException e) {
+            emitters.remove(email);
+            log.warn("Failed to send sold-out SSE notification to {}", email, e);
+        }
     }
 }

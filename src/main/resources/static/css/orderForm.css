@@ -339,6 +339,23 @@
     border-color: #dc2626;
 }
 
+/* 성인 / 아동 나란히 배치 */
+.guest-row {
+    display: flex;
+    gap: 12px;
+}
+
+.guest-input-box {
+    flex: 1;
+}
+
+.guest-label {
+    display: block;
+    font-size: 0.82rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
 .order-form-hint {
     font-size: 0.82rem;
     color: #6b7280;
@@ -353,11 +370,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 22px;
-    padding-top: 18px;
+    margin-top: 14px;
+    padding-top: 14px;
     border-top: 1px solid #e5e7eb;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* 최종 합계 강조 */
+.order-form-total--final {
     font-size: 1.08rem;
     font-weight: 800;
+    color: #111827;
 }
 
 .order-form-actions {
