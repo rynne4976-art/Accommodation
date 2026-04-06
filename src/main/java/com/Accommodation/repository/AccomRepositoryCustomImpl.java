@@ -45,6 +45,14 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
         return status == null ? null : QAccom.accom.status.eq(status);
     }
 
+    private BooleanExpression priceGoe(Integer minPrice) {
+        return minPrice == null ? null : QAccom.accom.pricePerNight.goe(minPrice);
+    }
+
+    private BooleanExpression ratingGoe(Double minRating) {
+        return minRating == null ? null : QAccom.accom.avgRating.goe(minRating);
+    }
+
     private BooleanExpression notDeleted() {
         return QAccom.accom.deleted.isFalse();
     }
@@ -73,7 +81,9 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         accomNameLike(accomSearchDto.getSearchQuery()),
                         accomTypeEq(accomSearchDto.getAccomType()),
                         gradeEq(accomSearchDto.getGrade()),
-                        statusEq(accomSearchDto.getAccomStatus())
+                        statusEq(accomSearchDto.getAccomStatus()),
+                        priceGoe(accomSearchDto.getMinPrice()),
+                        ratingGoe(accomSearchDto.getMinRating())
                 )
                 .orderBy(accom.id.desc())
                 .offset(pageable.getOffset())
@@ -88,7 +98,9 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         accomNameLike(accomSearchDto.getSearchQuery()),
                         accomTypeEq(accomSearchDto.getAccomType()),
                         gradeEq(accomSearchDto.getGrade()),
-                        statusEq(accomSearchDto.getAccomStatus())
+                        statusEq(accomSearchDto.getAccomStatus()),
+                        priceGoe(accomSearchDto.getMinPrice()),
+                        ratingGoe(accomSearchDto.getMinRating())
                 )
                 .fetchOne();
 
@@ -125,9 +137,11 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         accomNameLike(accomSearchDto.getSearchQuery()),
                         accomTypeEq(accomSearchDto.getAccomType()),
                         gradeEq(accomSearchDto.getGrade()),
-                        statusEq(accomSearchDto.getAccomStatus())
+                        statusEq(accomSearchDto.getAccomStatus()),
+                        priceGoe(accomSearchDto.getMinPrice()),
+                        ratingGoe(accomSearchDto.getMinRating())
                 )
-                .orderBy(accom.id.desc())
+                .orderBy(accom.avgRating.desc(), accom.reviewCount.desc(), accom.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -140,7 +154,9 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         accomNameLike(accomSearchDto.getSearchQuery()),
                         accomTypeEq(accomSearchDto.getAccomType()),
                         gradeEq(accomSearchDto.getGrade()),
-                        statusEq(accomSearchDto.getAccomStatus())
+                        statusEq(accomSearchDto.getAccomStatus()),
+                        priceGoe(accomSearchDto.getMinPrice()),
+                        ratingGoe(accomSearchDto.getMinRating())
                 )
                 .fetchOne();
 

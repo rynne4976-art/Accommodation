@@ -189,8 +189,14 @@ body {
 
 .search-form {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
     gap: 12px;
+    align-items: center;
+}
+
+.search-form-actions {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .search-form input,

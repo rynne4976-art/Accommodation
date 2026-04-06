@@ -7,7 +7,12 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "accom_img")
+@Table(
+        name = "accom_img",
+        indexes = {
+                @Index(name = "idx_accom_img_accom_rep_id", columnList = "accom_id, repimg_yn, accom_img_id")
+        }
+)
 @Getter @Setter
 @ToString(exclude = "accom")
 public class AccomImg {

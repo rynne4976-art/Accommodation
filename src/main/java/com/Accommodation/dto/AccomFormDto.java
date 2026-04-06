@@ -19,11 +19,15 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Getter
 @Setter
 public class AccomFormDto {
+
+    private static final Pattern POSTCODE_PATTERN = Pattern.compile("^\\((\\d{5})\\)\\s*(.*)$");
 
     private Long id;
 
@@ -45,9 +49,15 @@ public class AccomFormDto {
     @NotNull(message = "숙소 등급을 선택해 주세요.")
     private AccomGrade grade;
 
-    @NotBlank(message = "위치를 입력해 주세요.")
-    @Size(max = 255, message = "위치는 255자 이하로 입력해 주세요.")
+    @NotBlank(message = "주소를 입력해 주세요.")
+    @Size(max = 255, message = "주소는 255자 이하로 입력해 주세요.")
     private String location;
+
+    private String postcode;
+
+    private String address;
+
+    private String detailAddress;
 
     @NotNull(message = "객실 수를 입력해 주세요.")
     @Min(value = 0, message = "객실 수는 0 이상이어야 합니다.")
@@ -70,9 +80,29 @@ public class AccomFormDto {
     @NotNull(message = "체크아웃 시간을 입력해 주세요.")
     private LocalTime checkOutTime;
 
+    @Size(min = 1, message = "운영일을 한 개 이상 선택해 주세요.")
     private List<String> operationDateList = new ArrayList<>();
 
+    @NotNull(message = "숙소 상태를 선택해 주세요.")
     private AccomStatus status;
+
+    public String buildFullLocation() {
+        StringBuilder fullLocation = new StringBuilder();
+
+        if (postcode != null && !postcode.isBlank()) {
+            fullLocation.append('(').append(postcode.trim()).append(") ");
+        }
+
+        if (address != null && !address.isBlank()) {
+            fullLocation.append(address.trim());
+        }
+
+        if (detailAddress != null && !detailAddress.isBlank()) {
+            fullLocation.append(' ').append(detailAddress.trim());
+        }
+
+        return fullLocation.toString().trim();
+    }
 
     public static AccomFormDto of(Accom accom) {
         AccomFormDto dto = new AccomFormDto();
@@ -86,6 +116,7 @@ public class AccomFormDto {
         dto.setRoomCount(accom.getRoomCount());
         dto.setGuestCount(accom.getGuestCount());
         dto.setStatus(accom.getStatus());
+        dto.applyLocationParts(accom.getLocation());
 
         AccomOperationPolicy operationPolicy = accom.getOperationPolicy();
         if (operationPolicy != null) {
@@ -106,5 +137,30 @@ public class AccomFormDto {
         }
 
         return dto;
+    }
+
+    private void applyLocationParts(String fullLocation) {
+        if (fullLocation == null || fullLocation.isBlank()) {
+            return;
+        }
+
+        Matcher matcher = POSTCODE_PATTERN.matcher(fullLocation.trim());
+        if (matcher.matches()) {
+            this.postcode = matcher.group(1);
+            String remainder = matcher.group(2).trim();
+            int splitIndex = remainder.lastIndexOf(' ');
+
+            if (splitIndex > 0) {
+                this.address = remainder.substring(0, splitIndex).trim();
+                this.detailAddress = remainder.substring(splitIndex + 1).trim();
+            } else {
+                this.address = remainder;
+                this.detailAddress = "";
+            }
+            return;
+        }
+
+        this.address = fullLocation;
+        this.detailAddress = "";
     }
 }

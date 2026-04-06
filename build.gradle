@@ -147,6 +147,7 @@ dependencies {
 	// ══════════════════════════════════════════════════════════
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'com.h2database:h2'
 	// ↑ Spring Security 테스트: @WithMockUser, csrf() 등 보안 테스트 도구
 
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

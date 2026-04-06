@@ -7,6 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/footer.css}">
     <link rel="stylesheet" th:href="@{/css/admin-common.css}">
     <link rel="stylesheet" th:href="@{/css/accomForm.css}">
+    <script src="//t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 </head>
 <body>
 
@@ -17,8 +18,10 @@
         <div class="page-header-copy">
             <span class="page-label">Admin Accommodations</span>
             <h2 th:text="${accomFormDto.id == null} ? '숙소 등록' : '숙소 수정'">숙소 등록</h2>
-            <p th:text="${accomFormDto.id == null} ? '새 숙소를 등록하고 운영 정보를 입력합니다.' : '기존 숙소 정보를 수정하고 이미지와 운영 상태를 관리합니다.'">
-                숙소 관리 폼입니다.
+            <p th:text="${accomFormDto.id == null}
+                    ? '새 숙소를 등록하고 운영 정보를 입력합니다.'
+                    : '기존 숙소 정보를 수정하고 이미지와 운영 상태를 관리합니다.'">
+                숙소 관리 페이지입니다.
             </p>
         </div>
         <div class="header-actions">
@@ -45,6 +48,8 @@
                   novalidate
                   enctype="multipart/form-data">
 
+                <p class="field-hint required-guide">* 는 필수 입력란입니다.</p>
+
                 <input type="hidden" th:field="*{id}">
                 <input type="hidden" name="returnPage" th:value="${currentPage}">
                 <input type="hidden" name="returnSearchQuery" th:value="${returnSearchQuery}">
@@ -54,171 +59,136 @@
 
                 <div class="form-grid">
                     <div class="form-group full-width">
-                        <label for="accomName">숙소명</label>
-                        <input type="text" th:field="*{accomName}" id="accomName" placeholder="예: 해운대 오션뷰 호텔"
-                               th:classappend="${#fields.hasErrors('accomName')} ? ' is-invalid'">
-                        <p class="field-error" th:if="${#fields.hasErrors('accomName')}" th:errors="*{accomName}"></p>
-                        <p class="field-error" data-field-error="accomName" hidden></p>
+                        <label for="accomName">숙소명 <span class="required-indicator">*</span></label>
+                        <input type="text" th:field="*{accomName}" id="accomName" placeholder="1~100자 이내로 입력">
                     </div>
 
                     <div class="form-group">
-                        <label for="pricePerNight">1박 가격</label>
-                        <input type="number" th:field="*{pricePerNight}" id="pricePerNight" placeholder="150000"
-                               th:classappend="${#fields.hasErrors('pricePerNight')} ? ' is-invalid'">
-                        <p class="field-error" th:if="${#fields.hasErrors('pricePerNight')}" th:errors="*{pricePerNight}"></p>
-                        <p class="field-error" data-field-error="pricePerNight" hidden></p>
+                        <label for="pricePerNight">1박 가격 <span class="required-indicator">*</span></label>
+                        <input type="number" th:field="*{pricePerNight}" id="pricePerNight" placeholder="0보다 큰 금액 입력">
                     </div>
 
                     <div class="form-group">
-                        <label for="roomCount">객실 수</label>
-                        <input type="number" th:field="*{roomCount}" id="roomCount" min="0" placeholder="32"
-                               th:classappend="${#fields.hasErrors('roomCount')} ? ' is-invalid'">
-                        <p class="field-error" th:if="${#fields.hasErrors('roomCount')}" th:errors="*{roomCount}"></p>
-                        <p class="field-error" data-field-error="roomCount" hidden></p>
+                        <label for="roomCount">객실 수 <span class="required-indicator">*</span></label>
+                        <input type="number" th:field="*{roomCount}" id="roomCount" min="0" placeholder="0 이상 입력">
                     </div>
 
                     <div class="form-group">
-                        <label for="guestCount">투숙 가능 인원</label>
-                        <input type="number"
-                               th:field="*{guestCount}"
-                               id="guestCount"
-                               min="2"
-                               max="10"
-                               placeholder="2"
-                               th:classappend="${#fields.hasErrors('guestCount')} ? ' is-invalid'">
-                        <p class="field-hint" id="guestCountHint">호텔, 리조트, 펜션은 2~10인 / 게스트하우스, 모텔은 1~6인</p>
-                        <p class="field-error" th:if="${#fields.hasErrors('guestCount')}" th:errors="*{guestCount}"></p>
-                        <p class="field-error" data-field-error="guestCount" hidden></p>
+                        <label for="guestCount">투숙 가능 인원 <span class="required-indicator">*</span></label>
+                        <input type="number" th:field="*{guestCount}" id="guestCount" min="2" max="10" placeholder="숙소 유형에 맞는 인원 입력">
+                        <p class="field-hint" id="guestCountHint">호텔, 리조트, 펜션은 2~10명 / 게스트하우스, 모텔은 1~6명</p>
                     </div>
 
                     <div class="form-group">
-                        <label for="accomType">숙소 유형</label>
-                        <select th:field="*{accomType}" id="accomType"
-                                th:classappend="${#fields.hasErrors('accomType')} ? ' is-invalid'">
-                            <option value="">선택하십시오.</option>
+                        <label for="accomType">숙소 유형 <span class="required-indicator">*</span></label>
+                        <select th:field="*{accomType}" id="accomType">
+                            <option value="">선택해 주세요.</option>
                             <option th:value="HOTEL">호텔</option>
                             <option th:value="MOTEL">모텔</option>
                             <option th:value="PENSION">펜션</option>
                             <option th:value="RESORT">리조트</option>
                             <option th:value="GUESTHOUSE">게스트하우스</option>
                         </select>
-                        <p class="field-error" th:if="${#fields.hasErrors('accomType')}" th:errors="*{accomType}"></p>
-                        <p class="field-error" data-field-error="accomType" hidden></p>
                     </div>
 
                     <div class="form-group">
-                        <label for="grade">숙소 등급</label>
-                        <select th:field="*{grade}" id="grade"
-                                th:classappend="${#fields.hasErrors('grade')} ? ' is-invalid'">
-                            <option value="">선택하십시오.</option>
+                        <label for="grade">숙소 등급 <span class="required-indicator">*</span></label>
+                        <select th:field="*{grade}" id="grade">
+                            <option value="">선택해 주세요.</option>
                             <option th:value="FIVE">5성급</option>
                             <option th:value="FOUR">4성급</option>
                             <option th:value="THREE">3성급</option>
                             <option th:value="TWO">2성급</option>
                             <option th:value="ONE">1성급</option>
                         </select>
-                        <p class="field-error" th:if="${#fields.hasErrors('grade')}" th:errors="*{grade}"></p>
-                        <p class="field-error" data-field-error="grade" hidden></p>
                     </div>
 
                     <div class="form-group full-width">
-                        <label for="location">위치</label>
-                        <input type="text" th:field="*{location}" id="location" placeholder="예: 부산 해운대구 달맞이길 120"
-                               th:classappend="${#fields.hasErrors('location')} ? ' is-invalid'">
-                        <p class="field-error" th:if="${#fields.hasErrors('location')}" th:errors="*{location}"></p>
-                        <p class="field-error" data-field-error="location" hidden></p>
+                        <label for="postcode">주소 <span class="required-indicator">*</span></label>
+                        <input type="hidden" th:field="*{location}" id="location">
+                        <div class="address-search-row">
+                            <input type="text" th:field="*{postcode}" id="postcode" placeholder="우편번호" readonly>
+                            <button type="button" class="address-search-button" id="addressSearchButton">주소 검색</button>
+                        </div>
+                        <input type="text" th:field="*{address}" id="address" placeholder="기본 주소" readonly>
+                        <input type="text" th:field="*{detailAddress}" id="detailAddress" placeholder="상세 주소를 입력해 주세요.">
                     </div>
 
                     <div class="form-group full-width">
-                        <label for="accomDetail">숙소 설명</label>
-                        <textarea th:field="*{accomDetail}" id="accomDetail" rows="7" placeholder="숙소 특징과 제공 서비스를 입력하십시오."
-                                  th:classappend="${#fields.hasErrors('accomDetail')} ? ' is-invalid'"></textarea>
-                        <p class="field-error" th:if="${#fields.hasErrors('accomDetail')}" th:errors="*{accomDetail}"></p>
-                        <p class="field-error" data-field-error="accomDetail" hidden></p>
+                        <label for="accomDetail">숙소 설명 <span class="required-indicator">*</span></label>
+                        <textarea th:field="*{accomDetail}" id="accomDetail" rows="7" placeholder="10~1000자 이내로 입력"></textarea>
                     </div>
 
                     <div class="form-group">
-                        <label for="status">숙소 상태</label>
-                        <select th:field="*{status}" id="status"
-                                th:classappend="${#fields.hasErrors('status')} ? ' is-invalid'">
+                        <label for="status">숙소 상태 <span class="required-indicator">*</span></label>
+                        <select th:field="*{status}" id="status">
+                            <option value="">선택해 주세요.</option>
                             <option th:value="OPEN">운영중</option>
                             <option th:value="CLOSED">운영중지</option>
                             <option th:value="READY">준비중</option>
                         </select>
-                        <p class="field-error" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></p>
-                        <p class="field-error" data-field-error="status" hidden></p>
                     </div>
 
                     <div class="form-group file-group">
                         <label for="accomImgFile">숙소 이미지</label>
                         <input type="file" name="accomImgFile" id="accomImgFile" multiple>
                         <p class="field-hint" th:if="${accomFormDto.id != null}">
-                            이미지를 새로 선택하시면 기존 이미지가 교체됩니다.
+                            새 이미지를 선택하면 기존 이미지가 교체됩니다.
                         </p>
                         <p class="field-hint" th:if="${accomFormDto.id == null}">
-                            대표 이미지를 포함해 여러 장을 한 번에 등록할 수 있습니다.
+                            여러 이미지를 한 번에 업로드할 수 있습니다.
                         </p>
                     </div>
 
                     <div class="form-group">
-                        <label for="operationStartDate">운영 시작일</label>
+                        <label for="operationStartDate">운영 시작일 <span class="required-indicator">*</span></label>
                         <input type="date"
-                               th:field="*{operationStartDate}"
-                               id="operationStartDate"
-                               th:classappend="${#fields.hasErrors('operationStartDate')} ? ' is-invalid'">
-                        <p class="field-error" th:if="${#fields.hasErrors('operationStartDate')}" th:errors="*{operationStartDate}"></p>
-                        <p class="field-error" data-field-error="operationStartDate" hidden></p>
+                               name="operationStartDate"
+                               th:value="${accomFormDto.operationStartDate != null ? #temporals.format(accomFormDto.operationStartDate, 'yyyy-MM-dd') : ''}"
+                               id="operationStartDate">
                     </div>
 
                     <div class="form-group">
-                        <label for="operationEndDate">운영 종료일</label>
+                        <label for="operationEndDate">운영 종료일 <span class="required-indicator">*</span></label>
                         <input type="date"
-                               th:field="*{operationEndDate}"
-                               id="operationEndDate"
-                               th:classappend="${#fields.hasErrors('operationEndDate')} ? ' is-invalid'">
-                        <p class="field-error" th:if="${#fields.hasErrors('operationEndDate')}" th:errors="*{operationEndDate}"></p>
-                        <p class="field-error" data-field-error="operationEndDate" hidden></p>
+                               name="operationEndDate"
+                               th:value="${accomFormDto.operationEndDate != null ? #temporals.format(accomFormDto.operationEndDate, 'yyyy-MM-dd') : ''}"
+                               id="operationEndDate">
                     </div>
 
                     <div class="form-group">
-                        <label for="checkInTime">체크인 시간</label>
+                        <label for="checkInTime">체크인 시간 <span class="required-indicator">*</span></label>
                         <input type="time"
-                               th:field="*{checkInTime}"
-                               id="checkInTime"
-                               th:classappend="${#fields.hasErrors('checkInTime')} ? ' is-invalid'">
-                        <p class="field-error" th:if="${#fields.hasErrors('checkInTime')}" th:errors="*{checkInTime}"></p>
-                        <p class="field-error" data-field-error="checkInTime" hidden></p>
+                               name="checkInTime"
+                               th:value="${accomFormDto.checkInTime != null ? #temporals.format(accomFormDto.checkInTime, 'HH:mm') : ''}"
+                               step="60"
+                               id="checkInTime">
                     </div>
 
                     <div class="form-group">
-                        <label for="checkOutTime">체크아웃 시간</label>
+                        <label for="checkOutTime">체크아웃 시간 <span class="required-indicator">*</span></label>
                         <input type="time"
-                               th:field="*{checkOutTime}"
-                               id="checkOutTime"
-                               th:classappend="${#fields.hasErrors('checkOutTime')} ? ' is-invalid'">
-                        <p class="field-error" th:if="${#fields.hasErrors('checkOutTime')}" th:errors="*{checkOutTime}"></p>
-                        <p class="field-error" data-field-error="checkOutTime" hidden></p>
+                               name="checkOutTime"
+                               th:value="${accomFormDto.checkOutTime != null ? #temporals.format(accomFormDto.checkOutTime, 'HH:mm') : ''}"
+                               step="60"
+                               id="checkOutTime">
                     </div>
 
                     <div class="form-group full-width">
-                        <label>운영일 선택</label>
-                        <p class="field-hint">
-                            운영 시작일과 종료일을 선택한 뒤, 아래에서 실제 운영할 날짜만 체크하십시오.
-                        </p>
+                        <label>운영일 선택 <span class="required-indicator">*</span></label>
+                        <p class="field-hint">운영 시작일과 종료일을 선택한 뒤 달력에서 실제 운영할 날짜를 클릭해 주세요.</p>
 
-                        <div style="display:flex; gap:8px; margin-bottom:12px;">
-                            <button type="button" class="secondary-action" id="generateOperationDatesBtn">운영일 목록 생성</button>
-                            <button type="button" class="secondary-action" id="selectAllOperationDatesBtn">전체 선택</button>
-                            <button type="button" class="secondary-action" id="clearAllOperationDatesBtn">전체 해제</button>
+                        <div class="operation-date-area" id="operationDateArea">
+                            <div class="operation-date-actions">
+                                <button type="button" class="secondary-action" id="selectAllOperationDatesBtn">전체 선택</button>
+                                <button type="button" class="secondary-action" id="clearAllOperationDatesBtn">전체 해제</button>
+                            </div>
+
+                            <div id="operationDateListBox"
+                                 class="operation-date-box">
+                                <p class="operation-date-placeholder">운영 기간을 먼저 선택해 주세요.</p>
+                            </div>
                         </div>
-
-                        <div id="operationDateListBox"
-                             style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:8px; padding:12px; border:1px solid #ddd; border-radius:10px; min-height:80px;">
-                            <p style="margin:0; color:#666;">운영 기간을 먼저 선택한 뒤 운영일 목록을 생성해 주세요.</p>
-                        </div>
-
-                        <p class="field-error" th:if="${#fields.hasErrors('operationDateList')}" th:errors="*{operationDateList}"></p>
-                        <p class="field-error" data-field-error="operationDateList" hidden></p>
                     </div>
                 </div>
 
@@ -241,307 +211,13 @@
 <div th:replace="~{layouts/footer :: footer}"></div>
 
 <script th:inline="javascript">
-    (function() {
-        const accomTypeSelect = document.getElementById("accomType");
-        const guestCountInput = document.getElementById("guestCount");
-        const guestCountHint = document.getElementById("guestCountHint");
-        const form = document.querySelector(".accom-form");
-
-        const operationStartDateInput = document.getElementById("operationStartDate");
-        const operationEndDateInput = document.getElementById("operationEndDate");
-        const checkInTimeInput = document.getElementById("checkInTime");
-        const checkOutTimeInput = document.getElementById("checkOutTime");
-        const operationDateListBox = document.getElementById("operationDateListBox");
-        const generateOperationDatesBtn = document.getElementById("generateOperationDatesBtn");
-        const selectAllOperationDatesBtn = document.getElementById("selectAllOperationDatesBtn");
-        const clearAllOperationDatesBtn = document.getElementById("clearAllOperationDatesBtn");
-
-        const initialSelectedDates = /*[[${accomFormDto.operationDateList}]]*/ [];
-        let selectedDateSet = new Set(initialSelectedDates || []);
-
-        const fields = {
-            accomName: document.getElementById("accomName"),
-            pricePerNight: document.getElementById("pricePerNight"),
-            roomCount: document.getElementById("roomCount"),
-            guestCount: guestCountInput,
-            accomType: accomTypeSelect,
-            grade: document.getElementById("grade"),
-            location: document.getElementById("location"),
-            accomDetail: document.getElementById("accomDetail"),
-            status: document.getElementById("status"),
-            operationStartDate: operationStartDateInput,
-            operationEndDate: operationEndDateInput,
-            checkInTime: checkInTimeInput,
-            checkOutTime: checkOutTimeInput
-        };
-
-        if (!accomTypeSelect || !guestCountInput || !guestCountHint || !form) {
-            return;
-        }
-
-        function setFieldError(fieldName, message) {
-            const input = fields[fieldName];
-            const error = document.querySelector('[data-field-error="' + fieldName + '"]');
-
-            if (!error) {
-                return;
-            }
-
-            if (input) {
-                input.classList.toggle("is-invalid", Boolean(message));
-            }
-
-            error.hidden = !message;
-            error.textContent = message || "";
-        }
-
-        function getGuestCountRange() {
-            const accomType = accomTypeSelect.value;
-
-            if (accomType === "GUESTHOUSE" || accomType === "MOTEL") {
-                return { min: 1, max: 6, message: "게스트하우스와 모텔은 1명에서 6명까지 입력할 수 있습니다." };
-            }
-
-            if (accomType === "HOTEL" || accomType === "RESORT" || accomType === "PENSION") {
-                return { min: 2, max: 10, message: "호텔, 리조트, 펜션은 2명에서 10명까지 입력할 수 있습니다." };
-            }
-
-            return { min: 1, max: 10, message: "" };
-        }
-
-        function getCheckedOperationDates() {
-            return Array.from(document.querySelectorAll('input[name="operationDateList"]:checked'))
-                .map(function(input) { return input.value; });
-        }
-
-        function renderOperationDates() {
-            const startValue = operationStartDateInput.value;
-            const endValue = operationEndDateInput.value;
-
-            operationDateListBox.innerHTML = "";
-
-            if (!startValue || !endValue) {
-                operationDateListBox.innerHTML = '<p style="margin:0; color:#666;">운영 시작일과 종료일을 먼저 입력해 주세요.</p>';
-                return;
-            }
-
-            const startDate = new Date(startValue);
-            const endDate = new Date(endValue);
-
-            if (startDate > endDate) {
-                operationDateListBox.innerHTML = '<p style="margin:0; color:#c00;">운영 종료일은 운영 시작일보다 빠를 수 없습니다.</p>';
-                return;
-            }
-
-            const savedSelectedDates = new Set(selectedDateSet);
-
-            for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-                const yyyy = date.getFullYear();
-                const mm = String(date.getMonth() + 1).padStart(2, "0");
-                const dd = String(date.getDate()).padStart(2, "0");
-                const dateValue = yyyy + "-" + mm + "-" + dd;
-
-                const label = document.createElement("label");
-                label.style.display = "flex";
-                label.style.alignItems = "center";
-                label.style.gap = "8px";
-                label.style.padding = "8px 10px";
-                label.style.border = "1px solid #e5e5e5";
-                label.style.borderRadius = "8px";
-                label.style.cursor = "pointer";
-                label.style.backgroundColor = "#fff";
-
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.name = "operationDateList";
-                checkbox.value = dateValue;
-                checkbox.checked = savedSelectedDates.has(dateValue);
-
-                checkbox.addEventListener("change", function() {
-                    if (checkbox.checked) {
-                        selectedDateSet.add(dateValue);
-                    } else {
-                        selectedDateSet.delete(dateValue);
-                    }
-                    setFieldError("operationDateList", validateOperationDates());
-                });
-
-                const text = document.createElement("span");
-                text.textContent = dateValue;
-
-                label.appendChild(checkbox);
-                label.appendChild(text);
-                operationDateListBox.appendChild(label);
-            }
-
-            setFieldError("operationDateList", validateOperationDates());
-        }
-
-        function validateOperationDates() {
-            const checkedDates = getCheckedOperationDates();
-            if (checkedDates.length === 0) {
-                return "운영일을 한 개 이상 선택해 주세요.";
-            }
-            return "";
-        }
-
-        function validateField(fieldName) {
-            switch (fieldName) {
-                case "accomName": {
-                    const value = fields.accomName.value.trim();
-                    if (!value) return "숙소명을 입력해 주세요.";
-                    if (value.length > 100) return "숙소명은 100자 이하로 입력해 주세요.";
-                    return "";
-                }
-                case "pricePerNight": {
-                    const value = fields.pricePerNight.value.trim();
-                    if (!value) return "1박 가격을 입력해 주세요.";
-                    if (Number(value) <= 0) return "1박 가격은 0보다 커야 합니다.";
-                    return "";
-                }
-                case "roomCount": {
-                    const value = fields.roomCount.value.trim();
-                    if (!value) return "객실 수를 입력해 주세요.";
-                    if (Number(value) < 0) return "객실 수는 0 이상이어야 합니다.";
-                    return "";
-                }
-                case "accomType":
-                    return fields.accomType.value ? "" : "숙소 유형을 선택해 주세요.";
-                case "grade":
-                    return fields.grade.value ? "" : "숙소 등급을 선택해 주세요.";
-                case "location": {
-                    const value = fields.location.value.trim();
-                    if (!value) return "위치를 입력해 주세요.";
-                    if (value.length > 255) return "위치는 255자 이하로 입력해 주세요.";
-                    return "";
-                }
-                case "accomDetail": {
-                    const value = fields.accomDetail.value.trim();
-                    if (!value) return "숙소 설명을 입력해 주세요.";
-                    if (value.length < 10 || value.length > 1000) return "숙소 설명은 10자 이상 1000자 이하로 입력해 주세요.";
-                    return "";
-                }
-                case "guestCount": {
-                    const value = fields.guestCount.value.trim();
-                    if (!value) return "투숙 가능 인원을 입력해 주세요.";
-                    if (!fields.accomType.value) return "숙소 유형을 먼저 선택해 주세요.";
-
-                    const range = getGuestCountRange();
-                    const guestCount = Number(value);
-
-                    if (guestCount < range.min || guestCount > range.max) {
-                        return range.message;
-                    }
-
-                    return "";
-                }
-                case "operationStartDate":
-                    return fields.operationStartDate.value ? "" : "운영 시작일을 입력해 주세요.";
-                case "operationEndDate": {
-                    if (!fields.operationEndDate.value) return "운영 종료일을 입력해 주세요.";
-                    if (fields.operationStartDate.value && fields.operationEndDate.value < fields.operationStartDate.value) {
-                        return "운영 종료일은 운영 시작일보다 빠를 수 없습니다.";
-                    }
-                    return "";
-                }
-                case "checkInTime":
-                    return fields.checkInTime.value ? "" : "체크인 시간을 입력해 주세요.";
-                case "checkOutTime": {
-                    if (!fields.checkOutTime.value) return "체크아웃 시간을 입력해 주세요.";
-                    if (fields.checkInTime.value && fields.checkOutTime.value && fields.checkInTime.value === fields.checkOutTime.value) {
-                        return "체크인 시간과 체크아웃 시간은 같을 수 없습니다.";
-                    }
-                    return "";
-                }
-                default:
-                    return "";
-            }
-        }
-
-        function updateGuestCountRule() {
-            const range = getGuestCountRange();
-            const min = range.min;
-            const max = range.max;
-            const hint = range.message || "숙소 유형을 먼저 선택해 주세요.";
-
-            guestCountInput.min = String(min);
-            guestCountInput.max = String(max);
-            guestCountInput.placeholder = String(min);
-            guestCountHint.textContent = hint;
-            setFieldError("guestCount", validateField("guestCount"));
-        }
-
-        Object.keys(fields).forEach(function(fieldName) {
-            const field = fields[fieldName];
-
-            if (!field) {
-                return;
-            }
-
-            field.addEventListener("input", function() {
-                setFieldError(fieldName, validateField(fieldName));
-            });
-
-            field.addEventListener("change", function() {
-                setFieldError(fieldName, validateField(fieldName));
-            });
-        });
-
-        accomTypeSelect.addEventListener("change", function() {
-            updateGuestCountRule();
-            setFieldError("accomType", validateField("accomType"));
-        });
-
-        generateOperationDatesBtn.addEventListener("click", function() {
-            selectedDateSet = new Set(getCheckedOperationDates().length > 0 ? getCheckedOperationDates() : Array.from(selectedDateSet));
-            renderOperationDates();
-        });
-
-        selectAllOperationDatesBtn.addEventListener("click", function() {
-            document.querySelectorAll('input[name="operationDateList"]').forEach(function(input) {
-                input.checked = true;
-                selectedDateSet.add(input.value);
-            });
-            setFieldError("operationDateList", validateOperationDates());
-        });
-
-        clearAllOperationDatesBtn.addEventListener("click", function() {
-            document.querySelectorAll('input[name="operationDateList"]').forEach(function(input) {
-                input.checked = false;
-                selectedDateSet.delete(input.value);
-            });
-            setFieldError("operationDateList", validateOperationDates());
-        });
-
-        operationStartDateInput.addEventListener("change", renderOperationDates);
-        operationEndDateInput.addEventListener("change", renderOperationDates);
-
-        form.addEventListener("submit", function(event) {
-            let hasError = false;
-
-            Object.keys(fields).forEach(function(fieldName) {
-                const message = validateField(fieldName);
-                setFieldError(fieldName, message);
-                if (message) {
-                    hasError = true;
-                }
-            });
-
-            const operationDateMessage = validateOperationDates();
-            setFieldError("operationDateList", operationDateMessage);
-            if (operationDateMessage) {
-                hasError = true;
-            }
-
-            if (hasError) {
-                event.preventDefault();
-            }
-        });
-
-        updateGuestCountRule();
-        renderOperationDates();
-    })();
+    window.accomFormConfig = {
+        initialSelectedDates: /*[[${accomFormDto.operationDateList}]]*/ []
+    };
 </script>
+<script th:src="@{/js/accomform-validation.js}"></script>
+<script th:src="@{/js/accomform-address.js}"></script>
+<script th:src="@{/js/accomform-operation.js}"></script>
 
 </body>
 </html>

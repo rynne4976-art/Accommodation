@@ -408,6 +408,111 @@
     margin-top: 10px;
 }
 
+.operation-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 24px;
+    margin-bottom: 16px;
+}
+
+.operation-day-title {
+    margin: 0;
+    color: #101828;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.operation-calendar-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #667085;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.operation-calendar-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #1f4acc;
+    box-shadow: 0 0 0 4px rgba(31, 74, 204, 0.12);
+}
+
+.operation-calendar-wrap {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+.operation-calendar-card {
+    padding: 20px;
+    border: 1px solid #e4ebf5;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #fbfdff 0%, #f7faff 100%);
+}
+
+.operation-calendar-month {
+    margin: 0 0 14px;
+    color: #172033;
+    font-size: 18px;
+}
+
+.operation-calendar-weekdays,
+.operation-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.operation-calendar-weekdays {
+    margin-bottom: 10px;
+}
+
+.operation-calendar-weekdays span {
+    text-align: center;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.operation-calendar-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    border-radius: 12px;
+    background: #fff;
+    color: #172033;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid #e7edf4;
+}
+
+.operation-calendar-cell.is-empty {
+    background: transparent;
+    border-color: transparent;
+}
+
+.operation-calendar-cell.is-outside-range {
+    color: #c0c8d4;
+    background: #f8fafc;
+}
+
+.operation-calendar-cell.is-in-range {
+    background: #f8fbff;
+    color: #6b7280;
+}
+
+.operation-calendar-cell.is-active {
+    background: #1f4acc;
+    color: #fff;
+    border-color: #1f4acc;
+    box-shadow: 0 10px 22px rgba(31, 74, 204, 0.22);
+}
+
 body.modal-open {
     overflow: hidden;
 }
@@ -523,6 +628,12 @@ body.modal-open {
     gap: 14px;
 }
 
+.existing-review-image-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .modal-preview-item {
     display: flex;
     flex-direction: column;
@@ -544,6 +655,20 @@ body.modal-open {
     color: #475467;
     font-size: 12px;
     word-break: break-all;
+}
+
+.existing-review-image-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #475467;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.existing-review-image-select input {
+    width: auto;
+    margin: 0;
 }
 
 .modal-preview-remove,
@@ -584,6 +709,12 @@ body.modal-open {
     color: #1f3b7a;
 }
 
+.modal-action.tertiary {
+    min-width: 96px;
+    background: #f3f4f6;
+    color: #344054;
+}
+
 @media (max-width: 960px) {
     .accom-detail-hero {
         grid-template-columns: 1fr;
@@ -597,6 +728,11 @@ body.modal-open {
 
     .accom-detail-meta-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .operation-calendar-header {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .accom-detail-tab-nav {
@@ -911,4 +1047,69 @@ body.modal-open {
         font-size: 13px;
         padding: 7px 12px;
     }
+}
+
+.location-section-card {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.location-address-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px;
+    border-radius: 16px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+}
+
+.location-address-label {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.location-address-value {
+    font-size: 16px;
+    color: #111827;
+    font-weight: 800;
+    line-height: 1.5;
+    word-break: keep-all;
+}
+
+.naver-map-box {
+    width: 100%;
+    height: 420px;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid #dbe4ee;
+    background: #f8fafc;
+}
+
+.naver-map-error {
+    margin: 0;
+    color: #b42318;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.naver-map-info-window {
+    padding: 10px 14px;
+    min-width: 220px;
+    line-height: 1.6;
+    font-size: 13px;
+}
+
+.naver-map-info-window strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #111827;
+    font-weight: 800;
+}
+
+.naver-map-info-window p {
+    margin: 0;
+    color: #475467;
 }

@@ -9,13 +9,10 @@ import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.UUID;
 
 @Service
@@ -23,7 +20,6 @@ import java.util.UUID;
 public class S3FileService {
 
     private final S3Client s3Client;
-    private final S3Presigner s3Presigner;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -105,30 +101,6 @@ public class S3FileService {
                 + region
                 + ".amazonaws.com/"
                 + encodedKey;
-    }
-
-    public String getAccessibleFileUrl(String key) {
-
-        if (key == null || key.isBlank()) {
-            return "";
-        }
-
-        GetObjectRequest getObjectRequest =
-                GetObjectRequest.builder()
-                        .bucket(bucket)
-                        .key(key)
-                        .build();
-
-        GetObjectPresignRequest presignRequest =
-                GetObjectPresignRequest.builder()
-                        .getObjectRequest(getObjectRequest)
-                        .signatureDuration(Duration.ofHours(12))
-                        .build();
-
-        return s3Presigner
-                .presignGetObject(presignRequest)
-                .url()
-                .toString();
     }
 
     public String getProxyImageUrl(String key) {
