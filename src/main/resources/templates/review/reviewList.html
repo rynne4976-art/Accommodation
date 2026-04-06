@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>리뷰 전체보기</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/accomDtl.css}">
+</head>
+<body>
+<div th:replace="~{layouts/header :: header}"></div>
+
+<main class="accom-detail-page review-page">
+    <section class="accom-detail-info-card review-page-hero">
+        <div class="detail-section-header">
+            <span class="accom-detail-label subtle">All Reviews</span>
+            <h2 th:text="${accom.accomName} + ' 리뷰 전체보기'">리뷰 전체보기</h2>
+        </div>
+
+        <div class="review-section-card review-section-card-page">
+            <div class="review-score-box">
+                <strong>
+                    <span class="review-score-star">★</span>
+                    <span th:text="${#numbers.formatDecimal(accom.avgRating, 1, 1)}">0.0</span>
+                    <small th:text="'(' + ${#numbers.formatInteger(accom.reviewCount, 1, 'COMMA')} + ')'">(0)</small>
+                </strong>
+            </div>
+
+            <div class="review-summary-copy">
+                <p th:text="${accom.location}">숙소 위치</p>
+                <p>해당 숙박업소에 등록된 리뷰를 모두 확인할 수 있습니다.</p>
+            </div>
+
+            <a class="detail-action secondary" th:href="@{/accom/{accomId}(accomId=${accom.id})}">숙소로 돌아가기</a>
+        </div>
+    </section>
+
+    <section class="accom-detail-info-card review-page-list">
+        <div th:if="${reviewList != null and !#lists.isEmpty(reviewList)}" class="review-page-grid">
+            <article class="review-page-card" th:each="review : ${reviewList}">
+                <div class="review-card-top">
+                    <div class="review-card-stars" aria-label="회원 별점">
+                        <span class="review-star"
+                              th:each="i : ${#numbers.sequence(1,5)}"
+                              th:classappend="${i <= review.rating} ? ' filled' : ''">★</span>
+                    </div>
+                    <p class="review-card-date" th:text="${#temporals.format(review.regTime, 'yyyy.MM.dd')}">2026.04.02</p>
+                </div>
+
+                <div class="review-card-body review-card-body-page">
+                    <div class="review-card-copy">
+                        <p class="review-card-content review-card-content-page" th:text="${review.content}">리뷰 내용</p>
+                    </div>
+                </div>
+
+                <div class="review-image-section"
+                     th:if="${review.reviewImgList != null and !#lists.isEmpty(review.reviewImgList)}">
+                    <div class="review-image-section-head">
+                        <strong>리뷰 이미지</strong>
+                        <span th:text="${#lists.size(review.reviewImgList)} + '장'">1장</span>
+                    </div>
+
+                    <div class="review-image-slider-shell">
+                        <button type="button"
+                                class="review-image-slider-button"
+                                data-review-image-prev
+                                th:if="${#lists.size(review.reviewImgList) > 5}">&lt;</button>
+
+                        <div class="review-image-slider" data-review-image-slider>
+                            <img th:each="img : ${review.reviewImgList}"
+                                 class="review-image-slider-item"
+                                 th:src="${img.imgUrl}"
+                                 alt="리뷰 이미지">
+                        </div>
+
+                        <button type="button"
+                                class="review-image-slider-button"
+                                data-review-image-next
+                                th:if="${#lists.size(review.reviewImgList) > 5}">&gt;</button>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <div class="review-empty-card review-empty-inline" th:if="${reviewList == null or #lists.isEmpty(reviewList)}">
+            <p>등록된 리뷰가 없습니다.</p>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{layouts/footer :: footer}"></div>
+<script th:src="@{/js/review-list-slider.js}"></script>
+</body>
+</html>
