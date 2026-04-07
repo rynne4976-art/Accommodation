@@ -587,7 +587,7 @@
             </div>
 
             <form id="myReviewForm"
-                  th:action="${myReview != null} ? @{/reviews/{reviewId}/update(reviewId=${myReview.id})} : '#'"
+                  th:action="@{/reviews/{reviewId}/update(reviewId=${myReview != null ? myReview.id : 0})}"
                   method="post"
                   enctype="multipart/form-data"
                   class="review-modal-form review-modal-form-compact">
@@ -1080,7 +1080,7 @@
                     `/orders/accom/${accomId}/availability?checkInDate=${encodeURIComponent(selectedCheckIn)}&checkOutDate=${encodeURIComponent(selectedCheckOut)}`,
                     { signal: availabilityController.signal }
                 );
-                if (!response.ok) { const msg = await response.text(); throw new Error(msg || 'failed'); }
+                if (!response.ok) { setAvailabilityBadge(remainingEl, '-'); return; }
                 const data = await response.json();
                 const remaining = typeof data.remainingRooms === 'number' ? data.remainingRooms : null;
                 if (remaining === null) {
