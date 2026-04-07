@@ -1,11 +1,13 @@
 package com.Accommodation.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -25,6 +27,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final GoogleOidcUserService googleOidcUserService;
     private final Environment environment;
+    private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
 
     /**
      * 🌐 보안 필터 설정
@@ -98,7 +101,8 @@ public class SecurityConfig {
     }
 
     private boolean isSocialLoginEnabled() {
-        return isGoogleLoginEnabled() || isKakaoLoginEnabled();
+        return clientRegistrationRepositoryProvider.getIfAvailable() != null
+                && (isGoogleLoginEnabled() || isKakaoLoginEnabled());
     }
 
     private boolean isGoogleLoginEnabled() {
