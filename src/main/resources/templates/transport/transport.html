@@ -13,120 +13,211 @@
     <section class="transport-page">
         <div class="transport-shell">
             <header class="transport-hero">
-                <p class="transport-hero__eyebrow">Move Smarter</p>
-                <h1 class="transport-hero__title">교통/렌트카</h1>
-                <p class="transport-hero__subtitle">
-                    숙소 위치를 기준으로 주요 교통 거점과의 이동 감각을 빠르게 확인하고,
-                    함께 볼 만한 렌트카 정보도 한 화면에서 비교할 수 있습니다.
-                </p>
-
-                <div class="transport-tabs" aria-label="교통 카테고리">
-                    <button class="transport-tabs__item is-active" type="button">전체</button>
-                    <button class="transport-tabs__item" type="button">공항 이동</button>
-                    <button class="transport-tabs__item" type="button">기차역</button>
-                    <button class="transport-tabs__item" type="button">렌트카</button>
+                <div class="transport-hero__copy">
+                    <p class="transport-hero__eyebrow">TRIP MOBILITY</p>
+                    <h1 class="transport-hero__title">현재 위치와 숙소 주변 교통을 한 번에 확인하세요</h1>
+                    <p class="transport-hero__subtitle">
+                        현재 위치에서 숙소까지 얼마나 걸리는지, 숙소와 가장 가까운 공항과 지하철역은 어디인지,
+                        그리고 일정에 맞는 렌트카까지 한 눈에 비교할 수 있게 구성했습니다.
+                    </p>
+                </div>
+                <div class="transport-hero__actions">
+                    <a class="transport-hero__button transport-hero__button--primary"
+                       th:if="${selectedAccom != null}"
+                       th:href="@{/accom/{id}(id=${selectedAccom.id})}">
+                        숙소 상세로 돌아가기
+                    </a>
+                    <a class="transport-hero__button transport-hero__button--secondary"
+                       th:href="@{/searchList}">
+                        다른 숙소 보기
+                    </a>
                 </div>
             </header>
 
-            <section class="transport-overview">
-                <div class="transport-overview__main">
-                    <span class="transport-overview__badge">숙소 기준 계산</span>
-                    <h2 th:if="${selectedAccom != null}" th:text="${selectedAccom.accomName}">선택한 숙소</h2>
-                    <h2 th:if="${selectedAccom == null}">숙소를 선택하면 교통 정보를 계산합니다.</h2>
-                    <p th:if="${selectedAccom != null}" th:text="${selectedAccom.location}">숙소 주소</p>
-                    <p th:if="${selectedAccom == null}">
-                        숙소 상세 페이지에서 이동하면 해당 숙소 주소 기준으로 가장 가까운 공항과 역,
-                        추천 이동 방식을 바로 확인할 수 있습니다.
+            <section class="transport-empty-state" th:if="${selectedAccom == null}">
+                <div class="transport-empty-state__copy">
+                    <p class="transport-empty-state__eyebrow">No Stay Selected</p>
+                    <h2>숙소를 선택하면 교통 보드가 완성됩니다</h2>
+                    <p>
+                        이 페이지는 예약 확정 이후가 아니라 특정 숙소를 기준으로 이동 흐름을 보는 화면입니다.
+                        숙소 상세의 교통 보기 버튼으로 들어오면 바로 계산됩니다.
+                    </p>
+                </div>
+                <a class="transport-hero__button transport-hero__button--primary" th:href="@{/main}">
+                    숙소 둘러보기
+                </a>
+            </section>
+
+            <section class="transport-spotlight">
+                <article class="transport-stay-card">
+                    <span class="transport-stay-card__badge">선택한 숙소 기준</span>
+                    <h2 class="transport-stay-card__title"
+                        th:text="${selectedAccom != null ? selectedAccom.accomName : '숙소를 선택하면 상세한 교통 정보가 표시됩니다'}">
+                        대전 스테이 호텔
+                    </h2>
+                    <p class="transport-stay-card__address"
+                       th:text="${selectedAccom != null ? selectedAccom.location : '숙소 상세 페이지에서 교통 보기로 들어오면 주소 기반으로 교통 정보를 불러옵니다.'}">
+                        대전광역시 서구 둔산동 100
+                    </p>
+                    <div class="transport-stay-card__chips">
+                        <span>차량 이동</span>
+                        <span>공항 비교</span>
+                        <span>역세권 확인</span>
+                    </div>
+                    <div class="transport-stay-card__photo">
+                        <img th:if="${selectedAccom != null and selectedAccom.accomImgList != null and !#lists.isEmpty(selectedAccom.accomImgList)}"
+                             th:src="${selectedAccom.accomImgList[0].imgUrl}"
+                             alt="숙소 이미지">
+                        <div th:if="${selectedAccom == null or selectedAccom.accomImgList == null or #lists.isEmpty(selectedAccom.accomImgList)}"
+                             class="transport-stay-card__photo-placeholder">
+                            STAY PREVIEW
+                        </div>
+                    </div>
+                    <p class="transport-stay-card__location"
+                       th:text="${selectedAccom != null ? selectedAccom.location : '숙소 주소 정보가 여기에 표시됩니다'}">
+                        대전광역시 서구 둔산동 100
                     </p>
                     <input type="hidden"
                            id="transportAccomLocation"
                            th:value="${selectedAccom != null ? selectedAccom.location : ''}">
+                </article>
+
+                <article class="transport-map-card">
+                    <div class="transport-map-card__surface">
+                        <div class="transport-map-card__grid"></div>
+                        <div class="transport-map-card__roads"></div>
+                        <div class="transport-map-card__pin transport-map-card__pin--stay">
+                            <span>숙소</span>
+                            <strong th:text="${selectedAccom != null ? selectedAccom.accomName : '선택한 숙소'}">대전 스테이 호텔</strong>
+                        </div>
+                        <div class="transport-map-card__pin transport-map-card__pin--airport">
+                            <span>공항</span>
+                            <strong>가장 가까운 공항</strong>
+                        </div>
+                        <div class="transport-map-card__pin transport-map-card__pin--station">
+                            <span>지하철역</span>
+                            <strong>가장 가까운 역</strong>
+                        </div>
+                        <div class="transport-map-card__pin transport-map-card__pin--rental">
+                            <span>렌트카</span>
+                            <strong>렌터카 허브</strong>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <section class="transport-mobility-board">
+                <div class="transport-board-card transport-board-card--mobility">
+                    <div class="transport-board-card__head">
+                        <h3>이동 수단 비교</h3>
+                        <p id="transportStatus">현재 위치와 주변 교통 거점을 계산하고 있습니다.</p>
+                    </div>
+                    <div id="transportMetricCards" class="transport-mode-grid">
+                        <article class="transport-mode-card transport-mode-card--placeholder">
+                            <span class="transport-mode-card__icon">택시</span>
+                            <strong>현재 위치 기준</strong>
+                            <p>이동 시간 계산 중</p>
+                        </article>
+                        <article class="transport-mode-card transport-mode-card--placeholder">
+                            <span class="transport-mode-card__icon">지하철</span>
+                            <strong>가장 가까운 역</strong>
+                            <p>역세권 비교 중</p>
+                        </article>
+                        <article class="transport-mode-card transport-mode-card--placeholder">
+                            <span class="transport-mode-card__icon">공항</span>
+                            <strong>가장 가까운 공항</strong>
+                            <p>공항 거리 계산 중</p>
+                        </article>
+                    </div>
                 </div>
 
-                <div class="transport-overview__aside">
-                    <article class="transport-mini-card">
-                        <strong>계산 기준</strong>
-                        <p>네이버 지도 주소 변환 결과와 주요 교통 거점 좌표를 기준으로 계산합니다.</p>
-                    </article>
-                    <article class="transport-mini-card">
-                        <strong>안내 방식</strong>
-                        <p>직선거리와 대략적인 이동 시간 감각을 먼저 보여주고 렌트카 후보를 함께 제공합니다.</p>
-                    </article>
+                <div class="transport-board-card transport-board-card--highlight">
+                    <div class="transport-board-card__head">
+                        <h3>교통 하이라이트</h3>
+                        <p>빠르게 파악해야 하는 핵심 이동 포인트</p>
+                    </div>
+                    <div id="transportCurrentRoute" class="transport-route-grid transport-route-grid--single">
+                        <article class="transport-route-card transport-route-card--placeholder">
+                            <strong>현재 위치 경로가 여기에 표시됩니다</strong>
+                            <p>브라우저 위치 권한 허용 후 숙소까지의 경로를 안내합니다.</p>
+                        </article>
+                    </div>
                 </div>
             </section>
 
-            <section class="transport-board">
-                <div class="transport-board__head">
-                    <div>
-                        <h2>숙소 기준 이동 정보</h2>
-                        <p id="transportStatus">숙소 주소를 기준으로 교통 정보를 계산할 준비가 되어 있습니다.</p>
+            <section class="transport-detail-grid">
+                <div class="transport-board-card">
+                    <div class="transport-board-card__head">
+                        <h3>가장 가까운 공항</h3>
+                        <p>숙소와 공항 간 거리와 소요시간 비교</p>
                     </div>
-                    <button class="transport-board__sort" type="button">거리 기준</button>
+                    <div id="transportAirportCards" class="transport-route-grid">
+                        <article class="transport-route-card transport-route-card--placeholder">
+                            <strong>공항 비교 결과가 여기에 표시됩니다</strong>
+                            <p>가까운 순으로 공항 후보를 정리합니다.</p>
+                        </article>
+                    </div>
                 </div>
 
-                <div class="transport-filter-row">
-                    <button class="transport-filter is-active" type="button">전체</button>
-                    <button class="transport-filter" type="button">가까운 공항</button>
-                    <button class="transport-filter" type="button">가까운 역</button>
-                    <button class="transport-filter" type="button">추천 이동</button>
-                    <button class="transport-filter" type="button">렌트카</button>
+                <div class="transport-board-card">
+                    <div class="transport-board-card__head">
+                        <h3>가장 가까운 지하철역</h3>
+                        <p>숙소 접근성이 좋은 역을 가까운 순으로 보여줍니다</p>
+                    </div>
+                    <div id="transportStationCards" class="transport-route-grid">
+                        <article class="transport-route-card transport-route-card--placeholder">
+                            <strong>지하철역 비교 결과가 여기에 표시됩니다</strong>
+                            <p>주변 주요 역과의 거리 비교 결과를 제공합니다.</p>
+                        </article>
+                    </div>
                 </div>
 
-                <div id="transportMetricCards" class="transport-metric-grid">
-                    <article class="transport-metric-card transport-metric-card--placeholder">
-                        <span class="transport-metric-card__label">가장 가까운 공항</span>
-                        <strong class="transport-metric-card__headline">숙소 선택 필요</strong>
-                        <p class="transport-metric-card__copy">숙소 상세에서 이동하면 주소 기준 결과가 표시됩니다.</p>
-                    </article>
-                    <article class="transport-metric-card transport-metric-card--placeholder">
-                        <span class="transport-metric-card__label">가장 가까운 역</span>
-                        <strong class="transport-metric-card__headline">숙소 선택 필요</strong>
-                        <p class="transport-metric-card__copy">공항과 역은 직선거리 기준으로 계산됩니다.</p>
-                    </article>
-                    <article class="transport-metric-card transport-metric-card--placeholder">
-                        <span class="transport-metric-card__label">이동 추천</span>
-                        <strong class="transport-metric-card__headline">숙소 선택 필요</strong>
-                        <p class="transport-metric-card__copy">렌트카 추천은 교통 거점과의 거리 감각을 함께 반영합니다.</p>
-                    </article>
-                </div>
-
-                <div class="transport-board__message">
-                    <h3>렌트카 추천 보드</h3>
-                    <p>현재 등록된 렌트카 목록 중에서 먼저 보기 좋은 항목을 아래에 배치했습니다.</p>
-                </div>
-
-                <div class="transport-board__grid" th:if="${carList != null and !#lists.isEmpty(carList)}">
-                    <article class="transport-car-card" th:each="car : ${carList}">
-                        <div class="transport-car-card__visual">
-                            <div class="transport-car-card__visual-top">
-                                <span class="transport-car-card__company" th:text="${car.carCompany}">렌트카 업체</span>
+                <div class="transport-board-card transport-board-card--rental">
+                    <div class="transport-board-card__head">
+                        <h3>근처 렌트카</h3>
+                        <p id="transportRentalMessage">현재 위치나 공항에서 숙소까지 이동 거리가 길다면 렌트카가 유리할 수 있습니다.</p>
+                    </div>
+                    <div class="transport-toolbar">
+                        <div class="transport-filter-row" aria-label="렌트카 필터">
+                            <button class="transport-filter is-active" type="button" data-filter="all">전체</button>
+                            <button class="transport-filter" type="button" data-filter="compact">경차/소형</button>
+                            <button class="transport-filter" type="button" data-filter="family">가족형</button>
+                            <button class="transport-filter" type="button" data-filter="premium">프리미엄</button>
+                        </div>
+                        <label class="transport-sort">
+                            <span>정렬</span>
+                            <select id="transportCarSort">
+                                <option value="priceAsc">가격 낮은 순</option>
+                                <option value="peopleDesc">탑승 인원 많은 순</option>
+                                <option value="nameAsc">차량명 순</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="transport-board__grid" th:if="${carList != null and !#lists.isEmpty(carList)}" id="transportCarGrid">
+                        <article class="transport-car-card"
+                                 th:each="car : ${carList}"
+                                 th:attr="data-category=${car.carCategory},data-price=${car.carPrice},data-people=${car.carUsePeople},data-name=${car.carName}">
+                            <div class="transport-car-card__visual">
                                 <span class="transport-car-card__visual-badge" th:text="${car.carCategory}">차종</span>
+                                <strong class="transport-car-card__visual-name" th:text="${car.carName}">차량명</strong>
                             </div>
-                            <strong class="transport-car-card__visual-name" th:text="${car.carName}">차량명</strong>
-                            <span class="transport-car-card__visual-file"
-                                  th:text="${car.carImg != null ? car.carImg : 'image pending'}">image.jpg</span>
-                        </div>
-
-                        <div class="transport-car-card__body">
-                            <div class="transport-car-card__meta">
-                                <span class="transport-car-card__people"
-                                      th:text="'정원 ' + ${car.carUsePeople} + '명'">정원 4명</span>
-                            </div>
-                            <h3 class="transport-car-card__name" th:text="${car.carName}">차량명</h3>
-                            <p class="transport-car-card__info" th:text="${car.carInfo}">차량 설명</p>
-                            <div class="transport-car-card__bottom">
+                            <div class="transport-car-card__body">
+                                <div class="transport-car-card__meta">
+                                    <span class="transport-car-card__company" th:text="${car.carCompany}">렌트카 업체</span>
+                                    <span class="transport-car-card__people" th:text="'탑승 ' + ${car.carUsePeople} + '명'">탑승 4명</span>
+                                </div>
                                 <strong class="transport-car-card__price"
-                                        th:text="${#numbers.formatInteger(car.carPrice, 3, 'COMMA')} + '원'">80,000원</strong>
-                                <button class="transport-car-card__button" type="button">자세히 보기</button>
+                                        th:text="${#numbers.formatInteger(car.carPrice, 3, 'COMMA')} + '원'">58,000원</strong>
+                                <p class="transport-car-card__info" th:text="${car.carInfo}">차량 설명</p>
+                                <button class="transport-car-card__button" type="button">렌트카 예약</button>
                             </div>
-                        </div>
-                    </article>
-                </div>
-
-                <div class="transport-board__grid" th:if="${carList == null or #lists.isEmpty(carList)}">
-                    <div class="transport-placeholder-card"></div>
-                    <div class="transport-placeholder-card"></div>
-                    <div class="transport-placeholder-card"></div>
+                        </article>
+                    </div>
+                    <div class="transport-board__grid" th:if="${carList == null or #lists.isEmpty(carList)}">
+                        <div class="transport-placeholder-card"></div>
+                        <div class="transport-placeholder-card"></div>
+                        <div class="transport-placeholder-card"></div>
+                    </div>
                 </div>
             </section>
         </div>
@@ -134,12 +225,10 @@
 
     <script th:inline="javascript">
         window.transportPageConfig = {
-            hasSelectedAccom: /*[[${selectedAccom != null}]]*/ false
+            hasSelectedAccom: /*[[${selectedAccom != null}]]*/ false,
+            directionsEnabled: /*[[${directionsEnabled}]]*/ false
         };
     </script>
     <script th:src="@{/js/transport.js}"></script>
-    <script type="text/javascript"
-            th:src="|https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${naverMapClientId}&submodules=geocoder&callback=initTransportPage|">
-    </script>
 </div>
 </html>
