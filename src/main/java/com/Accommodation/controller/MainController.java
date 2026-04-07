@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MainController {
 
+    private static final String RECENT_VIEWED_COOKIE_DELIMITER_PATTERN = "[,-]";
+
     private final AccomService accomService;
 
     @GetMapping({"/", "/main"})
@@ -182,7 +184,7 @@ public class MainController {
             return Collections.emptyList();
         }
 
-        return Arrays.stream(recentViewedCookie.split(","))
+        return Arrays.stream(recentViewedCookie.split(RECENT_VIEWED_COOKIE_DELIMITER_PATTERN))
                 .map(String::trim)
                 .filter(value -> !value.isBlank())
                 .map(value -> {

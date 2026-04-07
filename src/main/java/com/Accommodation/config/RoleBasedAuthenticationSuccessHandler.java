@@ -10,8 +10,11 @@ import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @Component
 public class RoleBasedAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
@@ -22,6 +25,12 @@ public class RoleBasedAuthenticationSuccessHandler implements AuthenticationSucc
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
+        String redirectUrl = sanitizeRedirectUrl(request.getParameter("redirectUrl"));
+        if (isSafeRedirectUrl(redirectUrl)) {
+            response.sendRedirect(redirectUrl);
+            return;
+        }
+
         SavedRequest savedRequest = requestCache.getRequest(request, response);
         if (savedRequest != null) {
             new SavedRequestAwareAuthenticationSuccessHandler()
@@ -30,5 +39,38 @@ public class RoleBasedAuthenticationSuccessHandler implements AuthenticationSucc
         }
 
         response.sendRedirect("/main");
+    }
+
+    private boolean isSafeRedirectUrl(String redirectUrl) {
+        return StringUtils.hasText(redirectUrl)
+                && redirectUrl.startsWith("/")
+                && !redirectUrl.startsWith("//")
+                && !redirectUrl.startsWith("/members/login")
+                && !redirectUrl.startsWith("/members/logout");
+    }
+
+    private String sanitizeRedirectUrl(String redirectUrl) {
+        if (!StringUtils.hasText(redirectUrl)) {
+            return redirectUrl;
+        }
+
+        int queryIndex = redirectUrl.indexOf('?');
+        if (queryIndex < 0) {
+            return redirectUrl;
+        }
+
+        String path = redirectUrl.substring(0, queryIndex);
+        String query = redirectUrl.substring(queryIndex + 1);
+        String filteredQuery = Arrays.stream(query.split("&"))
+                .filter(StringUtils::hasText)
+                .filter(param -> !param.startsWith("logout="))
+                .filter(param -> !"logout".equals(param))
+                .collect(Collectors.joining("&"));
+
+        if (!StringUtils.hasText(filteredQuery)) {
+            return path;
+        }
+
+        return path + "?" + filteredQuery;
     }
 }

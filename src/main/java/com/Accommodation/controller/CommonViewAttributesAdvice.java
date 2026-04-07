@@ -7,6 +7,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 @ControllerAdvice
 @RequiredArgsConstructor
 public class CommonViewAttributesAdvice {
@@ -28,6 +31,28 @@ public class CommonViewAttributesAdvice {
     @ModelAttribute("currentUri")
     public String currentUri(HttpServletRequest request) {
         return request.getRequestURI();
+    }
+
+    @ModelAttribute("currentPathWithQuery")
+    public String currentPathWithQuery(HttpServletRequest request) {
+        String requestUri = request.getRequestURI();
+        String queryString = request.getQueryString();
+
+        if (!StringUtils.hasText(queryString)) {
+            return requestUri;
+        }
+
+        String filteredQuery = Arrays.stream(queryString.split("&"))
+                .filter(StringUtils::hasText)
+                .filter(param -> !param.startsWith("logout="))
+                .filter(param -> !"logout".equals(param))
+                .collect(Collectors.joining("&"));
+
+        if (!StringUtils.hasText(filteredQuery)) {
+            return requestUri;
+        }
+
+        return requestUri + "?" + filteredQuery;
     }
 
     @ModelAttribute("googleLoginEnabled")

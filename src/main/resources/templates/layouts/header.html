@@ -15,7 +15,7 @@
 
         <div class="menu-right">
             <div sec:authorize="isAnonymous()" class="menu-group">
-                <a th:href="@{/members/login}">로그인</a>
+                <a th:href="${currentUri == '/members/login' or currentUri == '/members/new'} ? @{/members/login} : @{/members/login(redirectUrl=${currentPathWithQuery})}">로그인</a>
                 <a th:href="@{/members/new}">회원가입</a>
             </div>
 
