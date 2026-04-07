@@ -1,5 +1,6 @@
 package com.Accommodation.repository;
 
+import com.Accommodation.constant.OrderStatus;
 import com.Accommodation.entity.Order;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +14,10 @@ public interface OrderRepository extends JpaRepository<Order, Long>, OrderReposi
     // 회원의 주문 내역을 최신순으로 조회 (페이징)
     @Query("SELECT o FROM Order o WHERE o.member.email = :email ORDER BY o.orderDate DESC")
     List<Order> findOrders(@Param("email") String email, Pageable pageable);
+
+    // 회원의 주문 내역을 상태별로 최신순 조회 (페이징)
+    @Query("SELECT o FROM Order o WHERE o.member.email = :email AND o.orderStatus = :status ORDER BY o.orderDate DESC")
+    List<Order> findOrdersByStatus(@Param("email") String email, @Param("status") OrderStatus status, Pageable pageable);
 
     // 회원의 총 주문 수 (페이징 계산용)
     @Query("SELECT COUNT(o) FROM Order o WHERE o.member.email = :email")

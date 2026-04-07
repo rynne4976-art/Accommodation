@@ -140,6 +140,10 @@
     padding: 6px 0;
 }
 
+/* 주말 요일 헤더 색상 */
+.calendar-weekday:first-child { color: #dc2626; } /* 일 */
+.calendar-weekday:last-child  { color: #2563eb; } /* 토 */
+
 .calendar-day {
     min-height: 78px;
     border: 1px solid #e5e7eb;
@@ -164,10 +168,30 @@
 }
 
 .calendar-day.is-disabled {
-    background: #f8fafc;
-    color: #cbd5e1;
-    border-color: #eef2f7;
+    background: #f1f5f9;
+    color: #94a3b8;          /* 대비 높임: #cbd5e1 → #94a3b8 */
+    border-color: #e2e8f0;
     cursor: not-allowed;
+}
+
+/* 지난날: 숫자 취소선 + 전체 페이드 */
+.calendar-day.is-past {
+    opacity: 0.55;
+}
+.calendar-day.is-past .calendar-day__num {
+    text-decoration: line-through;
+    text-decoration-color: #94a3b8;
+}
+.calendar-day.is-past .calendar-day__badge {
+    background: transparent;
+    color: #b0bec5;
+}
+
+/* 비운영(과거 제외): 뱃지 대비 높임 */
+.calendar-day.is-disabled:not(.is-past) .calendar-day__badge {
+    background: #e2e8f0;
+    color: #475569;
+    font-weight: 600;
 }
 
 .calendar-day.is-soldout {
@@ -196,6 +220,34 @@
     border-color: #93c5fd;
 }
 
+/* 오늘 날짜 강조 */
+.calendar-day.is-today {
+    border: 2px solid #6366f1;
+    background: #fafaff;
+}
+.calendar-day.is-today:hover {
+    border-color: #4f46e5;
+}
+.calendar-day__num.is-today {
+    color: #6366f1;
+    font-weight: 900;
+}
+.calendar-day__num.is-today::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #6366f1;
+    margin: 2px auto 0;
+}
+
+/* 주말 날짜 숫자 색상 (선택·마감 상태 제외) */
+.calendar-day.is-sunday:not(.is-selected):not(.is-soldout) .calendar-day__num { color: #dc2626; }
+.calendar-day.is-saturday:not(.is-selected):not(.is-soldout) .calendar-day__num { color: #2563eb; }
+/* is-today가 우선 */
+.calendar-day.is-today .calendar-day__num { color: #6366f1; }
+
 .calendar-day__num {
     font-size: 0.94rem;
     font-weight: 700;
@@ -220,17 +272,73 @@
     color: inherit;
 }
 
-/* 잔여 객실 3개 미만 - 빨간색 강조 */
-.calendar-day__badge.is-low-stock {
-    background: #fee2e2;
-    color: #b91c1c;
+/* ── 예약가능여부 뱃지 ───────────────────────────────────────────── */
+.availability-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.82rem;
     font-weight: 600;
+    color: #6b7280;
+    background: #f1f5f9;
 }
 
+.availability-badge--available {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.availability-badge--low-stock {
+    background: #fff7ed;
+    color: #ea580c;          /* 주황 통일 */
+    border: 1px solid #fed7aa;
+    font-weight: 700;
+}
+
+.availability-badge--rooms-left {
+    background: #fff7ed;     /* 빨강 → 주황 */
+    color: #ea580c;
+    border: 1px solid #fed7aa;
+    font-weight: 700;
+}
+
+.availability-badge--soldout {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+#summaryRemaining {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-end;
+}
+
+/* 운영일 뱃지: 예약가능(초록) */
+.calendar-day__badge.is-available {
+    background: #dcfce7;
+    color: #166534;
+    font-weight: 500;
+}
+
+/* 마감임박(주황) — 빨강은 진짜 마감에만 */
+.calendar-day__badge.is-low-stock {
+    background: #fff7ed;
+    color: #ea580c;
+    border: 1px solid #fed7aa;
+    font-weight: 700;
+}
+
+/* 선택·범위 상태에서 뱃지 색 통일 */
+.calendar-day.is-selected .calendar-day__badge.is-available,
+.calendar-day.is-in-range .calendar-day__badge.is-available {
+    background: rgba(220, 252, 231, 0.3);
+    color: inherit;
+}
 .calendar-day.is-selected .calendar-day__badge.is-low-stock,
 .calendar-day.is-in-range .calendar-day__badge.is-low-stock {
-    background: rgba(254, 226, 226, 0.92);
-    color: #b91c1c;
+    background: rgba(255, 247, 237, 0.3);
+    color: inherit;
 }
 
 .calendar-legend {
@@ -251,36 +359,24 @@
     color: #475569;
 }
 
-.calendar-legend__dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
+/* ── 범례 chip (캘린더 뱃지와 동일 스타일) ─── */
+.calendar-legend__chip {
     display: inline-block;
-    border: 1px solid #d1d5db;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 600;
+    background: rgba(241, 245, 249, 0.85);
+    color: #64748b;
+    border: 1px solid transparent;
 }
-
-.calendar-legend__dot.is-operating {
-    background: #ffffff;
-}
-
-.calendar-legend__dot.is-disabled {
-    background: #f8fafc;
-}
-
-.calendar-legend__dot.is-soldout {
-    background: #fff5f5;
-    border-color: #fecaca;
-}
-
-.calendar-legend__dot.is-selected {
-    background: #111827;
-    border-color: #111827;
-}
-
-.calendar-legend__dot.is-preview {
-    background: #eff6ff;
-    border-color: #93c5fd;
-}
+.chip--available  { background: #dcfce7; color: #166534; }
+.chip--low-stock  { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
+.chip--soldout    { background: #fff5f5; color: #b91c1c; border-color: #fecaca; }
+.chip--nonop      { background: #e2e8f0; color: #475569; }
+.chip--past       { background: #f8fafc; color: #b0bec5; font-style: italic; text-decoration: line-through; }
+.chip--today      { background: #fafaff; color: #6366f1; border-color: #6366f1; border-width: 2px; }
+.chip--selected   { background: #111827; color: #fff; }
 
 .selection-guide {
     margin-top: 18px;
@@ -465,6 +561,13 @@
     border: 1px solid #d1d5db;
     background: #fff;
     color: #374151;
+}
+
+.btn-order--edit {
+    background: linear-gradient(135deg, #7b3ff2, #9258ff);
+}
+.btn-order--edit:hover {
+    background: linear-gradient(135deg, #6d35d9, #8447ff);
 }
 
 @media (max-width: 900px) {

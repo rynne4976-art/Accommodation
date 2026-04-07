@@ -10,6 +10,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -98,7 +99,9 @@ public class MemberController {
 
         model.addAttribute("member", member);
         model.addAttribute("orders",
-                orderService.getOrderList(userDetails.getUsername(), PageRequest.of(0, 20)));
+                orderService.getOrderListByStatus(userDetails.getUsername(), com.Accommodation.constant.OrderStatus.ORDER, Pageable.unpaged()));
+        model.addAttribute("cancelledOrders",
+                orderService.getOrderListByStatus(userDetails.getUsername(), com.Accommodation.constant.OrderStatus.CANCEL, PageRequest.of(0, 5)));
         return "member/mypage";
     }
 

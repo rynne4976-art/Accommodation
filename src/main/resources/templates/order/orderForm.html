@@ -81,19 +81,13 @@
 
                             <div class="calendar-legend">
                                 <span class="calendar-legend__item">
-                                    <span class="calendar-legend__dot is-operating"></span> 운영일
+                                    <span class="calendar-legend__chip chip--available">운영</span> 예약가능
                                 </span>
                                 <span class="calendar-legend__item">
-                                    <span class="calendar-legend__dot is-disabled"></span> 비운영/과거
+                                    <span class="calendar-legend__chip chip--nonop">비운영</span> 비운영
                                 </span>
                                 <span class="calendar-legend__item">
-                                    <span class="calendar-legend__dot is-soldout"></span> 마감일
-                                </span>
-                                <span class="calendar-legend__item">
-                                    <span class="calendar-legend__dot is-selected"></span> 선택일
-                                </span>
-                                <span class="calendar-legend__item">
-                                    <span class="calendar-legend__dot is-preview"></span> 미리보기
+                                    <span class="calendar-legend__chip chip--soldout">마감</span> 마감일
                                 </span>
                             </div>
 
@@ -331,21 +325,31 @@
                 const isOperationDay        = operationDaySet.has(dateString);
                 const isSoldOut             = soldOutDaySet.has(dateString);
                 const isClosedByCheckInTime = isDateClosedByCheckInTime(dateString);
+                const isToday               = dateString === formatDateObj(new Date());
+                const dow                   = new Date(year, month, day).getDay();
                 const selectable = !isPastDate && isOperationDay && !isSoldOut && !isClosedByCheckInTime;
 
-                if (isPastDate || !isOperationDay || isClosedByCheckInTime) cell.classList.add('is-disabled');
-                if (isSoldOut) { cell.classList.remove('is-disabled'); cell.classList.add('is-soldout'); }
+                // 상태 클래스 부여
+                if (isPastDate)                                { cell.classList.add('is-disabled', 'is-past'); }
+                else if (!isOperationDay || isClosedByCheckInTime) { cell.classList.add('is-disabled'); }
+                if (isSoldOut) { cell.classList.remove('is-disabled', 'is-past'); cell.classList.add('is-soldout'); }
+                if (isToday)   cell.classList.add('is-today');
+                if (dow === 0) cell.classList.add('is-sunday');
+                if (dow === 6) cell.classList.add('is-saturday');
                 if (selectedCheckIn === dateString || selectedCheckOut === dateString) {
                     cell.classList.add('is-selected');
                 } else if (isBetweenSelectedRange(dateString)) {
                     cell.classList.add('is-in-range');
                 }
 
+                // 날짜 숫자
                 const num = document.createElement('div');
                 num.className = 'calendar-day__num';
+                if (isToday) num.classList.add('is-today');
                 num.textContent = day;
                 cell.appendChild(num);
 
+                // 상태 뱃지
                 const badge = document.createElement('div');
                 badge.className = 'calendar-day__badge';
                 if (isSoldOut) {
@@ -361,15 +365,14 @@
                 } else if (isBetweenSelectedRange(dateString)) {
                     badge.textContent = '선택';
                 } else {
-                    // 운영일: 잔여 객실 수 표시
+                    // 운영일: 잔여 객실 수 항상 숫자로 표시
                     const remaining = dailyRooms[dateString];
-                    if (remaining !== undefined) {
-                        badge.textContent = `남은 객실: ${remaining}개`;
-                        if (remaining < 3) {
-                            badge.classList.add('is-low-stock');
-                        }
+                    if (typeof remaining === 'number') {
+                        badge.textContent = `${remaining}실 남음`;
+                        badge.classList.add(remaining < 3 ? 'is-low-stock' : 'is-available');
                     } else {
-                        badge.textContent = '운영';
+                        badge.classList.add('is-available');
+                        badge.textContent = '예약가능';
                     }
                 }
                 cell.appendChild(badge);
@@ -439,7 +442,7 @@
                 if (cell && !cell.classList.contains('is-selected') && !cell.classList.contains('is-in-range')) {
                     cell.classList.add('is-preview');
                     const badge = cell.querySelector('.calendar-day__badge');
-                    if (badge) { badge.dataset.originalText = badge.textContent; badge.textContent = '미리보기'; }
+                    if (badge) { badge.dataset.originalText = badge.textContent; }
                 }
             });
         }
@@ -582,9 +585,15 @@
         }
 
         // ── 장바구니 담기 ────────────────────────────────────────────────────
+        function setAvailabilityBadge(el, text, mod) {
+            const cls = mod ? `availability-badge availability-badge--${mod}` : 'availability-badge';
+            el.innerHTML = `<span class="${cls}">${text}</span>`;
+        }
+
         async function updateAvailability(remainingEl) {
+            if (!remainingEl) return;
             if (!selectedCheckIn || !selectedCheckOut) {
-                remainingEl.textContent = '-';
+                setAvailabilityBadge(remainingEl, '-');
                 lastAvailabilityKey = '';
                 return;
             }
@@ -611,17 +620,20 @@
                 const data = await response.json();
                 const remaining = typeof data.remainingRooms === 'number' ? data.remainingRooms : null;
                 if (remaining === null) {
-                    remainingEl.textContent = '-';
+                    setAvailabilityBadge(remainingEl, '-');
                 } else if (remaining <= 0) {
-                    remainingEl.textContent = '0실';
+                    setAvailabilityBadge(remainingEl, '마감', 'soldout');
+                } else if (remaining < 15) {
+                    remainingEl.innerHTML =
+                        `<span class="availability-badge availability-badge--rooms-left">${remaining}실 남음</span>`;
                 } else {
-                    remainingEl.textContent = `${remaining}실`;
+                    setAvailabilityBadge(remainingEl, '예약가능', 'available');
                 }
             } catch (error) {
                 if (error.name === 'AbortError') {
                     return;
                 }
-                remainingEl.textContent = '-';
+                setAvailabilityBadge(remainingEl, '-');
             }
         }
 
@@ -682,6 +694,30 @@
             } catch (error) {
                 alert('오류가 발생했습니다: ' + error.message);
             }
+        }
+        //수정 모드일 때 UI(버튼명, 타이틀, 인원수)를 세팅
+        function applyCartEditContext() {
+            const adultParam = urlParams.get('adultCount');
+            const childParam = urlParams.get('childCount');
+            const backButton = document.querySelector('.btn-back');
+            const submitButton = document.querySelector('.btn-order');
+            const title = document.querySelector('.order-form-page__title');
+
+            if (adultParam !== null) {
+                document.getElementById('adultCount').value = adultParam;
+            }
+            if (childParam !== null) {
+                document.getElementById('childCount').value = childParam;
+            }
+
+            if (!cartItemId) return; // 수정 모드가 아니면 종료
+
+            if (backButton) backButton.setAttribute('href', '/cart');
+            if (submitButton) {
+                submitButton.textContent = '수정 완료';
+                submitButton.classList.add('btn-order--edit');
+            }
+            if (title) title.textContent = '예약 수정하기';
         }
 
         // ── 유틸 ─────────────────────────────────────────────────────────────
