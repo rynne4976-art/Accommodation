@@ -62,7 +62,7 @@ public class NotificationService {
         Notification notification = new Notification();
         notification.setMember(member);
         notification.setMessage("예약 #" + orderId + " 이(가) 취소되었습니다.");
-        notification.setTargetUrl("/orders");
+        notification.setTargetUrl("/orders/" + orderId);
         notification.setRead(false);
         notificationRepository.save(notification);
 
@@ -115,9 +115,9 @@ public class NotificationService {
     }
 
     /**
-     * 만실 알림 – 장바구니에 해당 날짜를 담은 다른 사용자에게 SSE 및 DB 알림 전송
+     * 만실 알림을 DB에 저장한다.
      *
-     * @param email     수신 대상 이메일
+     * @param email 수신 대상 이메일
      * @param accomName 만실이 된 숙소명
      * @param soldOutDate 만실이 된 날짜
      */
@@ -135,19 +135,5 @@ public class NotificationService {
         notification.setTargetUrl("/cart");
         notification.setRead(false);
         notificationRepository.save(notification);
-
-        SseEmitter emitter = emitters.get(email);
-        if (emitter == null) {
-            return;
-        }
-
-        try {
-            emitter.send(SseEmitter.event()
-                    .name("sold-out")
-                    .data(new NotificationDto(notification)));
-        } catch (IOException e) {
-            emitters.remove(email);
-            log.warn("Failed to send sold-out SSE notification to {}", email, e);
-        }
     }
 }

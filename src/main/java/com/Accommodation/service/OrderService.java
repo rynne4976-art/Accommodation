@@ -50,6 +50,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderStayDateRepository orderStayDateRepository;
+    private final NotificationService notificationService;
 
     // ── 장바구니 → 예약 확정 (CartService 에서 호출) ─────────────────────────
     public Long createOrderFromCartItem(CartItem cartItem, String email) {
@@ -150,6 +151,7 @@ public class OrderService {
 
         // Order.cancelOrder() 내부에서 FSM + COMPLETED 방어 처리
         order.cancelOrder();
+        notificationService.sendOrderCancelled(order.getMember().getEmail(), order.getId());
     }
 
     // ── 관리자 예약 상태 변경 ──────────────────────────────────────────────
@@ -164,6 +166,7 @@ public class OrderService {
         if (status == OrderStatus.CANCEL) {
             // cancelOrder() 가 FSM + COMPLETED 방어를 내부에서 처리
             order.cancelOrder();
+            notificationService.sendOrderCancelled(order.getMember().getEmail(), order.getId());
             return;
         }
 
@@ -225,8 +228,18 @@ public class OrderService {
     @Transactional(readOnly = true)
     public List<OrderHistDto> getOrderList(String email, Pageable pageable) {
         List<Order> orders = orderRepository.findOrders(email, pageable);
-        List<OrderHistDto> result = new ArrayList<>();
+        return toOrderHistDtoList(orders);
+    }
 
+    // ── 상태별 주문 내역 조회 (페이징) ──────────────────────────────────────────
+    @Transactional(readOnly = true)
+    public List<OrderHistDto> getOrderListByStatus(String email, OrderStatus status, Pageable pageable) {
+        List<Order> orders = orderRepository.findOrdersByStatus(email, status, pageable);
+        return toOrderHistDtoList(orders);
+    }
+
+    private List<OrderHistDto> toOrderHistDtoList(List<Order> orders) {
+        List<OrderHistDto> result = new ArrayList<>();
         for (Order order : orders) {
             OrderHistDto dto = new OrderHistDto(order);
             for (OrderItem item : order.getOrderItems()) {
