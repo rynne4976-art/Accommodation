@@ -26,6 +26,7 @@
 
         <form class="auth-form" th:action="@{/members/login}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" name="redirectUrl" th:value="${redirectUrl}">
             <div class="form-group">
                 <label>이메일</label>
                 <input type="email" name="email" placeholder="이메일을 입력하세요">

@@ -36,6 +36,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AccomController {
 
+    private static final String RECENT_VIEWED_COOKIE_NAME = "recentViewedAccoms";
+    private static final String RECENT_VIEWED_COOKIE_DELIMITER = "-";
+
     private final AccomService accomService;
     private final ReviewService reviewService;
     private final AccomValidator accomValidator;
@@ -223,9 +226,9 @@ public class AccomController {
 
         if (request.getCookies() != null) {
             Arrays.stream(request.getCookies())
-                    .filter(cookie -> "recentViewedAccoms".equals(cookie.getName()))
+                    .filter(cookie -> RECENT_VIEWED_COOKIE_NAME.equals(cookie.getName()))
                     .findFirst()
-                    .ifPresent(cookie -> Arrays.stream(cookie.getValue().split(","))
+                    .ifPresent(cookie -> Arrays.stream(cookie.getValue().split("[,-]"))
                             .map(String::trim)
                             .filter(value -> !value.isBlank())
                             .filter(value -> !value.equals(String.valueOf(accomId)))
@@ -233,7 +236,10 @@ public class AccomController {
                             .forEach(viewedIds::add));
         }
 
-        Cookie cookie = new Cookie("recentViewedAccoms", viewedIds.stream().collect(Collectors.joining(",")));
+        Cookie cookie = new Cookie(
+                RECENT_VIEWED_COOKIE_NAME,
+                viewedIds.stream().collect(Collectors.joining(RECENT_VIEWED_COOKIE_DELIMITER))
+        );
         cookie.setPath("/");
         cookie.setHttpOnly(false);
         cookie.setMaxAge(60 * 60 * 24 * 30);

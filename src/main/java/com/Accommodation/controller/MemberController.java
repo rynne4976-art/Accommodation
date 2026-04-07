@@ -67,6 +67,7 @@ public class MemberController {
     @GetMapping("/members/login")
     public String memberLogin(@RequestParam(value = "error", required = false) String error,
                               @RequestParam(value = "signupSuccess", required = false) String signupSuccess,
+                              @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
                               Model model) {
         // 로그인 실패와 회원가입 완료 메시지를 같은 로그인 화면에서 처리합니다.
         if (error != null) {
@@ -75,6 +76,7 @@ public class MemberController {
         if (signupSuccess != null) {
             model.addAttribute("signupSuccessMessage", "회원가입이 완료되었습니다. 로그인해주세요.");
         }
+        model.addAttribute("redirectUrl", redirectUrl);
         return "member/memberLoginForm";
     }
 
