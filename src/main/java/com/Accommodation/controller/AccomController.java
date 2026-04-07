@@ -6,6 +6,7 @@ import com.Accommodation.dto.ReviewFormDto;
 import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.Review;
 import com.Accommodation.service.AccomService;
+import com.Accommodation.service.OrderService;
 import com.Accommodation.service.ReviewService;
 import com.Accommodation.validation.AccomValidator;
 import jakarta.servlet.http.Cookie;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,6 +42,7 @@ public class AccomController {
     private static final String RECENT_VIEWED_COOKIE_DELIMITER = "-";
 
     private final AccomService accomService;
+    private final OrderService orderService;
     private final ReviewService reviewService;
     private final AccomValidator accomValidator;
 
@@ -213,7 +216,13 @@ public class AccomController {
         model.addAttribute("myReview", myReview);
         model.addAttribute("canWriteReview", canWriteReview);
         model.addAttribute("reviewWriteDenyMessage", reviewWriteDenyMessage);
+        List<String> soldOutDays = orderService.getSoldOutDates(accomId)
+                .stream()
+                .map(LocalDate::toString)
+                .collect(Collectors.toList());
+
         model.addAttribute("naverMapClientId", naverMapClientId);
+        model.addAttribute("soldOutDays", soldOutDays);
 
         return "accom/accomDtl";
     }
