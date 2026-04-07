@@ -7,6 +7,7 @@
     <meta charset="UTF-8">
     <title>숙소 상세</title>
     <link rel="stylesheet" th:href="@{/css/accomDtl.css}">
+    <link rel="stylesheet" th:href="@{/css/orderForm.css}">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
 </head>
@@ -14,6 +15,7 @@
 <div layout:fragment="content">
     <main class="accom-detail-page">
         <nav class="accom-detail-tab-nav" aria-label="숙소 상세 메뉴">
+            <a href="#booking-info" class="tab-nav-link">예약</a>
             <a href="#detail-info" class="tab-nav-link">상세 정보</a>
             <a href="#location-info" class="tab-nav-link">위치 정보</a>
             <a href="#review-info" class="tab-nav-link">리뷰</a>
@@ -87,13 +89,13 @@
                     <th:block th:if="${accom.operationPolicy != null}">
                         <div>
                             <span class="highlight-label">운영 기간</span>
-                            <strong th:text="|${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd')} ~ ${#temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}|">
+                            <strong th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd') + ' ~ ' + #temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">
                                 2026-04-01 ~ 2026-04-30
                             </strong>
                         </div>
                         <div>
                             <span class="highlight-label">체크인 / 체크아웃</span>
-                            <strong th:text="|${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm')} / ${#temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}|">
+                            <strong th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">
                                 15:00 / 11:00
                             </strong>
                         </div>
@@ -105,10 +107,148 @@
                 </div>
 
                 <div class="accom-detail-actions">
-                    <a th:href="@{/orders/accom/{accomId}(accomId=${accom.id})}" class="detail-action primary">
-                        예약하기
-                    </a>
+                    <a th:href="@{/transport(accomId=${accom.id})}" class="detail-action secondary">교통 보기</a>
                 </div>
+            </div>
+        </section>
+
+        <section id="booking-info" class="accom-detail-info-card">
+            <div class="detail-section-header">
+                <span class="accom-detail-label subtle">Reservation</span>
+                <h2>예약하기</h2>
+            </div>
+
+            <div class="booking-section-layout">
+                <!-- 왼쪽: 운영 정보 + 달력 -->
+                <div class="booking-section-main">
+                    <div class="order-form-card">
+                        <div class="order-form-body">
+                            <div class="order-info-grid" th:if="${accom.operationPolicy != null}">
+                                <div class="order-info-box">
+                                    <div class="order-info-box__label">운영기간</div>
+                                    <div class="order-info-box__value"
+                                         th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd') + ' ~ ' + #temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">
+                                    </div>
+                                </div>
+                                <div class="order-info-box">
+                                    <div class="order-info-box__label">체크인 / 체크아웃</div>
+                                    <div class="order-info-box__value"
+                                         th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="calendar-card">
+                                <div class="calendar-header">
+                                    <div class="calendar-title">예약 가능 날짜 선택</div>
+                                    <div class="calendar-nav">
+                                        <button type="button" onclick="moveMonth(-1)">&#8249;</button>
+                                        <button type="button" onclick="moveMonth(1)">&#8250;</button>
+                                    </div>
+                                </div>
+                                <div id="calendarMonthLabel" class="calendar-month-label"></div>
+                                <div class="calendar-weekdays">
+                                    <div class="calendar-weekday">일</div>
+                                    <div class="calendar-weekday">월</div>
+                                    <div class="calendar-weekday">화</div>
+                                    <div class="calendar-weekday">수</div>
+                                    <div class="calendar-weekday">목</div>
+                                    <div class="calendar-weekday">금</div>
+                                    <div class="calendar-weekday">토</div>
+                                </div>
+                                <div id="calendarGrid" class="calendar-grid"></div>
+                                <div class="calendar-legend">
+                                    <span class="calendar-legend__item">
+                                        <span class="calendar-legend__chip chip--available">운영</span> 예약가능
+                                    </span>
+                                    <span class="calendar-legend__item">
+                                        <span class="calendar-legend__chip chip--nonop">비운영</span> 비운영
+                                    </span>
+                                    <span class="calendar-legend__item">
+                                        <span class="calendar-legend__chip chip--soldout">마감</span> 마감일
+                                    </span>
+                                </div>
+                                <div class="selection-guide">
+                                    운영일만 선택할 수 있습니다.<br>
+                                    첫 번째 클릭은 체크인, 두 번째 클릭은 체크아웃으로 처리됩니다.<br>
+                                    이미 선택한 날짜를 다시 누르면 선택이 해제됩니다.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 오른쪽: 예약 요약 + 인원 + 가격 + 버튼 (sticky) -->
+                <aside class="order-summary-card booking-section-aside">
+                    <div class="order-summary-title">예약 정보</div>
+
+                    <div class="summary-row">
+                        <span class="summary-label">체크인</span>
+                        <span class="summary-value" id="summaryCheckIn">선택 전</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">체크아웃</span>
+                        <span class="summary-value" id="summaryCheckOut">선택 전</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">숙박일수</span>
+                        <span class="summary-value" id="summaryNights">0박</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">체크인 시간</span>
+                        <span class="summary-value"
+                              th:text="${accom.operationPolicy != null ? #temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') : '미등록'}">
+                            15:00
+                        </span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">체크아웃 시간</span>
+                        <span class="summary-value"
+                              th:text="${accom.operationPolicy != null ? #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm') : '미등록'}">
+                            11:00
+                        </span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">잔여 객실</span>
+                        <span id="summaryRemaining"></span>
+                    </div>
+
+                    <div class="order-form-group">
+                        <label>투숙 인원</label>
+                        <div class="guest-row">
+                            <div class="guest-input-box">
+                                <span class="guest-label">성인</span>
+                                <input type="number" id="adultCount" value="1" min="1" oninput="onGuestChange()">
+                            </div>
+                            <div class="guest-input-box">
+                                <span class="guest-label">아동</span>
+                                <input type="number" id="childCount" value="0" min="0" oninput="onGuestChange()">
+                            </div>
+                        </div>
+                        <p class="order-form-hint" id="guestHint">최대 <span id="guestHintMax"></span>명까지 가능합니다.</p>
+                    </div>
+                    <div class="surcharge-guide" id="surchargeGuide"></div>
+
+                    <input type="hidden" id="hiddenCheckInDate">
+                    <input type="hidden" id="hiddenCheckOutDate">
+
+                    <div class="order-form-total">
+                        <span>기본 숙박비</span>
+                        <span id="basePrice">0원</span>
+                    </div>
+                    <div class="order-form-total" id="surchargeRow" style="display:none;">
+                        <span>인원 추가 요금</span>
+                        <span id="surchargePrice">0원</span>
+                    </div>
+                    <div class="order-form-total order-form-total--final">
+                        <span>TOTAL</span>
+                        <span id="totalPrice">0원</span>
+                    </div>
+
+                    <div class="order-form-actions">
+                        <button type="button" class="btn-order" style="width:100%;" onclick="submitToCart()">장바구니 담기</button>
+                    </div>
+                </aside>
             </div>
         </section>
 
@@ -447,7 +587,7 @@
             </div>
 
             <form id="myReviewForm"
-                  th:action="${myReview != null} ? @{/reviews/{reviewId}/update(reviewId=${myReview.id})} : '#'"
+                  th:action="@{/reviews/{reviewId}/update(reviewId=${myReview != null ? myReview.id : 0})}"
                   method="post"
                   enctype="multipart/form-data"
                   class="review-modal-form review-modal-form-compact">
@@ -559,6 +699,442 @@
             </form>
         </div>
     </div>
+
+    <script th:inline="javascript">
+        const accomId       = /*[[${accom.id}]]*/ 0;
+        const pricePerNight = /*[[${accom.pricePerNight}]]*/ 0;
+        const accomMaxGuest = /*[[${accom.guestCount}]]*/ 10;
+        const accomTypeStr  = /*[[${accom.accomType != null ? accom.accomType.name() : 'HOTEL'}]]*/ 'HOTEL';
+
+        const operationDays = /*[[${accom.operationDayList != null ? accom.operationDayList.![#temporals.format(operationDate, 'yyyy-MM-dd')] : T(java.util.Collections).emptyList()}]]*/ [];
+        const soldOutDays   = /*[[${soldOutDays}]]*/ [];
+
+        const initialCheckIn     = null;
+        const initialCheckOut    = null;
+        const operationStartDate = /*[[${accom.operationPolicy != null ? #temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd') : null}]]*/ null;
+        const operationEndDate   = /*[[${accom.operationPolicy != null ? #temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd') : null}]]*/ null;
+        const checkInTimeValue   = /*[[${accom.operationPolicy != null ? #temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') : ''}]]*/ '';
+
+        const isSmallType        = accomTypeStr === 'MOTEL' || accomTypeStr === 'GUESTHOUSE';
+        const typeMinGuests      = isSmallType ? 1 : 2;
+        const typeMaxGuests      = isSmallType ? 6 : 10;
+        const surchargeThreshold = isSmallType ? 2 : 4;
+        const effectiveMax       = Math.min(accomMaxGuest, typeMaxGuests);
+
+        const operationDaySet = new Set(operationDays);
+        const soldOutDaySet   = new Set(soldOutDays);
+
+        const monthlyRoomsCache = {};
+        let dailyRooms = {};
+
+        let currentMonth     = null;
+        let selectedCheckIn  = initialCheckIn;
+        let selectedCheckOut = initialCheckOut;
+        let previewCheckOut  = null;
+        let nights           = 0;
+        let lastAvailabilityKey     = '';
+        let availabilityController  = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('guestHintMax').textContent = effectiveMax;
+
+            const surchargeFromPerson = isSmallType ? 3 : 5;
+            document.getElementById('surchargeGuide').innerHTML =
+                `<span class="surcharge-guide__icon">💡</span>` +
+                `<span><strong>${surchargeFromPerson}인 이상</strong>부터 성인 1인당 1박 요금의 <strong>10%</strong>, 아동 1인당 <strong>5%</strong> 추가 요금이 부과됩니다.</span>`;
+
+            initCalendarMonth();
+            renderCalendar();
+            updateSummary();
+            fetchMonthlyRooms(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
+
+            setInterval(() => {
+                const key = `${currentMonth.getFullYear()}-${currentMonth.getMonth() + 1}`;
+                delete monthlyRoomsCache[key];
+                fetchMonthlyRooms(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
+                updateSummary();
+            }, 60000);
+        });
+
+        async function fetchMonthlyRooms(year, month) {
+            const key = `${year}-${month}`;
+            if (monthlyRoomsCache[key]) { dailyRooms = monthlyRoomsCache[key]; return; }
+            try {
+                const res = await fetch(`/orders/accom/${accomId}/monthly-availability?year=${year}&month=${month}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    monthlyRoomsCache[key] = data;
+                    dailyRooms = data;
+                }
+            } catch (_) {}
+            renderCalendar();
+        }
+
+        function initCalendarMonth() {
+            if (selectedCheckIn) { currentMonth = parseLocalDate(selectedCheckIn); currentMonth.setDate(1); return; }
+            if (operationStartDate) { currentMonth = parseLocalDate(operationStartDate); currentMonth.setDate(1); return; }
+            currentMonth = new Date(); currentMonth.setDate(1);
+        }
+
+        function moveMonth(offset) {
+            const moved = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1);
+            if (operationStartDate && moved < firstDayOfMonth(operationStartDate)) return;
+            if (operationEndDate   && moved > firstDayOfMonth(operationEndDate))   return;
+            currentMonth = moved;
+            dailyRooms = {};
+            fetchMonthlyRooms(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
+        }
+
+        function renderCalendar() {
+            const grid  = document.getElementById('calendarGrid');
+            const label = document.getElementById('calendarMonthLabel');
+            grid.innerHTML = '';
+
+            const year  = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            label.textContent = `${year}년 ${month + 1}월`;
+
+            const firstDate    = new Date(year, month, 1);
+            const lastDate     = new Date(year, month + 1, 0);
+            const startWeekday = firstDate.getDay();
+            const daysInMonth  = lastDate.getDate();
+
+            for (let i = 0; i < startWeekday; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-day is-other-month';
+                grid.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateString = formatDate(year, month + 1, day);
+                const cell = document.createElement('button');
+                cell.type = 'button';
+                cell.className = 'calendar-day';
+                cell.dataset.date = dateString;
+
+                const isPastDate            = isBeforeToday(dateString);
+                const isOperationDay        = operationDaySet.has(dateString);
+                const isSoldOut             = soldOutDaySet.has(dateString);
+                const isClosedByCheckInTime = isDateClosedByCheckInTime(dateString);
+                const isToday               = dateString === formatDateObj(new Date());
+                const dow                   = new Date(year, month, day).getDay();
+                const selectable = !isPastDate && isOperationDay && !isSoldOut && !isClosedByCheckInTime;
+
+                if (isPastDate)                                        { cell.classList.add('is-disabled', 'is-past'); }
+                else if (!isOperationDay || isClosedByCheckInTime)     { cell.classList.add('is-disabled'); }
+                if (isSoldOut) { cell.classList.remove('is-disabled', 'is-past'); cell.classList.add('is-soldout'); }
+                if (isToday)   cell.classList.add('is-today');
+                if (dow === 0) cell.classList.add('is-sunday');
+                if (dow === 6) cell.classList.add('is-saturday');
+                if (selectedCheckIn === dateString || selectedCheckOut === dateString) {
+                    cell.classList.add('is-selected');
+                } else if (isBetweenSelectedRange(dateString)) {
+                    cell.classList.add('is-in-range');
+                }
+
+                const num = document.createElement('div');
+                num.className = 'calendar-day__num';
+                if (isToday) num.classList.add('is-today');
+                num.textContent = day;
+                cell.appendChild(num);
+
+                const badge = document.createElement('div');
+                badge.className = 'calendar-day__badge';
+                if (isSoldOut) {
+                    badge.textContent = '마감';
+                } else if (isPastDate) {
+                    badge.textContent = '지난날';
+                } else if (isClosedByCheckInTime || !isOperationDay) {
+                    badge.textContent = '비운영';
+                } else if (selectedCheckIn === dateString) {
+                    badge.textContent = '체크인';
+                } else if (selectedCheckOut === dateString) {
+                    badge.textContent = '체크아웃';
+                } else if (isBetweenSelectedRange(dateString)) {
+                    badge.textContent = '선택';
+                } else {
+                    const remaining = dailyRooms[dateString];
+                    if (typeof remaining === 'number') {
+                        badge.textContent = `${remaining}실 남음`;
+                        badge.classList.add(remaining < 3 ? 'is-low-stock' : 'is-available');
+                    } else {
+                        badge.classList.add('is-available');
+                        badge.textContent = '예약가능';
+                    }
+                }
+                cell.appendChild(badge);
+
+                if (selectable || selectedCheckIn === dateString || selectedCheckOut === dateString) {
+                    cell.addEventListener('click',      () => selectDate(dateString));
+                    cell.addEventListener('mouseenter', () => handleDateHover(dateString));
+                    cell.addEventListener('mouseleave', clearPreviewRange);
+                }
+                grid.appendChild(cell);
+            }
+        }
+
+        function selectDate(dateString) {
+            if (selectedCheckIn === dateString && !selectedCheckOut) {
+                selectedCheckIn = null; selectedCheckOut = null; previewCheckOut = null;
+                renderCalendar(); updateSummary(); return;
+            }
+            if (selectedCheckIn === dateString && selectedCheckOut) {
+                selectedCheckIn = null; selectedCheckOut = null; previewCheckOut = null;
+                renderCalendar(); updateSummary(); return;
+            }
+            if (selectedCheckOut === dateString) {
+                selectedCheckOut = null; previewCheckOut = null;
+                renderCalendar(); updateSummary(); return;
+            }
+            if (!selectedCheckIn || (selectedCheckIn && selectedCheckOut)) {
+                if (isDateUnavailable(dateString)) return;
+                selectedCheckIn = dateString; selectedCheckOut = null; previewCheckOut = null;
+                renderCalendar(); updateSummary(); return;
+            }
+            if (dateString < selectedCheckIn) {
+                if (isDateUnavailable(dateString)) return;
+                selectedCheckIn = dateString; selectedCheckOut = null; previewCheckOut = null;
+                renderCalendar(); updateSummary(); return;
+            }
+            if (dateString > selectedCheckIn) {
+                if (isDateUnavailable(dateString)) return;
+                const stayDates    = buildStayDates(selectedCheckIn, dateString);
+                const invalidRange = stayDates.some(d => isDateUnavailable(d));
+                if (invalidRange) {
+                    alert('선택한 범위 안에 운영하지 않는 날짜 또는 예약 불가 날짜가 포함되어 있습니다.');
+                    return;
+                }
+                selectedCheckOut = dateString; previewCheckOut = null;
+                renderCalendar(); updateSummary();
+            }
+        }
+
+        function handleDateHover(dateString) {
+            if (!selectedCheckIn || selectedCheckOut) { clearPreviewRange(); return; }
+            if (dateString <= selectedCheckIn)         { clearPreviewRange(); return; }
+            if (isDateUnavailable(dateString))         { clearPreviewRange(); return; }
+            const stayDates    = buildStayDates(selectedCheckIn, dateString);
+            const invalidRange = stayDates.some(d => isDateUnavailable(d));
+            if (invalidRange) { clearPreviewRange(); return; }
+            previewCheckOut = dateString;
+            applyPreviewRange();
+        }
+
+        function applyPreviewRange() {
+            clearPreviewRange(false);
+            if (!selectedCheckIn || selectedCheckOut || !previewCheckOut) return;
+            const grid = document.getElementById('calendarGrid');
+            buildInnerRange(selectedCheckIn, previewCheckOut).forEach(ds => {
+                const cell = grid.querySelector(`.calendar-day[data-date="${ds}"]`);
+                if (cell && !cell.classList.contains('is-selected') && !cell.classList.contains('is-in-range')) {
+                    cell.classList.add('is-preview');
+                    const badge = cell.querySelector('.calendar-day__badge');
+                    if (badge) { badge.dataset.originalText = badge.textContent; }
+                }
+            });
+        }
+
+        function clearPreviewRange(resetValue = true) {
+            document.getElementById('calendarGrid').querySelectorAll('.calendar-day.is-preview').forEach(cell => {
+                cell.classList.remove('is-preview');
+                const badge = cell.querySelector('.calendar-day__badge');
+                if (badge && badge.dataset.originalText !== undefined) {
+                    badge.textContent = badge.dataset.originalText;
+                    delete badge.dataset.originalText;
+                }
+            });
+            if (resetValue) previewCheckOut = null;
+        }
+
+        function buildStayDates(checkIn, checkOut) {
+            const result = [];
+            let cursor = parseLocalDate(checkIn);
+            const out  = parseLocalDate(checkOut);
+            while (cursor < out) { result.push(formatDateObj(cursor)); cursor.setDate(cursor.getDate() + 1); }
+            return result;
+        }
+
+        function buildInnerRange(checkIn, checkOut) {
+            return buildStayDates(checkIn, checkOut).filter(d => d !== checkIn);
+        }
+
+        function isBetweenSelectedRange(ds) {
+            return selectedCheckIn && selectedCheckOut && ds > selectedCheckIn && ds < selectedCheckOut;
+        }
+
+        function isDateUnavailable(ds) {
+            return isBeforeToday(ds) || !operationDaySet.has(ds) || soldOutDaySet.has(ds) || isDateClosedByCheckInTime(ds);
+        }
+
+        function isBeforeToday(ds) {
+            const today = new Date(); today.setHours(0,0,0,0);
+            return parseLocalDate(ds) < today;
+        }
+
+        function isDateClosedByCheckInTime(ds) {
+            if (!checkInTimeValue) return false;
+            const now = new Date();
+            if (ds !== formatDateObj(now)) return false;
+            const [h, m] = checkInTimeValue.split(':').map(Number);
+            return now >= new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+        }
+
+        function getAdultCount() { return parseInt(document.getElementById('adultCount').value || '0', 10); }
+        function getChildCount() { return parseInt(document.getElementById('childCount').value || '0', 10); }
+
+        function calcSurchargePerNight(adult, child) {
+            const total = adult + child;
+            if (total <= surchargeThreshold) return 0;
+            const excessTotal  = total - surchargeThreshold;
+            const excessAdults = Math.max(0, adult - surchargeThreshold);
+            const excessChild  = excessTotal - excessAdults;
+            return Math.floor(pricePerNight * 0.10 * excessAdults)
+                 + Math.floor(pricePerNight * 0.05 * excessChild);
+        }
+
+        function onGuestChange() {
+            const adult = getAdultCount();
+            const child = getChildCount();
+            const total = adult + child;
+            const hint  = document.getElementById('guestHint');
+            let error = false;
+            if (adult < 1) {
+                hint.textContent = '성인은 최소 1명 이상이어야 합니다.';
+                error = true;
+            } else if (total < typeMinGuests) {
+                hint.textContent = `이 숙소 유형은 최소 ${typeMinGuests}인 이상이어야 합니다.`;
+                error = true;
+            } else if (total > effectiveMax) {
+                hint.textContent = `최대 ${effectiveMax}명까지 가능합니다.`;
+                error = true;
+            } else {
+                hint.textContent = `최대 ${effectiveMax}명까지 가능합니다.`;
+            }
+            hint.classList.toggle('error', error);
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const checkInEl      = document.getElementById('summaryCheckIn');
+            const checkOutEl     = document.getElementById('summaryCheckOut');
+            const nightsEl       = document.getElementById('summaryNights');
+            const remainingEl    = document.getElementById('summaryRemaining');
+            const basePriceEl    = document.getElementById('basePrice');
+            const surchargePriceEl = document.getElementById('surchargePrice');
+            const surchargeRow   = document.getElementById('surchargeRow');
+            const totalEl        = document.getElementById('totalPrice');
+            const hiddenCheckIn  = document.getElementById('hiddenCheckInDate');
+            const hiddenCheckOut = document.getElementById('hiddenCheckOutDate');
+
+            if (selectedCheckIn  && isDateUnavailable(selectedCheckIn))  { selectedCheckIn  = null; selectedCheckOut = null; previewCheckOut = null; }
+            if (selectedCheckOut && isDateUnavailable(selectedCheckOut)) { selectedCheckOut = null; }
+
+            checkInEl.textContent  = selectedCheckIn  || '선택 전';
+            checkOutEl.textContent = selectedCheckOut || '선택 전';
+            hiddenCheckIn.value    = selectedCheckIn  || '';
+            hiddenCheckOut.value   = selectedCheckOut || '';
+
+            if (selectedCheckIn && selectedCheckOut) {
+                nights = Math.round((parseLocalDate(selectedCheckOut) - parseLocalDate(selectedCheckIn)) / 86400000);
+            } else {
+                nights = 0;
+            }
+
+            nightsEl.textContent = `${nights}박`;
+
+            const adult          = getAdultCount();
+            const child          = getChildCount();
+            const surcharge      = calcSurchargePerNight(adult, child);
+            const baseTotal      = pricePerNight * nights;
+            const surchargeTotal = surcharge * nights;
+            const grandTotal     = baseTotal + surchargeTotal;
+
+            basePriceEl.textContent = baseTotal.toLocaleString('ko-KR') + '원';
+
+            if (surchargeTotal > 0) {
+                surchargePriceEl.textContent = surchargeTotal.toLocaleString('ko-KR') + '원';
+                surchargeRow.style.display = '';
+            } else {
+                surchargeRow.style.display = 'none';
+            }
+
+            totalEl.textContent = grandTotal.toLocaleString('ko-KR') + '원';
+            updateAvailability(remainingEl);
+        }
+
+        function setAvailabilityBadge(el, text, mod) {
+            const cls = mod ? `availability-badge availability-badge--${mod}` : 'availability-badge';
+            el.innerHTML = `<span class="${cls}">${text}</span>`;
+        }
+
+        async function updateAvailability(remainingEl) {
+            if (!remainingEl) return;
+            if (!selectedCheckIn || !selectedCheckOut) { setAvailabilityBadge(remainingEl, '-'); lastAvailabilityKey = ''; return; }
+            const key = `${selectedCheckIn}_${selectedCheckOut}`;
+            if (key === lastAvailabilityKey) return;
+            lastAvailabilityKey = key;
+            if (availabilityController) availabilityController.abort();
+            availabilityController = new AbortController();
+            try {
+                const response = await fetch(
+                    `/orders/accom/${accomId}/availability?checkInDate=${encodeURIComponent(selectedCheckIn)}&checkOutDate=${encodeURIComponent(selectedCheckOut)}`,
+                    { signal: availabilityController.signal }
+                );
+                if (!response.ok) { setAvailabilityBadge(remainingEl, '-'); return; }
+                const data = await response.json();
+                const remaining = typeof data.remainingRooms === 'number' ? data.remainingRooms : null;
+                if (remaining === null) {
+                    setAvailabilityBadge(remainingEl, '-');
+                } else if (remaining <= 0) {
+                    setAvailabilityBadge(remainingEl, '마감', 'soldout');
+                } else if (remaining < 15) {
+                    remainingEl.innerHTML = `<span class="availability-badge availability-badge--rooms-left">${remaining}실 남음</span>`;
+                } else {
+                    setAvailabilityBadge(remainingEl, '예약가능', 'available');
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') setAvailabilityBadge(remainingEl, '-');
+            }
+        }
+
+        async function submitToCart() {
+            if (!selectedCheckIn || !selectedCheckOut) { alert('체크인과 체크아웃 날짜를 선택해 주세요.'); return; }
+            if (nights <= 0) { alert('체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.'); return; }
+            const adult = getAdultCount();
+            const child = getChildCount();
+            const total = adult + child;
+            if (adult < 1) { alert('성인은 최소 1명 이상이어야 합니다.'); return; }
+            if (total < typeMinGuests) { alert(`이 숙소 유형은 최소 ${typeMinGuests}인 이상이어야 합니다.`); return; }
+            if (total > effectiveMax) { alert(`최대 ${effectiveMax}명까지 가능합니다.`); return; }
+
+            const csrfTokenMeta  = document.querySelector('meta[name="_csrf"]');
+            const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfTokenMeta && csrfHeaderMeta) headers[csrfHeaderMeta.content] = csrfTokenMeta.content;
+
+            try {
+                const response = await fetch('/cart', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ accomId, checkInDate: selectedCheckIn, checkOutDate: selectedCheckOut, adultCount: adult, childCount: child })
+                });
+                if (response.ok) {
+                    alert('장바구니에 담았습니다. 장바구니에서 예약을 확정해 주세요.');
+                    window.location.href = '/cart';
+                } else {
+                    const message = await response.text();
+                    alert('담기 실패: ' + message);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        function parseLocalDate(ds) { const [y,m,d] = ds.split('-').map(Number); return new Date(y, m-1, d); }
+        function formatDate(y, m, d) { return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+        function formatDateObj(obj) { return formatDate(obj.getFullYear(), obj.getMonth()+1, obj.getDate()); }
+        function firstDayOfMonth(ds) { const d = parseLocalDate(ds); return new Date(d.getFullYear(), d.getMonth(), 1); }
+    </script>
 
     <script th:inline="javascript">
         window.accomDtlConfig = {

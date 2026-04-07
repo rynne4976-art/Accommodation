@@ -39,6 +39,9 @@ public class OrderController {
     public String orderForm(@PathVariable Long accomId,
                             @RequestParam(required = false) LocalDate checkInDate,
                             @RequestParam(required = false) LocalDate checkOutDate,
+                            @RequestParam(required = false, defaultValue = "1") Integer adultCount,
+                            @RequestParam(required = false, defaultValue = "0") Integer childCount,
+                            @RequestParam(required = false) Long cartItemId,
                             Principal principal,
                             Model model) {
         if (!memberService.hasRequiredReservationInfo(principal.getName())) {
@@ -59,19 +62,20 @@ public class OrderController {
                 .map(LocalDate::toString)
                 .toList();
 
-        model.addAttribute("accom", accom);
-        model.addAttribute("checkInDate", checkInDate);
-        model.addAttribute("checkOutDate", checkOutDate);
-        model.addAttribute("operationDays", operationDays);
-        model.addAttribute("soldOutDays", soldOutDays);
-        model.addAttribute("operationStartDate",
-                policy != null ? policy.getOperationStartDate() : null);
-        model.addAttribute("operationEndDate",
-                policy != null ? policy.getOperationEndDate() : null);
-        model.addAttribute("checkInTime",
-                policy != null ? policy.getCheckInTime() : null);
-        model.addAttribute("checkOutTime",
-                policy != null ? policy.getCheckOutTime() : null);
+            model.addAttribute("accom", accom);
+            model.addAttribute("checkInDate", checkInDate);
+            model.addAttribute("checkOutDate", checkOutDate);
+            model.addAttribute("adultCount", adultCount);
+            model.addAttribute("childCount", childCount);
+            model.addAttribute("cartItemId", cartItemId);
+            model.addAttribute("isEditingCart", cartItemId != null);
+            model.addAttribute("operationDays", operationDays);
+            model.addAttribute("soldOutDays", soldOutDays);
+            model.addAttribute("operationStartDate", policy != null ? policy.getOperationStartDate() : null);
+            model.addAttribute("operationEndDate", policy != null ? policy.getOperationEndDate() : null);
+            model.addAttribute("checkInTime", policy != null ? policy.getCheckInTime() : null);
+            model.addAttribute("checkOutTime", policy != null ? policy.getCheckOutTime() : null);
+            model.addAttribute("backPath", cartItemId != null ? "/cart" : "/accom/" + accom.getId());
 
         return "order/orderForm";
     }

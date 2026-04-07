@@ -95,6 +95,38 @@
     background: #fff;
 }
 
+/* ── 예약 섹션 레이아웃 ── */
+.booking-section-layout {
+    display: grid;
+    grid-template-columns: 1fr minmax(300px, 360px);
+    gap: 28px;
+    align-items: stretch;
+    margin-top: 4px;
+}
+
+.booking-section-main .order-form-card {
+    border-radius: 18px;
+    border: 1px solid #e7ecf3;
+    overflow: hidden;
+}
+
+.booking-section-main .order-form-body {
+    padding: 20px;
+}
+
+.booking-section-aside {
+    position: sticky;
+    top: 68px;
+}
+
+.booking-section-aside.order-summary-card {
+    height: 100%;
+}
+
+.booking-section-aside .order-form-actions {
+    display: none;
+}
+
 .accom-detail-label {
     display: inline-block;
     margin-bottom: 14px;

@@ -29,6 +29,12 @@
             color: #111827;
         }
 
+        .order-section__sub {
+            font-size: 13px;
+            color: #98a2b3;
+            font-weight: 600;
+        }
+
         .order-empty {
             background: #fff;
             border-radius: 24px;
@@ -155,14 +161,6 @@
             border: none;
         }
 
-        .btn-order-edit {
-            background: #f8faff;
-            color: #1f4acc;
-            border: 1px solid #dbe4ff;
-        }
-
-        .btn-order-edit:hover { background: #eef2ff; }
-
         .btn-order-cancel {
             background: #111827;
             color: #fff;
@@ -177,104 +175,28 @@
             cursor: default;
         }
 
-        /* ── 수정 모달 ── */
-        .edit-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+        /* 취소 내역 카드 */
+        .order-card--cancelled {
+            border-left: 4px solid #fca5a5;
+            opacity: 0.85;
         }
 
-        .edit-modal.is-open { display: flex; }
-
-        .edit-modal__backdrop {
-            position: absolute;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.5);
-        }
-
-        .edit-modal__dialog {
-            position: relative;
-            background: #fff;
-            border-radius: 24px;
-            padding: 32px 30px;
-            width: 100%;
-            max-width: 460px;
-            z-index: 1;
-            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.15);
-        }
-
-        .edit-modal__title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #111827;
-            margin-bottom: 24px;
-        }
-
-        .edit-modal__group { margin-bottom: 16px; }
-
-        .edit-modal__group label {
+        .order-card__cancel-date {
             display: block;
-            font-size: 13px;
-            font-weight: 700;
-            color: #667085;
-            margin-bottom: 8px;
+            font-size: 12px;
+            color: #cf1322;
+            margin-top: 3px;
         }
 
-        .edit-modal__group input {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #eaecf0;
-            border-radius: 14px;
-            background: #fcfcfd;
-            font-size: 15px;
-            color: #101828;
-            box-sizing: border-box;
+        .order-item--cancelled {
+            background: #fafafa;
         }
 
-        .edit-modal__group input:read-only {
-            background: #f2f4f7;
-            color: #667085;
+        .order-item__price--cancelled {
+            color: #98a2b3;
+            text-decoration: line-through;
         }
 
-        .edit-modal__row { display: flex; gap: 12px; }
-        .edit-modal__row .edit-modal__group { flex: 1; }
-
-        .edit-modal__actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 28px;
-        }
-
-        .btn-modal-primary {
-            flex: 1;
-            padding: 13px;
-            border: none;
-            border-radius: 999px;
-            background: #111827;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .btn-modal-primary:hover { background: #1f2937; }
-
-        .btn-modal-secondary {
-            flex: 1;
-            padding: 13px;
-            border: 1px solid #dbe4ff;
-            border-radius: 999px;
-            background: #f8faff;
-            color: #1f4acc;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .btn-modal-secondary:hover { background: #eef2ff; }
     </style>
 </head>
 <body>
@@ -343,16 +265,11 @@
             <p>예약 내역이 없습니다.</p>
         </div>
 
-        <div th:each="order : ${orders}"
-             th:with="firstItem=${#lists.isEmpty(order.orderItemDtos) ? null : order.orderItemDtos[0]}"
-             class="order-card">
-
+        <div th:each="order : ${orders}" class="order-card">
             <div class="order-card__top">
                 <span class="order-card__date"
                       th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">날짜</span>
-                <span class="order-card__badge"
-                      th:classappend="${order.orderStatus.name() == 'CANCEL' ? ' order-status-cancel' : ' order-status-order'}"
-                      th:text="${order.orderStatus.name() == 'ORDER' ? '예약 완료' : '예약 취소'}">상태</span>
+                <span class="order-card__badge order-status-order">예약 완료</span>
             </div>
 
             <div th:each="item : ${order.orderItemDtos}" class="order-item">
@@ -374,17 +291,7 @@
             </div>
 
             <div class="order-card__footer">
-                <button class="btn-order-action btn-order-edit"
-                        th:disabled="${order.orderStatus.name() == 'CANCEL'}"
-                        th:data-order-id="${order.orderId}"
-                        th:data-checkin="${firstItem != null ? firstItem.checkInDate : ''}"
-                        th:data-checkout="${firstItem != null ? firstItem.checkOutDate : ''}"
-                        th:data-guest="${firstItem != null and firstItem.guestCount != null ? firstItem.guestCount : 1}"
-                        onclick="openEditModal(this)">
-                    예약 수정
-                </button>
                 <button class="btn-order-action btn-order-cancel"
-                        th:disabled="${order.orderStatus.name() == 'CANCEL'}"
                         th:data-order-id="${order.orderId}"
                         onclick="cancelOrder(this)">
                     예약 취소
@@ -393,45 +300,52 @@
         </div>
     </section>
 
-    <!-- 수정 모달 -->
-    <div id="editModal" class="edit-modal" aria-hidden="true">
-        <div class="edit-modal__backdrop" onclick="closeEditModal()"></div>
-        <div class="edit-modal__dialog">
-            <p class="edit-modal__title">예약 수정</p>
+    <!-- 예약 취소 내역 -->
+    <section class="order-section">
+        <div class="order-section__header">
+            <h3 class="order-section__title">예약 취소 내역</h3>
+            <span class="order-section__sub">최근 5건</span>
+        </div>
 
-            <div class="edit-modal__row">
-                <div class="edit-modal__group">
-                    <label for="editCheckIn">체크인 날짜</label>
-                    <input type="date" id="editCheckIn" oninput="syncEditNights()">
+        <div th:if="${cancelledOrders == null or #lists.isEmpty(cancelledOrders)}" class="order-empty">
+            <p>취소된 예약이 없습니다.</p>
+        </div>
+
+        <div th:each="order : ${cancelledOrders}" class="order-card order-card--cancelled">
+            <div class="order-card__top">
+                <div>
+                    <span class="order-card__date"
+                          th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">예약일</span>
+                    <span class="order-card__cancel-date"
+                          th:if="${order.cancelDate != null}"
+                          th:text="'취소 ' + ${#temporals.format(order.cancelDate, 'yyyy-MM-dd HH:mm')}">취소일</span>
                 </div>
-                <div class="edit-modal__group">
-                    <label for="editCheckOut">체크아웃 날짜</label>
-                    <input type="date" id="editCheckOut" oninput="syncEditNights()">
+                <span class="order-card__badge order-status-cancel">예약 취소</span>
+            </div>
+
+            <div th:each="item : ${order.orderItemDtos}" class="order-item order-item--cancelled">
+                <img class="order-item__img"
+                     th:src="${#strings.isEmpty(item.imgUrl) ? '/images/no-image.png' : item.imgUrl}"
+                     th:alt="${item.accomName}">
+                <div class="order-item__info">
+                    <div class="order-item__name" th:text="${item.accomName}">숙소명</div>
+                    <div class="order-item__meta">
+                        <span th:if="${item.checkInDate != null}"
+                              th:text="|${item.checkInDate} ~ ${item.checkOutDate} (${item.count}박)|"></span>
+                        <span th:if="${item.checkInDate == null}" th:text="${item.count} + '박'"></span>
+                        <br>
+                        <span th:if="${item.guestCount != null}" th:text="|투숙 ${item.guestCount}명|"></span>
+                    </div>
                 </div>
-            </div>
-
-            <div class="edit-modal__group">
-                <label for="editNights">숙박 일수</label>
-                <input type="text" id="editNights" readonly>
-            </div>
-
-            <div class="edit-modal__group">
-                <label for="editGuest">투숙 인원</label>
-                <input type="number" id="editGuest" min="1" value="1">
-            </div>
-
-            <div class="edit-modal__actions">
-                <button class="btn-modal-secondary" onclick="closeEditModal()">취소</button>
-                <button class="btn-modal-primary" onclick="submitEdit()">수정 완료</button>
+                <div class="order-item__price order-item__price--cancelled"
+                     th:text="${#numbers.formatInteger(item.orderPrice * item.count, 3, 'COMMA')} + '원'">0원</div>
             </div>
         </div>
-    </div>
+    </section>
 
 <div th:replace="~{layouts/footer :: footer}"></div>
 
 <script th:inline="javascript">
-    let currentOrderId = null;
-
     function getCsrfHeader() {
         return document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
     }
@@ -454,72 +368,6 @@
         })
         .catch(err => alert('취소 실패: ' + err.message));
     }
-
-    // ── 수정 모달 열기 ─────────────────────────────────────────────────────────
-    function openEditModal(btn) {
-        currentOrderId = btn.getAttribute('data-order-id');
-        const checkIn  = btn.getAttribute('data-checkin')  || '';
-        const checkOut = btn.getAttribute('data-checkout') || '';
-        const guest    = btn.getAttribute('data-guest')    || '1';
-
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('editCheckIn').min  = today;
-        document.getElementById('editCheckOut').min = today;
-        document.getElementById('editCheckIn').value  = checkIn;
-        document.getElementById('editCheckOut').value = checkOut;
-        document.getElementById('editGuest').value   = guest;
-        syncEditNights();
-
-        const modal = document.getElementById('editModal');
-        modal.classList.add('is-open');
-        modal.setAttribute('aria-hidden', 'false');
-    }
-
-    function closeEditModal() {
-        const modal = document.getElementById('editModal');
-        modal.classList.remove('is-open');
-        modal.setAttribute('aria-hidden', 'true');
-        currentOrderId = null;
-    }
-
-    function syncEditNights() {
-        const inVal  = document.getElementById('editCheckIn').value;
-        const outVal = document.getElementById('editCheckOut').value;
-        if (!inVal || !outVal) { document.getElementById('editNights').value = ''; return; }
-        const nights = Math.round((new Date(outVal) - new Date(inVal)) / 86400000);
-        document.getElementById('editNights').value = nights > 0 ? nights + '박' : '';
-    }
-
-    // ── 수정 제출 ──────────────────────────────────────────────────────────────
-    function submitEdit() {
-        const checkIn  = document.getElementById('editCheckIn').value;
-        const checkOut = document.getElementById('editCheckOut').value;
-        const guest    = parseInt(document.getElementById('editGuest').value);
-
-        if (!checkIn || !checkOut) { alert('날짜를 모두 선택해 주세요.'); return; }
-        if (new Date(checkOut) <= new Date(checkIn)) {
-            alert('체크아웃은 체크인 이후여야 합니다.'); return;
-        }
-        if (!guest || guest < 1) { alert('투숙 인원을 1명 이상 입력해 주세요.'); return; }
-
-        fetch('/order/' + currentOrderId, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                [getCsrfHeader()]: getCsrfToken()
-            },
-            body: JSON.stringify({ checkInDate: checkIn, checkOutDate: checkOut, guestCount: guest })
-        })
-        .then(res => {
-            if (res.ok) { alert('예약이 수정되었습니다.'); location.reload(); }
-            else return res.text().then(msg => { throw new Error(msg); });
-        })
-        .catch(err => alert('수정 실패: ' + err.message));
-    }
-
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closeEditModal();
-    });
 </script>
 </body>
 </html>

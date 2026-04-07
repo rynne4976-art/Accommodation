@@ -17,11 +17,6 @@
         <h1 class="hero-copy">원하는 숙소를 빠르고 편하게 찾아보세요!</h1>
 
         <div class="booking-shell">
-            <div class="booking-tabs">
-                <button class="booking-tab" type="button" data-booking-tab="domestic">국내 숙소</button>
-                <button class="booking-tab active" type="button" data-booking-tab="global">해외 숙소</button>
-            </div>
-
             <form class="booking-bar" th:action="@{/searchList}" method="get">
                 <input type="hidden" name="checkInDate" id="checkInDateInput"
                        th:value="${accomSearchDto != null and accomSearchDto.checkInDate != null ? #temporals.format(accomSearchDto.checkInDate, 'yyyy-MM-dd') : ''}">
@@ -127,22 +122,11 @@
 <section class="popular-area">
     <h2>국내 인기 여행지</h2>
     <div class="area-list">
-        <div class="area-card"><img th:src="@{/images/main/seoul.png}" alt="서울"><span>서울</span></div>
-        <div class="area-card"><img th:src="@{/images/main/busan.png}" alt="부산"><span>부산</span></div>
-        <div class="area-card"><img th:src="@{/images/main/gangneung.png}" alt="강릉"><span>강릉</span></div>
-        <div class="area-card"><img th:src="@{/images/main/jeju.png}" alt="제주"><span>제주</span></div>
-        <div class="area-card"><img th:src="@{/images/main/gyeongju.png}" alt="경주"><span>경주</span></div>
-    </div>
-</section>
-
-<section class="popular-area">
-    <h2>해외 인기 여행지</h2>
-    <div class="area-list">
-        <div class="area-card"><img th:src="@{/images/main/bangkok.png}" alt="방콕"><span>방콕</span></div>
-        <div class="area-card"><img th:src="@{/images/main/tokyo.png}" alt="도쿄"><span>도쿄</span></div>
-        <div class="area-card"><img th:src="@{/images/main/newyork.png}" alt="뉴욕"><span>뉴욕</span></div>
-        <div class="area-card"><img th:src="@{/images/main/roma.png}" alt="로마"><span>로마</span></div>
-        <div class="area-card"><img th:src="@{/images/main/paris.png}" alt="파리"><span>파리</span></div>
+        <a class="area-card" th:href="@{/searchList(searchQuery='서울')}"><img th:src="@{/images/main/seoul.png}" alt="서울"><span>서울</span></a>
+        <a class="area-card" th:href="@{/searchList(searchQuery='부산')}"><img th:src="@{/images/main/busan.png}" alt="부산"><span>부산</span></a>
+        <a class="area-card" th:href="@{/searchList(searchQuery='강릉')}"><img th:src="@{/images/main/gangneung.png}" alt="강릉"><span>강릉</span></a>
+        <a class="area-card" th:href="@{/searchList(searchQuery='제주')}"><img th:src="@{/images/main/jeju.png}" alt="제주"><span>제주</span></a>
+        <a class="area-card" th:href="@{/searchList(searchQuery='경주')}"><img th:src="@{/images/main/gyeongju.png}" alt="경주"><span>경주</span></a>
     </div>
 </section>
 
@@ -180,21 +164,12 @@
 
             <div class="card-body accom-info">
                 <div class="accom-card__badge-row"
-                     th:with="gradeNum=${accom.grade == T(com.Accommodation.constant.AccomGrade).ONE ? 1 :
-                                        accom.grade == T(com.Accommodation.constant.AccomGrade).TWO ? 2 :
-                                        accom.grade == T(com.Accommodation.constant.AccomGrade).THREE ? 3 :
-                                        accom.grade == T(com.Accommodation.constant.AccomGrade).FOUR ? 4 :
-                                        accom.grade == T(com.Accommodation.constant.AccomGrade).FIVE ? 5 : 0}">
+                     th:with="gradeNum=${accom.grade != null ? accom.grade.num : 0}">
                     <span class="accom-card__kind"
-                          th:text="${accom.accomType == T(com.Accommodation.constant.AccomType).HOTEL ? '호텔' :
-                                     accom.accomType == T(com.Accommodation.constant.AccomType).MOTEL ? '모텔' :
-                                     accom.accomType == T(com.Accommodation.constant.AccomType).PENSION ? '펜션' :
-                                     accom.accomType == T(com.Accommodation.constant.AccomType).RESORT ? '리조트' :
-                                     accom.accomType == T(com.Accommodation.constant.AccomType).GUESTHOUSE ? '게스트하우스' : '숙소'}">호텔</span>
+                          th:text="${accom.accomType != null ? accom.accomType.label : '숙소'}">호텔</span>
                     <span class="accom-card__grade-stars" aria-label="숙소 등급">
-                        <span class="star"
-                              th:each="i : ${#numbers.sequence(1,5)}"
-                              th:classappend="${i <= gradeNum} ? ' filled' : ''">&#9733;</span>
+                        <span class="star filled"
+                              th:each="i : ${#numbers.sequence(1,gradeNum)}">&#9733;</span>
                     </span>
                 </div>
                 <h3 class="accom-card__title" th:text="${accom.accomName}">숙소명</h3>
@@ -202,7 +177,9 @@
                 <div class="accom-card__rating">
                     <span class="accom-card__score" th:text="${accom.avgRating != null ? #numbers.formatDecimal(accom.avgRating, 1, 1) : '0.0'}">0.0</span>
                     <div class="accom-card__rating-copy">
-                        <span th:text="${accom.reviewCount != null ? #numbers.formatInteger(accom.reviewCount, 1, 'COMMA') + '개 후기' : '후기 0개'}">후기 0개</span>
+                        <a class="accom-card__review-link"
+                           th:href="@{/reviews/accom/{id}(id=${accom.id})}"
+                           th:text="${accom.reviewCount != null ? #numbers.formatInteger(accom.reviewCount, 1, 'COMMA') + '개 후기' : '후기 0개'}">후기 0개</a>
                     </div>
                 </div>
 
