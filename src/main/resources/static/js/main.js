@@ -7,10 +7,9 @@ if (params.has("logout")) {
 }
 
 const $ = (id) => document.getElementById(id);
-const tabs = document.querySelectorAll("[data-booking-tab]");
 const slider = document.querySelector("[data-accom-slider]");
 
-if (tabs.length) {
+if ($("dateTrigger")) {
     const ui = {
         dateTrigger: $("dateTrigger"),
         guestTrigger: $("guestTrigger"),
@@ -153,12 +152,6 @@ if (tabs.length) {
         renderDate();
         renderCalendar();
     }
-
-    tabs.forEach((tab) => {
-        tab.addEventListener("click", () => {
-            tabs.forEach((el) => el.classList.toggle("active", el === tab));
-        });
-    });
 
     [[ui.dateTrigger, ui.calendar], [ui.guestTrigger, ui.guest]].forEach(([trigger, popup]) => {
         trigger?.addEventListener("click", () => {
