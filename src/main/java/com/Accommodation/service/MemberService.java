@@ -6,8 +6,9 @@ import com.Accommodation.dto.MemberUpdateDto;
 import com.Accommodation.dto.PasswordChangeDto;
 import com.Accommodation.constant.Role;
 import com.Accommodation.entity.Member;
+import com.Accommodation.exception.ErrorCode;
+import com.Accommodation.exception.MemberException;
 import com.Accommodation.repository.MemberRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -69,7 +70,7 @@ public class MemberService {
         Member member = memberRepository.findByEmail(email);
 
         if (member == null) {
-            throw new EntityNotFoundException("회원 정보를 찾을 수 없습니다.");
+            throw new MemberException(ErrorCode.MEMBER_NOT_FOUND);
         }
 
         return member;
@@ -84,11 +85,11 @@ public class MemberService {
         Member member = getMemberByEmail(email);
 
         if (!passwordEncoder.matches(passwordChangeDto.getCurrentPassword(), member.getPassword())) {
-            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            throw new MemberException(ErrorCode.INVALID_CURRENT_PASSWORD);
         }
 
         if (passwordEncoder.matches(passwordChangeDto.getNewPassword(), member.getPassword())) {
-            throw new IllegalArgumentException("현재 비밀번호와 동일한 비밀번호는 사용할 수 없습니다.");
+            throw new MemberException(ErrorCode.SAME_AS_CURRENT_PASSWORD);
         }
 
         member.setPassword(passwordEncoder.encode(passwordChangeDto.getNewPassword()));
@@ -134,7 +135,7 @@ public class MemberService {
         Member findMember = memberRepository.findByEmail(email);
 
         if (findMember != null) {
-            throw new IllegalStateException("이미 가입된 회원입니다.");
+            throw new MemberException(ErrorCode.DUPLICATE_EMAIL);
         }
     }
 }

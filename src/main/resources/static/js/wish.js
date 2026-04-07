@@ -7,6 +7,11 @@
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute("content");
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute("content");
 
+    function moveToLoginWithRedirect() {
+        const redirectUrl = `${window.location.pathname}${window.location.search}`;
+        window.location.href = `/members/login?redirectUrl=${encodeURIComponent(redirectUrl)}`;
+    }
+
     async function syncWishButtons() {
         const isWishPage = Boolean(document.querySelector("[data-wish-content]"));
         if (isWishPage) {
@@ -66,7 +71,7 @@
             });
 
             if (response.status === 401 || response.redirected || response.url.includes("/members/login")) {
-                window.location.href = "/members/login";
+                moveToLoginWithRedirect();
                 return;
             }
 

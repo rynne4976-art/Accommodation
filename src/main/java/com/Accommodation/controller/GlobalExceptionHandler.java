@@ -1,5 +1,7 @@
 package com.Accommodation.controller;
 
+import com.Accommodation.exception.AdminException;
+import com.Accommodation.exception.MemberException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,6 +12,24 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice(annotations = Controller.class)
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MemberException.class)
+    public String handleMemberException(MemberException exception,
+                                        HttpServletRequest request,
+                                        HttpServletResponse response) {
+        response.setStatus(exception.getErrorCode().getStatus().value());
+        request.setAttribute("errorMessage", exception.getMessage());
+        return "error/4xx";
+    }
+
+    @ExceptionHandler(AdminException.class)
+    public String handleAdminException(AdminException exception,
+                                       HttpServletRequest request,
+                                       HttpServletResponse response) {
+        response.setStatus(exception.getErrorCode().getStatus().value());
+        request.setAttribute("errorMessage", exception.getMessage());
+        return "error/4xx";
+    }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public String handleEntityNotFound(EntityNotFoundException exception,

@@ -4,12 +4,13 @@ import com.Accommodation.dto.MemberFormDto;
 import com.Accommodation.dto.MemberUpdateDto;
 import com.Accommodation.dto.PasswordChangeDto;
 import com.Accommodation.entity.Member;
+import com.Accommodation.exception.MemberException;
 import com.Accommodation.service.MemberService;
 import com.Accommodation.service.OrderService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -91,14 +92,16 @@ public class MemberController {
         Member member;
         try {
             member = memberService.getMemberByEmail(userDetails.getUsername());
-        } catch (EntityNotFoundException e) {
+        } catch (MemberException e) {
             redirectAttributes.addFlashAttribute("loginErrorMessage", "회원 정보를 다시 확인해주세요.");
             return "redirect:/members/login";
         }
 
         model.addAttribute("member", member);
         model.addAttribute("orders",
-                orderService.getOrderList(userDetails.getUsername(), PageRequest.of(0, 20)));
+                orderService.getOrderListByStatus(userDetails.getUsername(), com.Accommodation.constant.OrderStatus.ORDER, Pageable.unpaged()));
+        model.addAttribute("cancelledOrders",
+                orderService.getOrderListByStatus(userDetails.getUsername(), com.Accommodation.constant.OrderStatus.CANCEL, PageRequest.of(0, 5)));
         return "member/mypage";
     }
 
@@ -163,7 +166,7 @@ public class MemberController {
 
         try {
             memberService.changePassword(userDetails.getUsername(), passwordChangeDto);
-        } catch (IllegalArgumentException e) {
+        } catch (MemberException e) {
             model.addAttribute("errorMessage", e.getMessage());
             return "member/passwordEdit";
         }
@@ -197,7 +200,7 @@ public class MemberController {
 
         try {
             memberService.saveMember(memberFormDto);
-        } catch (IllegalStateException e) {
+        } catch (MemberException e) {
             model.addAttribute("errorMessage", e.getMessage());
             return "member/memberForm";
         }

@@ -6,10 +6,11 @@ import com.Accommodation.dto.OrderSearchDto;
 import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.Member;
 import com.Accommodation.entity.Order;
+import com.Accommodation.exception.AdminException;
+import com.Accommodation.exception.ErrorCode;
 import com.Accommodation.repository.AccomRepository;
 import com.Accommodation.repository.MemberRepository;
 import com.Accommodation.repository.OrderRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -52,7 +53,7 @@ public class AdminService {
 
     public Member getMemberDetail(Long memberId) {
         return memberRepository.findById(memberId)
-                .orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new AdminException(ErrorCode.ADMIN_MEMBER_NOT_FOUND));
     }
 
     public long getMemberCount() {
@@ -74,10 +75,10 @@ public class AdminService {
     @Transactional
     public void updateMemberRole(Long memberId, Role role, String currentAdminEmail) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new AdminException(ErrorCode.ADMIN_MEMBER_NOT_FOUND));
 
         if (member.getEmail().equals(currentAdminEmail) && role != Role.ADMIN) {
-            throw new IllegalStateException("현재 로그인한 관리자 계정의 ADMIN 권한은 해제할 수 없습니다.");
+            throw new AdminException(ErrorCode.ADMIN_ROLE_DOWNGRADE_FORBIDDEN);
         }
 
         member.setRole(role);

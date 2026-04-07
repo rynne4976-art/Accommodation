@@ -4,9 +4,9 @@ import com.Accommodation.constant.OrderStatus;
 import com.Accommodation.constant.Role;
 import com.Accommodation.dto.MemberSearchDto;
 import com.Accommodation.dto.OrderSearchDto;
+import com.Accommodation.exception.AdminException;
 import com.Accommodation.service.AdminService;
 import com.Accommodation.service.OrderService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -61,7 +61,7 @@ public class AdminController {
                                Model model) {
         try {
             model.addAttribute("member", adminService.getMemberDetail(memberId));
-        } catch (EntityNotFoundException e) {
+        } catch (AdminException e) {
             redirectAttributes.addAttribute("page", page);
             redirectAttributes.addAttribute("searchBy", memberSearchDto.getSearchBy());
             redirectAttributes.addAttribute("searchQuery", memberSearchDto.getSearchQuery());
@@ -86,7 +86,7 @@ public class AdminController {
         try {
             adminService.updateMemberRole(memberId, role, userDetails.getUsername());
             redirectAttributes.addAttribute("roleUpdated", "true");
-        } catch (IllegalStateException | EntityNotFoundException e) {
+        } catch (AdminException e) {
             redirectAttributes.addAttribute("roleError", e.getMessage());
         }
 
@@ -122,7 +122,7 @@ public class AdminController {
         try {
             orderService.updateOrderStatusByAdmin(orderId, status);
             redirectAttributes.addAttribute("orderUpdated", "true");
-        } catch (IllegalArgumentException | EntityNotFoundException e) {
+        } catch (IllegalArgumentException | jakarta.persistence.EntityNotFoundException e) {
             redirectAttributes.addAttribute(
                     "orderError",
                     StringUtils.hasText(e.getMessage()) ? e.getMessage() : "예약 정보를 찾을 수 없습니다."

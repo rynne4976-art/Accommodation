@@ -24,7 +24,7 @@
             <p th:text="${errorMessage}"></p>
         </div>
 
-        <form class="auth-form" th:action="@{/members/new}" th:object="${memberFormDto}" method="post">
+        <form class="auth-form" th:action="@{/members/new}" th:object="${memberFormDto}" method="post" novalidate>
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
             <div class="form-group">
