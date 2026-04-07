@@ -164,17 +164,9 @@
 
             <div class="card-body accom-info">
                 <div class="accom-card__badge-row"
-                     th:with="gradeNum=${accom.grade == T(com.Accommodation.constant.AccomGrade).ONE ? 1 :
-                                        accom.grade == T(com.Accommodation.constant.AccomGrade).TWO ? 2 :
-                                        accom.grade == T(com.Accommodation.constant.AccomGrade).THREE ? 3 :
-                                        accom.grade == T(com.Accommodation.constant.AccomGrade).FOUR ? 4 :
-                                        accom.grade == T(com.Accommodation.constant.AccomGrade).FIVE ? 5 : 0}">
+                     th:with="gradeNum=${accom.grade != null ? accom.grade.ordinal() + 1 : 0}">
                     <span class="accom-card__kind"
-                          th:text="${accom.accomType == T(com.Accommodation.constant.AccomType).HOTEL ? '호텔' :
-                                     accom.accomType == T(com.Accommodation.constant.AccomType).MOTEL ? '모텔' :
-                                     accom.accomType == T(com.Accommodation.constant.AccomType).PENSION ? '펜션' :
-                                     accom.accomType == T(com.Accommodation.constant.AccomType).RESORT ? '리조트' :
-                                     accom.accomType == T(com.Accommodation.constant.AccomType).GUESTHOUSE ? '게스트하우스' : '숙소'}">호텔</span>
+                          th:text="${accom.accomType != null ? (accom.accomType.name() == 'HOTEL' ? '호텔' : accom.accomType.name() == 'MOTEL' ? '모텔' : accom.accomType.name() == 'PENSION' ? '펜션' : accom.accomType.name() == 'RESORT' ? '리조트' : '게스트하우스') : '숙소'}">호텔</span>
                     <span class="accom-card__grade-stars" aria-label="숙소 등급">
                         <span class="star filled"
                               th:each="i : ${#numbers.sequence(1,gradeNum)}">&#9733;</span>

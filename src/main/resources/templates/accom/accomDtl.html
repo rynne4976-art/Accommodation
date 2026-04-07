@@ -89,13 +89,13 @@
                     <th:block th:if="${accom.operationPolicy != null}">
                         <div>
                             <span class="highlight-label">운영 기간</span>
-                            <strong th:text="|${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd')} ~ ${#temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}|">
+                            <strong th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd') + ' ~ ' + #temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">
                                 2026-04-01 ~ 2026-04-30
                             </strong>
                         </div>
                         <div>
                             <span class="highlight-label">체크인 / 체크아웃</span>
-                            <strong th:text="|${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm')} / ${#temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}|">
+                            <strong th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">
                                 15:00 / 11:00
                             </strong>
                         </div>
@@ -127,13 +127,13 @@
                                 <div class="order-info-box">
                                     <div class="order-info-box__label">운영기간</div>
                                     <div class="order-info-box__value"
-                                         th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd')} + ' ~ ' + ${#temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">
+                                         th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd') + ' ~ ' + #temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">
                                     </div>
                                 </div>
                                 <div class="order-info-box">
                                     <div class="order-info-box__label">체크인 / 체크아웃</div>
                                     <div class="order-info-box__value"
-                                         th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm')} + ' / ' + ${#temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">
+                                         th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">
                                     </div>
                                 </div>
                             </div>
