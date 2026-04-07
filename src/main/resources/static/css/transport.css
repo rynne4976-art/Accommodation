@@ -1,412 +1,651 @@
 .transport-page {
     min-height: calc(100vh - 180px);
-    padding: 32px 20px 72px;
+    padding: 34px 18px 84px;
     background:
-        radial-gradient(circle at 10% 16%, rgba(180, 148, 255, 0.18), transparent 26%),
-        linear-gradient(180deg, #f7f8fd 0%, #f4f6fb 100%);
+        radial-gradient(circle at 0 0, rgba(255, 188, 147, 0.22), transparent 18%),
+        radial-gradient(circle at 100% 14%, rgba(110, 177, 255, 0.18), transparent 24%),
+        linear-gradient(180deg, #f6f8fc 0%, #edf2fb 100%);
 }
 
 .transport-shell {
-    width: min(1120px, 100%);
+    width: min(1180px, 100%);
     margin: 0 auto;
 }
 
-.transport-hero {
-    margin-bottom: 24px;
+.transport-hero,
+.transport-stay-card,
+.transport-map-card,
+.transport-board-card,
+.transport-empty-state {
+    border: 1px solid rgba(220, 228, 239, 0.96);
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.06);
 }
 
-.transport-hero__eyebrow {
-    margin: 0 0 10px;
-    color: #6d47ff;
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
+.transport-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 18px;
+    padding: 34px 36px;
+}
+
+.transport-hero__copy {
+    max-width: 700px;
+}
+
+.transport-hero__eyebrow,
+.transport-empty-state__eyebrow {
+    margin: 0 0 12px;
+    color: #f06b36;
+    font-size: 0.82rem;
+    font-weight: 900;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
 }
 
 .transport-hero__title {
     margin: 0;
-    color: #1f2940;
-    font-size: clamp(2rem, 5vw, 3.3rem);
+    color: #1e2840;
+    font-size: clamp(2rem, 4.9vw, 3.35rem);
     font-weight: 900;
-    letter-spacing: -0.04em;
+    line-height: 1.04;
+    letter-spacing: -0.05em;
 }
 
 .transport-hero__subtitle {
-    width: min(720px, 100%);
-    margin: 12px 0 0;
-    color: #667085;
-    font-size: 1.02rem;
-    line-height: 1.65;
+    margin: 14px 0 0;
+    color: #6a7489;
+    font-size: 1rem;
+    line-height: 1.75;
 }
 
-.transport-tabs {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 22px;
+.transport-hero__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-end;
 }
 
-.transport-tabs__item,
-.transport-filter,
-.transport-board__sort {
-    border: 0;
-    background: #fff;
-    color: #5f6880;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.transport-tabs__item {
-    min-height: 40px;
-    padding: 0 16px;
-    border-radius: 999px;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-}
-
-.transport-tabs__item.is-active,
-.transport-filter.is-active {
-    background: linear-gradient(135deg, #a374ff, #7b3ff2);
-    color: #fff;
-}
-
-.transport-overview {
-    display: grid;
-    grid-template-columns: 1.35fr 0.85fr;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.transport-overview__main,
-.transport-mini-card,
-.transport-board {
-    border: 1px solid rgba(226, 232, 240, 0.92);
-    border-radius: 26px;
-    background: rgba(255, 255, 255, 0.84);
-    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.05);
-}
-
-.transport-overview__main {
-    padding: 24px 26px;
-}
-
-.transport-overview__badge {
+.transport-hero__button {
     display: inline-flex;
     align-items: center;
-    min-height: 30px;
-    padding: 0 12px;
+    justify-content: center;
+    min-width: 186px;
+    min-height: 48px;
+    padding: 0 20px;
     border-radius: 999px;
-    background: rgba(123, 63, 242, 0.12);
-    color: #6d47ff;
-    font-size: 0.8rem;
+    text-decoration: none;
+    font-size: 0.95rem;
     font-weight: 800;
 }
 
-.transport-overview__main h2 {
-    margin: 14px 0 10px;
-    color: #222b41;
-    font-size: 2rem;
-    font-weight: 900;
-    line-height: 1.25;
+.transport-hero__button--primary {
+    background: linear-gradient(135deg, #ff8547, #f0602a);
+    color: #fff;
+    box-shadow: 0 16px 26px rgba(240, 96, 42, 0.22);
 }
 
-.transport-overview__main p {
-    margin: 0;
-    color: #667085;
-    line-height: 1.7;
+.transport-hero__button--secondary {
+    background: #fff;
+    color: #23314d;
+    box-shadow: inset 0 0 0 1px #dfe6f0;
 }
 
-.transport-overview__aside {
-    display: grid;
-    gap: 16px;
-}
-
-.transport-mini-card {
-    padding: 22px;
-}
-
-.transport-mini-card strong {
-    display: block;
-    margin-bottom: 8px;
-    color: #243044;
-    font-size: 1.15rem;
-    font-weight: 900;
-}
-
-.transport-mini-card p {
-    margin: 0;
-    color: #667085;
-    line-height: 1.6;
-}
-
-.transport-board {
-    padding: 24px;
-}
-
-.transport-board__head {
+.transport-empty-state {
     display: flex;
-    align-items: end;
+    align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 18px;
     margin-bottom: 18px;
+    padding: 24px 28px;
 }
 
-.transport-board__head h2 {
-    margin: 0;
-    color: #202a40;
+.transport-empty-state h2 {
+    margin: 0 0 10px;
+    color: #1e2840;
     font-size: 1.8rem;
     font-weight: 900;
 }
 
-.transport-board__head p {
-    margin: 8px 0 0;
-    color: #667085;
+.transport-empty-state p {
+    margin: 0;
+    color: #687488;
+    line-height: 1.75;
+}
+
+.transport-spotlight {
+    display: grid;
+    grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.3fr);
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.transport-stay-card,
+.transport-map-card,
+.transport-board-card {
+    padding: 24px;
+}
+
+.transport-stay-card {
+    display: grid;
+    gap: 14px;
+}
+
+.transport-stay-card__badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    width: fit-content;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(255, 132, 72, 0.12);
+    color: #f06b36;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.transport-stay-card__title {
+    margin: 0;
+    color: #1f2940;
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1.1;
+}
+
+.transport-stay-card__address,
+.transport-stay-card__location {
+    margin: 0;
+    color: #6a7489;
+    line-height: 1.7;
+}
+
+.transport-stay-card__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.transport-stay-card__chips span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #f5f7fb;
+    color: #314056;
+    font-size: 0.84rem;
+    font-weight: 800;
+}
+
+.transport-stay-card__photo {
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid #e7edf5;
+    background: linear-gradient(135deg, #eef3fb, #fff7f1);
+}
+
+.transport-stay-card__photo img,
+.transport-stay-card__photo-placeholder {
+    width: 100%;
+    height: 220px;
+    display: block;
+}
+
+.transport-stay-card__photo img {
+    object-fit: cover;
+}
+
+.transport-stay-card__photo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7a879d;
+    font-size: 0.95rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+}
+
+.transport-map-card__surface {
+    position: relative;
+    overflow: hidden;
+    min-height: 100%;
+    height: 100%;
+    border-radius: 26px;
+    background:
+        linear-gradient(180deg, rgba(249, 251, 255, 0.96), rgba(242, 247, 252, 0.98));
+}
+
+.transport-map-card__grid,
+.transport-map-card__roads {
+    position: absolute;
+    inset: 0;
+}
+
+.transport-map-card__grid {
+    background-image:
+        linear-gradient(rgba(163, 180, 200, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(163, 180, 200, 0.18) 1px, transparent 1px);
+    background-size: 42px 42px;
+}
+
+.transport-map-card__roads::before,
+.transport-map-card__roads::after {
+    content: "";
+    position: absolute;
+    inset: auto;
+    background: rgba(255, 196, 92, 0.8);
+    border-radius: 999px;
+    box-shadow: 0 0 0 8px rgba(255, 216, 137, 0.22);
+}
+
+.transport-map-card__roads::before {
+    top: 24%;
+    left: -8%;
+    width: 118%;
+    height: 14px;
+    transform: rotate(-12deg);
+}
+
+.transport-map-card__roads::after {
+    left: 8%;
+    bottom: 20%;
+    width: 90%;
+    height: 12px;
+    transform: rotate(18deg);
+}
+
+.transport-map-card__pin {
+    position: absolute;
+    display: grid;
+    gap: 4px;
+    min-width: 144px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    color: #1f2940;
+    box-shadow: 0 16px 28px rgba(15, 23, 42, 0.12);
+}
+
+.transport-map-card__pin span {
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.transport-map-card__pin strong {
+    font-size: 0.92rem;
+    font-weight: 800;
+    line-height: 1.4;
+}
+
+.transport-map-card__pin--stay {
+    top: 18%;
+    right: 18%;
+    background: #fff;
+}
+
+.transport-map-card__pin--airport {
+    top: 44%;
+    left: 12%;
+    background: #eef6ff;
+}
+
+.transport-map-card__pin--station {
+    bottom: 18%;
+    right: 20%;
+    background: #effff6;
+}
+
+.transport-map-card__pin--rental {
+    bottom: 24%;
+    left: 20%;
+    background: #fff7ed;
+}
+
+.transport-mobility-board,
+.transport-detail-grid {
+    display: grid;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.transport-mobility-board {
+    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+}
+
+.transport-detail-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.transport-board-card__head {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.transport-board-card__head h3 {
+    margin: 0;
+    color: #1f2940;
+    font-size: 1.45rem;
+    font-weight: 900;
+}
+
+.transport-board-card__head p {
+    margin: 0;
+    color: #6a7489;
+    line-height: 1.65;
 }
 
 #transportStatus[data-tone="loading"] {
-    color: #6d47ff;
+    color: #f06b36;
 }
 
 #transportStatus[data-tone="success"] {
-    color: #2f6f52;
+    color: #237458;
 }
 
 #transportStatus[data-tone="error"] {
     color: #c2410c;
 }
 
-.transport-board__sort {
-    min-width: 92px;
-    min-height: 40px;
-    padding: 0 16px;
-    border-radius: 14px;
-    box-shadow: inset 0 0 0 1px #d8deea;
+.transport-mode-grid,
+.transport-route-grid,
+.transport-board__grid {
+    display: grid;
+    gap: 14px;
+}
+
+.transport-mode-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.transport-route-grid {
+    grid-template-columns: 1fr;
+}
+
+.transport-mode-card,
+.transport-route-card,
+.transport-car-card {
+    border: 1px solid #e6ecf4;
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 253, 0.94));
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.transport-mode-card,
+.transport-route-card {
+    padding: 18px;
+}
+
+.transport-mode-card__icon {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #f4f7fb;
+    color: #495978;
+    font-size: 0.76rem;
+    font-weight: 900;
+}
+
+.transport-mode-card strong,
+.transport-route-card strong {
+    display: block;
+    margin-top: 12px;
+    color: #1f2940;
+    font-size: 1.1rem;
+    font-weight: 900;
+    line-height: 1.4;
+}
+
+.transport-mode-card p,
+.transport-route-card p {
+    margin: 8px 0 0;
+    color: #6a7489;
+    line-height: 1.65;
+}
+
+.transport-mode-card--placeholder,
+.transport-route-card--placeholder {
+    opacity: 0.82;
+}
+
+.transport-route-card__eyebrow {
+    display: block;
+    color: #7e8ba0;
+    font-size: 0.76rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.transport-route-card__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.transport-route-card__stats span {
+    display: block;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: #f6f9fc;
+    color: #344054;
+    font-size: 0.88rem;
+    font-weight: 800;
+}
+
+.transport-route-card__stats strong {
+    margin-top: 4px;
+    font-size: 1.15rem;
+}
+
+.transport-route-card__note {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #ebf0f6;
+    color: #667488;
+    font-size: 0.92rem;
+}
+
+.transport-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
 .transport-filter-row {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 18px;
 }
 
 .transport-filter {
     min-height: 38px;
-    padding: 0 15px;
+    padding: 0 14px;
+    border: 0;
     border-radius: 999px;
-    box-shadow: inset 0 0 0 1px #e1e6f0;
-}
-
-.transport-metric-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-    margin-bottom: 18px;
-}
-
-.transport-metric-card {
-    padding: 20px 22px;
-    border-radius: 22px;
-    border: 1px solid rgba(226, 232, 240, 0.92);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 247, 255, 0.92));
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
-}
-
-.transport-metric-card--placeholder {
-    opacity: 0.82;
-}
-
-.transport-metric-card__label {
-    display: block;
-    margin-bottom: 10px;
-    color: #7b8798;
-    font-size: 0.78rem;
+    background: #fff;
+    color: #596983;
     font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    box-shadow: inset 0 0 0 1px #dfe6f0;
+    cursor: pointer;
 }
 
-.transport-metric-card__headline {
-    display: block;
+.transport-filter.is-active {
+    background: linear-gradient(135deg, #ff8547, #f0602a);
+    color: #fff;
+    box-shadow: none;
+}
+
+.transport-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #42516a;
+    font-weight: 700;
+}
+
+.transport-sort select {
+    min-width: 150px;
+    min-height: 40px;
+    padding: 0 12px;
+    border: 1px solid #dce4ef;
+    border-radius: 14px;
+    background: #fff;
     color: #1f2940;
-    font-size: 1.12rem;
-    font-weight: 900;
-    line-height: 1.4;
-}
-
-.transport-metric-card__copy {
-    margin: 10px 0 0;
-    color: #667085;
-    font-size: 0.92rem;
-    line-height: 1.65;
-}
-
-.transport-board__message {
-    margin-bottom: 16px;
-    padding: 20px 22px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, rgba(123, 63, 242, 0.08), rgba(255, 255, 255, 0.72));
-    border: 1px dashed rgba(123, 63, 242, 0.28);
-}
-
-.transport-board__message h3 {
-    margin: 0 0 8px;
-    color: #26324a;
-    font-size: 1.12rem;
-    font-weight: 900;
-}
-
-.transport-board__message p {
-    margin: 0;
-    color: #667085;
-    line-height: 1.65;
+    font-weight: 700;
 }
 
 .transport-board__grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-}
-
-.transport-placeholder-card {
-    min-height: 220px;
-    border-radius: 22px;
-    border: 1px solid rgba(226, 232, 240, 0.95);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 255, 0.94)),
-        linear-gradient(135deg, #eef2ff, #fff9f3);
+    grid-template-columns: 1fr;
 }
 
 .transport-car-card {
     overflow: hidden;
-    border: 1px solid rgba(226, 232, 240, 0.95);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+}
+
+.transport-car-card.is-hidden {
+    display: none;
 }
 
 .transport-car-card__visual {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 160px;
-    padding: 18px;
-    background:
-        linear-gradient(160deg, rgba(123, 63, 242, 0.14), rgba(255, 255, 255, 0.1)),
-        linear-gradient(135deg, #edf2ff, #fff8ef);
-}
-
-.transport-car-card__visual-top,
-.transport-car-card__bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    min-height: 120px;
+    padding: 16px;
+    background: linear-gradient(160deg, rgba(255, 136, 77, 0.14), rgba(92, 159, 255, 0.12));
 }
 
 .transport-car-card__visual-badge {
-    align-self: flex-start;
+    width: fit-content;
     padding: 6px 10px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.9);
-    color: #6d47ff;
-    font-size: 0.74rem;
-    font-weight: 800;
+    background: rgba(255, 255, 255, 0.92);
+    color: #243248;
+    font-size: 0.76rem;
+    font-weight: 900;
 }
 
 .transport-car-card__visual-name {
-    color: #243044;
-    font-size: 1.35rem;
+    color: #1b2438;
+    font-size: 1.1rem;
     font-weight: 900;
-    letter-spacing: -0.03em;
-}
-
-.transport-car-card__visual-file {
-    color: #7b8798;
-    font-size: 0.78rem;
-    font-weight: 700;
+    line-height: 1.2;
 }
 
 .transport-car-card__body {
-    display: flex;
-    flex-direction: column;
+    display: grid;
     gap: 10px;
-    padding: 18px;
+    padding: 16px;
 }
 
 .transport-car-card__meta {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
+    gap: 8px;
 }
 
-.transport-car-card__company {
-    color: #5b46d8;
-    font-size: 0.76rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
+.transport-car-card__company,
 .transport-car-card__people {
-    color: #6b7280;
+    color: #617086;
     font-size: 0.82rem;
-    font-weight: 700;
+    font-weight: 800;
 }
 
-.transport-car-card__name {
-    margin: 0;
-    color: #1f2940;
-    font-size: 1.08rem;
+.transport-car-card__price {
+    color: #1b2438;
+    font-size: 1.15rem;
     font-weight: 900;
 }
 
 .transport-car-card__info {
     margin: 0;
-    color: #667085;
-    font-size: 0.88rem;
+    color: #6a7489;
     line-height: 1.6;
 }
 
-.transport-car-card__price {
-    color: #202a40;
-    font-size: 1.12rem;
-    font-weight: 900;
-}
-
 .transport-car-card__button {
-    min-width: 98px;
+    width: fit-content;
+    min-width: 110px;
     height: 38px;
+    padding: 0 16px;
     border: 0;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #7b3ff2, #9258ff);
+    border-radius: 999px;
+    background: linear-gradient(135deg, #4f92ff, #2d73e0);
     color: #fff;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 800;
     cursor: pointer;
 }
 
-@media (max-width: 960px) {
-    .transport-overview,
-    .transport-metric-grid,
-    .transport-board__grid {
+.transport-placeholder-card {
+    min-height: 220px;
+    border-radius: 24px;
+    border: 1px solid #e6ecf4;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 249, 253, 0.94));
+}
+
+@media (max-width: 1100px) {
+    .transport-spotlight,
+    .transport-mobility-board,
+    .transport-detail-grid {
         grid-template-columns: 1fr;
     }
+}
 
-    .transport-board__head {
+@media (max-width: 860px) {
+    .transport-hero,
+    .transport-empty-state {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .transport-hero__actions {
+        align-items: flex-start;
+    }
+
+    .transport-mode-grid {
+        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 768px) {
     .transport-page {
-        padding: 24px 16px 56px;
+        padding: 22px 14px 56px;
     }
 
-    .transport-overview__main,
-    .transport-mini-card,
-    .transport-board {
+    .transport-hero,
+    .transport-stay-card,
+    .transport-map-card,
+    .transport-board-card,
+    .transport-empty-state {
         padding: 20px;
+        border-radius: 24px;
+    }
+
+    .transport-stay-card__title,
+    .transport-hero__title {
+        font-size: 2rem;
+    }
+
+    .transport-car-card {
+        grid-template-columns: 1fr;
+    }
+
+    .transport-car-card__visual {
+        min-height: 110px;
     }
 }

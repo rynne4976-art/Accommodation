@@ -8,4 +8,6 @@ import java.util.List;
 public interface CarListRepository extends JpaRepository<CarList, Long> {
 
     List<CarList> findTop3ByOrderByCarPriceAsc();
+
+    List<CarList> findAllByOrderByCarPriceAsc();
 }

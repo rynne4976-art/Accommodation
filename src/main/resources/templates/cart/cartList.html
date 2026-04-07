@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <title>장바구니</title>
-    <meta name="_csrf"        th:content="${_csrf.token}">
+    <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <link rel="stylesheet" th:href="@{/css/cart.css}">
 </head>
@@ -13,55 +13,43 @@
 <div layout:fragment="content">
     <section class="cart-page">
         <div class="cart-page__inner">
-
-            <!-- ── 좌측: 장바구니 목록 ────────────────────────────────── -->
             <div class="cart-main">
-
-                <!-- 빈 장바구니 -->
                 <div class="cart-empty" th:if="${#lists.isEmpty(cartItems)}">
                     <div class="cart-empty__icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24">
-                            <circle cx="9"  cy="19" r="1.5"></circle>
+                            <circle cx="9" cy="19" r="1.5"></circle>
                             <circle cx="18" cy="19" r="1.5"></circle>
                             <path d="M4 5h2l2.2 9h9.6l2.2-7H7.2"></path>
                         </svg>
                     </div>
-                    <h2>아직 장바구니가 비어있어요</h2>
-                    <p>원하는 숙소를 담아두면 한 번에 비교하고 예약할 수 있어요.</p>
-                    <a th:href="@{/main}" class="cart-empty__action">담으러 가기</a>
+                    <h2>아직 장바구니가 비어 있어요.</h2>
+                    <p>마음에 드는 숙소를 담아두고 한 번에 비교하고 예약해보세요.</p>
+                    <a th:href="@{/main}" class="cart-empty__action">숙소 보러가기</a>
                 </div>
 
-                <!-- 장바구니 아이템 목록 -->
                 <div class="cart-list" th:unless="${#lists.isEmpty(cartItems)}">
                     <div class="cart-list__header">
                         <span class="cart-list__title">예약 대기 목록</span>
-                        <span class="cart-list__count"
-                              th:text="${cartCount} + '건'">0건</span>
+                        <span class="cart-list__count" th:text="${cartCount} + '건'">0건</span>
                     </div>
 
                     <div class="cart-item"
                          th:each="item : ${cartItems}"
                          th:id="'cart-item-' + ${item.cartItemId}">
-
-                        <!-- 숙소 이미지 -->
-                        <a class="cart-item__img-wrap"
-                           th:href="@{/accom/{id}(id=${item.accomId})}">
+                        <a class="cart-item__img-wrap" th:href="@{/accom/{id}(id=${item.accomId})}">
                             <img class="cart-item__img"
                                  th:src="${item.repImgUrl != null and !#strings.isEmpty(item.repImgUrl)} ? ${item.repImgUrl} : '/images/no-image.png'"
                                  th:alt="${item.accomName}">
                         </a>
 
-                        <!-- 숙소 정보 -->
                         <div class="cart-item__body">
                             <div class="cart-item__top">
                                 <div>
-                                    <span class="cart-item__type"
-                                          th:text="${item.accomTypeName}">유형</span>
+                                    <span class="cart-item__type" th:text="${item.accomTypeName}">유형</span>
                                     <a class="cart-item__name"
                                        th:href="@{/accom/{id}(id=${item.accomId})}"
                                        th:text="${item.accomName}">숙소명</a>
                                 </div>
-                                <!-- 삭제 버튼 -->
                                 <button type="button"
                                         class="cart-item__delete"
                                         th:data-id="${item.cartItemId}"
@@ -78,23 +66,20 @@
                                 </button>
                             </div>
 
-                            <!-- 날짜·인원 -->
                             <div class="cart-item__meta">
                                 <div class="cart-item__dates">
                                     <span th:text="${#temporals.format(item.checkInDate, 'yyyy.MM.dd')}">체크인</span>
                                     <span class="cart-item__dates-arrow">→</span>
                                     <span th:text="${#temporals.format(item.checkOutDate, 'yyyy.MM.dd')}">체크아웃</span>
-                                    <span class="cart-item__nights"
-                                          th:text="${item.nights} + '박'">0박</span>
+                                    <span class="cart-item__nights" th:text="${item.nights} + '박'">0박</span>
                                 </div>
                                 <div class="cart-item__guests">
-                                    <span th:text="'성인 ' + ${item.adultCount} + '명'">성인</span>
+                                    <span th:text="'성인 ' + ${item.adultCount} + '명'">성인 1명</span>
                                     <span th:if="${item.childCount > 0}"
-                                          th:text="' · 아동 ' + ${item.childCount} + '명'">아동</span>
+                                          th:text="' · 아동 ' + ${item.childCount} + '명'">아동 1명</span>
                                 </div>
                             </div>
 
-                            <!-- 요금 -->
                             <div class="cart-item__price-area">
                                 <div class="cart-item__price-row">
                                     <span class="cart-item__price-label">기본 숙박비</span>
@@ -111,22 +96,29 @@
                                 </div>
                             </div>
 
-                            <!-- 개별 예약 확정 버튼 -->
                             <div class="cart-item__actions">
-                                <span class="cart-item__status-badge">예약 대기</span>
-                                <button type="button"
-                                        class="cart-item__confirm-btn"
-                                        th:data-id="${item.cartItemId}"
-                                        onclick="confirmItem(this)">
-                                    예약 확정
-                                </button>
+                                <div class="cart-item__status-group">
+                                    <span class="cart-item__status-badge">예약 대기</span>
+                                    <span class="cart-item__status-copy">확정 전에 날짜와 인원 정보를 다시 조정할 수 있어요.</span>
+                                </div>
+                                <div class="cart-item__action-buttons">
+                                    <a class="cart-item__edit-btn"
+                                       th:href="@{/orders/accom/{accomId}(accomId=${item.accomId},checkInDate=${item.checkInDate},checkOutDate=${item.checkOutDate},adultCount=${item.adultCount},childCount=${item.childCount},cartItemId=${item.cartItemId})}">
+                                        수정
+                                    </a>
+                                    <button type="button"
+                                            class="cart-item__confirm-btn"
+                                            th:data-id="${item.cartItemId}"
+                                            onclick="confirmItem(this)">
+                                        예약 확정
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div><!-- /cart-item -->
-                </div><!-- /cart-list -->
+                    </div>
+                </div>
             </div>
 
-            <!-- ── 우측: 요약 패널 ─────────────────────────────────────── -->
             <aside class="cart-summary">
                 <div class="cart-summary__title">예약 요약</div>
 
@@ -141,7 +133,6 @@
 
                 <hr class="cart-summary__divider">
 
-                <!-- 전체 예약 확정 -->
                 <button type="button"
                         class="cart-summary__button"
                         id="btnConfirmAll"
@@ -156,24 +147,33 @@
                     확정 시점에 날짜가 만실이면 예약이 거부됩니다.
                 </p>
             </aside>
-
         </div>
     </section>
 
     <script th:inline="javascript">
-        const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
+        const unavailableCartAccomId = /*[[${unavailableCartAccomId}]]*/ null;
+        const unavailableCartAccomName = /*[[${unavailableCartAccomName}]]*/ null;
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
-        function buildHeaders() {
-            const h = { 'Content-Type': 'application/json' };
-            if (csrfToken && csrfHeader) h[csrfHeader] = csrfToken;
-            return h;
+        if (unavailableCartAccomId) {
+            window.alert("'" + unavailableCartAccomName + "' 숙소는 현재 만실이라 예약 확정이 어렵습니다. 예약 화면에서 다시 선택해주세요.");
+            window.location.href = '/orders/accom/' + unavailableCartAccomId;
         }
 
-        // ── 개별 삭제 ────────────────────────────────────────────────────────
+        function buildHeaders() {
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+            return headers;
+        }
+
         async function removeItem(btn) {
             const id = btn.dataset.id;
-            if (!confirm('장바구니에서 제거할까요?')) return;
+            if (!confirm('장바구니에서 제거할까요?')) {
+                return;
+            }
 
             try {
                 const res = await fetch(`/cart/${id}`, {
@@ -182,7 +182,7 @@
                 });
                 if (res.ok) {
                     document.getElementById(`cart-item-${id}`)?.remove();
-                    location.reload();   // 요약 패널 갱신
+                    location.reload();
                 } else {
                     alert(await res.text());
                 }
@@ -191,13 +191,14 @@
             }
         }
 
-        // ── 개별 예약 확정 ───────────────────────────────────────────────────
         async function confirmItem(btn) {
             const id = btn.dataset.id;
-            if (!confirm('이 항목을 예약 확정할까요?')) return;
+            if (!confirm('이 예약을 확정할까요?')) {
+                return;
+            }
 
             btn.disabled = true;
-            btn.textContent = '처리 중…';
+            btn.textContent = '처리 중...';
 
             try {
                 const res = await fetch(`/cart/${id}/confirm`, {
@@ -206,7 +207,7 @@
                 });
                 if (res.ok) {
                     const orderId = await res.json();
-                    alert('예약이 확정되었습니다!');
+                    alert('예약이 확정되었습니다.');
                     window.location.href = `/orders/${orderId}`;
                 } else {
                     btn.disabled = false;
@@ -220,13 +221,14 @@
             }
         }
 
-        // ── 전체 예약 확정 ───────────────────────────────────────────────────
         async function confirmAll() {
-            if (!confirm('장바구니 전체를 예약 확정할까요?')) return;
+            if (!confirm('장바구니 전체를 예약 확정할까요?')) {
+                return;
+            }
 
             const btn = document.getElementById('btnConfirmAll');
             btn.disabled = true;
-            btn.textContent = '처리 중…';
+            btn.textContent = '처리 중...';
 
             try {
                 const res = await fetch('/cart/confirm-all', {
@@ -234,7 +236,7 @@
                     headers: buildHeaders()
                 });
                 if (res.ok) {
-                    alert('전체 예약이 완료되었습니다!');
+                    alert('전체 예약이 완료되었습니다.');
                     window.location.href = '/orders';
                 } else {
                     btn.disabled = false;
