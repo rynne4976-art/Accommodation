@@ -144,29 +144,86 @@ public class RegionActivityService {
             return List.of();
         }
 
-        List<RegionActivityItemDto> festivalItems = searchFestival(regionName, size);
-        if (!festivalItems.isEmpty()) {
-            return festivalItems;
+        Map<String, RegionActivityItemDto> merged = new LinkedHashMap<>();
+
+        List<RegionActivityItemDto> festivalItems = searchFestival(regionName, 12);
+        for (RegionActivityItemDto item : festivalItems) {
+            merged.putIfAbsent(buildMergeKey(item), item);
         }
 
-        List<String> keywords = List.of(
-                regionName + " 축제",
-                regionName + " 행사",
-                regionName + " 관광",
-                regionName + " 여행"
-        );
+        List<RegionActivityItemDto> areaItems = searchAreaBased(regionName, 20);
+        for (RegionActivityItemDto item : areaItems) {
+            merged.putIfAbsent(buildMergeKey(item), item);
+        }
 
-        for (String keyword : keywords) {
-            List<RegionActivityItemDto> items = searchByKeyword(keyword, size);
-            if (!items.isEmpty()) {
-                log.info("TourAPI searchKeyword2 조회 성공 - region={}, keyword={}, count={}",
-                        regionName, keyword, items.size());
-                return items;
+        List<String> regionKeywords = getRegionKeywords(regionName);
+        for (String keyword : regionKeywords) {
+            List<RegionActivityItemDto> items = searchByKeyword(keyword, 8);
+            for (RegionActivityItemDto item : items) {
+                merged.putIfAbsent(buildMergeKey(item), item);
             }
         }
 
-        log.warn("TourAPI 지역 조회 결과 없음 - region={}", regionName);
-        return List.of();
+        return merged.values().stream()
+                .limit(size)
+                .toList();
+    }
+
+    private List<String> getRegionKeywords(String regionName) {
+        return switch (regionName) {
+            case "서울" -> List.of(
+                    "서울 축제",
+                    "서울 전시",
+                    "서울 공연",
+                    "서울 한강",
+                    "서울 야경",
+                    "서울 체험"
+            );
+            case "부산" -> List.of(
+                    "부산 축제",
+                    "부산 해운대",
+                    "부산 광안리",
+                    "부산 야경",
+                    "부산 체험",
+                    "부산 공연"
+            );
+            case "강릉" -> List.of(
+                    "강릉 축제",
+                    "강릉 단오",
+                    "강릉 바다",
+                    "강릉 체험",
+                    "강릉 커피",
+                    "강릉 관광"
+            );
+            case "제주" -> List.of(
+                    "제주 축제",
+                    "제주 오름",
+                    "제주 유채꽃",
+                    "제주 체험",
+                    "제주 관광",
+                    "제주 전시"
+            );
+            case "경주" -> List.of(
+                    "경주 축제",
+                    "경주 벚꽃",
+                    "경주 문화유산",
+                    "경주 체험",
+                    "경주 공연",
+                    "경주 관광"
+            );
+            default -> List.of(
+                    regionName + " 축제",
+                    regionName + " 관광",
+                    regionName + " 체험"
+            );
+        };
+    }
+
+    private String buildMergeKey(RegionActivityItemDto item) {
+        String title = item.getTitle() == null ? "" : item.getTitle().trim();
+        String externalUrl = item.getExternalUrl() == null ? "" : item.getExternalUrl().trim();
+        String detailUrl = item.getDetailUrl() == null ? "" : item.getDetailUrl().trim();
+        return title + "|" + externalUrl + "|" + detailUrl;
     }
 
     private List<RegionActivityItemDto> searchFestival(String regionName, int size) {
@@ -225,7 +282,6 @@ public class RegionActivityService {
                         .imageUrl(imageUrl)
                         .address(address)
                         .period(period)
-                        .summary(limit(cleanText(firstNotBlank(detailInfo.overview(), address)), 180))
                         .detailUrl(buildVisitKoreaDetailUrl(contentId))
                         .externalUrl(detailInfo.homepageUrl())
                         .category("행사/축제")
@@ -239,6 +295,97 @@ public class RegionActivityService {
             log.error("TourAPI searchFestival2 호출 실패 - region={}", regionName, e);
             return List.of();
         }
+    }
+
+    private List<RegionActivityItemDto> searchAreaBased(String regionName, int size) {
+        AreaCode areaCode = getAreaCode(regionName);
+
+        if (!StringUtils.hasText(areaCode.lDongRegnCd())) {
+            return List.of();
+        }
+
+        List<RegionActivityItemDto> result = new ArrayList<>();
+        List<String> contentTypeIds = List.of("12", "14", "15", "25", "28");
+
+        for (String contentTypeId : contentTypeIds) {
+            try {
+                UriComponentsBuilder builder = UriComponentsBuilder
+                        .fromHttpUrl(baseUrl + "/areaBasedList2")
+                        .queryParam("serviceKey", serviceKey)
+                        .queryParam("MobileOS", "ETC")
+                        .queryParam("MobileApp", mobileApp)
+                        .queryParam("_type", "json")
+                        .queryParam("arrange", "Q")
+                        .queryParam("numOfRows", 10)
+                        .queryParam("pageNo", 1)
+                        .queryParam("contentTypeId", contentTypeId)
+                        .queryParam("lDongRegnCd", areaCode.lDongRegnCd());
+
+                if (StringUtils.hasText(areaCode.lDongSignguCd())) {
+                    builder.queryParam("lDongSignguCd", areaCode.lDongSignguCd());
+                }
+
+                String requestUrl = builder
+                        .encode()
+                        .build()
+                        .toUriString();
+
+                Map<String, Object> response = restClient.get()
+                        .uri(requestUrl)
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<>() {});
+
+                List<Map<String, Object>> rawItems = extractItems(response);
+
+                for (Map<String, Object> raw : rawItems) {
+                    String title = stringValue(raw.get("title"));
+                    if (!StringUtils.hasText(title)) {
+                        continue;
+                    }
+
+                    String contentId = stringValue(raw.get("contentid"));
+                    String imageUrl = firstNotBlank(
+                            stringValue(raw.get("firstimage")),
+                            stringValue(raw.get("firstimage2"))
+                    );
+                    String address = joinAddress(
+                            stringValue(raw.get("addr1")),
+                            stringValue(raw.get("addr2"))
+                    );
+
+                    DetailInfo detailInfo = fetchDetailInfo(contentId, contentTypeId);
+
+                    result.add(
+                            RegionActivityItemDto.builder()
+                                    .title(title)
+                                    .imageUrl(imageUrl)
+                                    .address(address)
+                                    .period("")
+                                    .detailUrl(buildVisitKoreaDetailUrl(contentId))
+                                    .externalUrl(detailInfo.homepageUrl())
+                                    .category(resolveCategory(contentTypeId))
+                                    .tel(firstNotBlank(stringValue(raw.get("tel")), detailInfo.tel()))
+                                    .regionName(regionName)
+                                    .build()
+                    );
+                }
+            } catch (Exception e) {
+                log.warn("TourAPI areaBasedList2 호출 실패 - region={}, contentTypeId={}", regionName, contentTypeId, e);
+            }
+        }
+
+        return result;
+    }
+
+    private AreaCode getAreaCode(String regionName) {
+        return switch (regionName) {
+            case "서울" -> new AreaCode("11", "");
+            case "부산" -> new AreaCode("26", "");
+            case "강릉" -> new AreaCode("51", "170");
+            case "제주" -> new AreaCode("50", "");
+            case "경주" -> new AreaCode("47", "130");
+            default -> new AreaCode("", "");
+        };
     }
 
     private List<RegionActivityItemDto> searchByKeyword(String keyword, int size) {
@@ -293,16 +440,11 @@ public class RegionActivityService {
 
             DetailInfo detailInfo = fetchDetailInfo(contentId, contentTypeId);
 
-            String summary = StringUtils.hasText(detailInfo.overview())
-                    ? detailInfo.overview()
-                    : address;
-
             result.add(RegionActivityItemDto.builder()
                     .title(title)
                     .imageUrl(imageUrl)
                     .address(address)
                     .period("")
-                    .summary(limit(cleanText(summary), 180))
                     .detailUrl(buildVisitKoreaDetailUrl(contentId))
                     .externalUrl(detailInfo.homepageUrl())
                     .category(resolveCategory(contentTypeId))
@@ -387,8 +529,7 @@ public class RegionActivityService {
             Map<String, Object> item = items.get(0);
             return extractHomepageUrl(stringValue(item.get("eventhomepage")));
         } catch (Exception e) {
-            log.warn("TourAPI detailIntro2 호출 실패 - contentId={}, contentTypeId={}",
-                    contentId, contentTypeId, e);
+            log.warn("TourAPI detailIntro2 호출 실패 - contentId={}, contentTypeId={}", contentId, contentTypeId, e);
             return "";
         }
     }
@@ -580,6 +721,12 @@ public class RegionActivityService {
             String overview,
             String homepageUrl,
             String tel
+    ) {
+    }
+
+    private record AreaCode(
+            String lDongRegnCd,
+            String lDongSignguCd
     ) {
     }
 }

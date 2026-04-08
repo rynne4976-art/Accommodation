@@ -17,7 +17,6 @@ public class RegionActivityItemDto {
     private String imageUrl;        // 대표 이미지
     private String address;         // 주소
     private String period;          // 행사 기간
-    private String summary;         // 간단 설명
     private String detailUrl;       // 상세 페이지 링크
     private String externalUrl;     // 공식 홈페이지 / 외부 링크
     private String category;        // 행사 / 축제 / 관광지 등

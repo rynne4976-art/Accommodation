@@ -125,11 +125,6 @@
                         주소
                     </p>
 
-                    <p class="activity-row-card__summary"
-                       th:text="${item.summary != null and !#strings.isEmpty(item.summary) ? item.summary : '상세 설명이 아직 제공되지 않습니다.'}">
-                        설명
-                    </p>
-
                     <p class="activity-row-card__phone"
                        th:if="${item.tel != null and !#strings.isEmpty(item.tel)}">
                         문의: <span th:text="${item.tel}">000-0000-0000</span>
@@ -145,14 +140,6 @@
                         </a>
 
                         <a class="activity-row-card__button activity-row-card__button--ghost"
-                           th:if="${item.detailUrl != null and !#strings.isEmpty(item.detailUrl)}"
-                           th:href="${item.detailUrl}"
-                           target="_blank"
-                           rel="noopener noreferrer">
-                            상세 정보 보기
-                        </a>
-
-                        <a class="activity-row-card__button activity-row-card__button--ghost"
                            th:href="@{/searchList(searchQuery=${activityPage.regionName})}">
                             이 지역 숙소 보기
                         </a>
@@ -165,6 +152,37 @@
              th:if="${activityList == null or #lists.isEmpty(activityList)}">
             <p>현재 표시할 지역 즐길거리 정보가 없습니다.</p>
             <a th:href="@{/main}">메인으로 이동</a>
+        </div>
+
+        <div class="pager type-pager"
+             th:if="${totalPages != null and totalPages > 0}"
+             th:with="startPage=${((currentPage - 1) / 5) * 5 + 1},
+                      endPage=${T(java.lang.Math).min(totalPages, startPage + 4)}">
+
+            <span class="pager-nav pager-nav-disabled" th:if="${startPage <= 1}">이전 5개</span>
+            <a class="pager-nav"
+               th:if="${startPage > 1}"
+               th:href="@{${currentPath}(page=${startPage - 1})}">이전 5개</a>
+
+            <span class="pager-nav pager-nav-disabled" th:if="${currentPage <= 1}">이전</span>
+            <a class="pager-nav"
+               th:if="${currentPage > 1}"
+               th:href="@{${currentPath}(page=${currentPage - 1})}">이전</a>
+
+            <a th:each="pageNum : ${#numbers.sequence(startPage, endPage)}"
+               th:classappend="${pageNum == currentPage} ? ' pager-current'"
+               th:href="@{${currentPath}(page=${pageNum})}"
+               th:text="${pageNum}">1</a>
+
+            <span class="pager-nav pager-nav-disabled" th:if="${currentPage >= totalPages}">다음</span>
+            <a class="pager-nav"
+               th:if="${currentPage < totalPages}"
+               th:href="@{${currentPath}(page=${currentPage + 1})}">다음</a>
+
+            <span class="pager-nav pager-nav-disabled" th:if="${endPage >= totalPages}">다음 5개</span>
+            <a class="pager-nav"
+               th:if="${endPage < totalPages}"
+               th:href="@{${currentPath}(page=${endPage + 1})}">다음 5개</a>
         </div>
     </section>
 
