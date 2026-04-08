@@ -51,5 +51,9 @@ public class CartItem extends BaseTimeEntity {
 
     /** 객실 수 (최소 1실) */
     @Column(nullable = false)
-    private int roomCount = 1;
+    private Integer roomCount = 1;
+
+    public int getRoomCount() {
+        return roomCount == null || roomCount < 1 ? 1 : roomCount;
+    }
 }

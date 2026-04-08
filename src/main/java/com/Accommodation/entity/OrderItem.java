@@ -54,7 +54,7 @@ public class OrderItem extends BaseEntity {
     private int childCount;
 
     /** 객실 수 */
-    private int roomCount = 1;
+    private Integer roomCount = 1;
 
     @OneToMany(
             mappedBy = "orderItem",
@@ -66,7 +66,11 @@ public class OrderItem extends BaseEntity {
 
     /** 총 결제 금액 = (기본 요금 + 추가 요금) × 박 수 × 객실 수 */
     public int getTotalPrice() {
-        return (orderPrice + surchargePerNight) * count * roomCount;
+        return (orderPrice + surchargePerNight) * count * getRoomCount();
+    }
+
+    public int getRoomCount() {
+        return roomCount == null || roomCount < 1 ? 1 : roomCount;
     }
 
     /**

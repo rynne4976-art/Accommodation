@@ -13,6 +13,16 @@
 <div layout:fragment="content">
     <section class="cart-page">
         <div class="cart-page__inner">
+            <header class="cart-page__header">
+                <h1 class="cart-page__title">
+                    예약 대기 숙소
+                    <span class="cart-page__count-wrap">
+                        <span class="cart-page__count" th:text="| 대기 ${cartCount}건|">예약 대기 0건</span>
+                    </span>
+                </h1>
+                <p class="cart-page__subtitle">장바구니 예약 대기 상태의 숙소를 확정하세요.</p>
+            </header>
+
             <div class="cart-main">
                 <div class="cart-empty" th:if="${#lists.isEmpty(cartItems)}">
                     <div class="cart-empty__icon" aria-hidden="true">
@@ -28,11 +38,6 @@
                 </div>
 
                 <div class="cart-list" th:unless="${#lists.isEmpty(cartItems)}">
-                    <div class="cart-list__header">
-                        <span class="cart-list__title">예약 대기 목록</span>
-                        <span class="cart-list__count" th:text="${cartCount} + '건'">0건</span>
-                    </div>
-
                     <div class="cart-item"
                          th:each="item : ${cartItems}"
                          th:id="'cart-item-' + ${item.cartItemId}">
