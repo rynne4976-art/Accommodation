@@ -538,3 +538,152 @@ img { display: block; max-width: 100%; }
     .accom-card__title { font-size: 1.05rem; }
     .price { font-size: 1.2rem; }
 }
+
+.local-activities {
+    width: min(1200px, calc(100% - 32px));
+    margin: 56px auto 0;
+}
+
+.local-activities__head {
+    margin-bottom: 28px;
+}
+
+.local-activities__eyebrow {
+    margin: 0 0 10px;
+    color: #0f5fd0;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.local-activities__head h2 {
+    margin: 0 0 14px;
+    font-size: clamp(1.8rem, 2.8vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #172033;
+}
+
+.local-activities__sub {
+    margin: 0;
+    color: #667085;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.local-activities__grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.activity-card {
+    border-radius: 24px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #e6ebf5;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+    transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+}
+
+.activity-card:hover {
+    transform: translateY(-6px);
+    border-color: #d8d3ff;
+    box-shadow: 0 24px 52px rgba(15, 23, 42, 0.14);
+}
+
+.activity-card__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+}
+
+.activity-card__image-wrap {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.activity-card__image-wrap::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 45%, rgba(17, 24, 39, 0.72) 100%);
+}
+
+.activity-card__image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+}
+
+.activity-card:hover .activity-card__image-wrap img {
+    transform: scale(1.05);
+}
+
+/* 기존 좌측 상단 파란 배지 -> 좌측 하단 흰 글씨 */
+.activity-card__label {
+    position: absolute;
+    left: 18px;
+    bottom: 16px;
+    z-index: 1;
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.activity-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px 18px 20px;
+    flex: 1;
+}
+
+.activity-card__body p {
+    margin: 0;
+    color: #667085;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    flex-grow: 1;
+}
+
+.activity-card__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    min-height: 42px;
+    padding: 0 18px;
+    margin-top: auto;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #7b3ff2, #9563ff);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+@media (max-width: 1200px) {
+    .local-activities__grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .local-activities {
+        width: min(100% - 24px, 1200px);
+    }
+
+    .local-activities__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-card__body p {
+        min-height: auto;
+    }
+}
