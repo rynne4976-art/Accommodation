@@ -124,7 +124,8 @@
 }
 
 .booking-section-aside .order-form-actions {
-    display: none;
+    display: flex;
+    flex-direction: column;
 }
 
 .accom-detail-label {
@@ -237,6 +238,19 @@
     margin-bottom: 18px;
 }
 
+.detail-section-header--location {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.detail-section-header--location > div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
 .detail-section-header h2,
 .detail-section-header h3 {
     margin: 0;
@@ -244,6 +258,19 @@
     font-size: 28px;
     font-weight: 800;
     line-height: 1.25;
+}
+
+.location-transport-link {
+    color: #1f4acc;
+    font-size: 1.02rem;
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 0.16em;
+    white-space: nowrap;
+}
+
+.location-transport-link:hover {
+    color: #1738a5;
 }
 
 .detail-section-card {

@@ -106,9 +106,6 @@
                     </th:block>
                 </div>
 
-                <div class="accom-detail-actions">
-                    <a th:href="@{/transport(accomId=${accom.id})}" class="detail-action secondary">교통 보기</a>
-                </div>
             </div>
         </section>
 
@@ -247,6 +244,7 @@
 
                     <div class="order-form-actions">
                         <button type="button" class="btn-order" style="width:100%;" onclick="submitToCart()">장바구니 담기</button>
+                        <button type="button" class="btn-back" style="width:100%;" onclick="submitOrder()">예약하기</button>
                     </div>
                 </aside>
             </div>
@@ -329,9 +327,12 @@
         </section>
 
         <section id="location-info" class="accom-detail-info-card">
-            <div class="detail-section-header">
-                <span class="accom-detail-label subtle">Location</span>
-                <h2>위치 정보</h2>
+            <div class="detail-section-header detail-section-header--location">
+                <div>
+                    <span class="accom-detail-label subtle">Location</span>
+                    <h2>위치 정보</h2>
+                </div>
+                <a th:href="@{/transport(accomId=${accom.id})}" class="location-transport-link">교통 정보 바로가기 →</a>
             </div>
 
             <div class="detail-section-card location-section-card">
@@ -1097,7 +1098,7 @@
             }
         }
 
-        async function submitToCart() {
+        function getBookingSelection() {
             if (!selectedCheckIn || !selectedCheckOut) { alert('체크인과 체크아웃 날짜를 선택해 주세요.'); return; }
             if (nights <= 0) { alert('체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.'); return; }
             const adult = getAdultCount();
@@ -1106,6 +1107,40 @@
             if (adult < 1) { alert('성인은 최소 1명 이상이어야 합니다.'); return; }
             if (total < typeMinGuests) { alert(`이 숙소 유형은 최소 ${typeMinGuests}인 이상이어야 합니다.`); return; }
             if (total > effectiveMax) { alert(`최대 ${effectiveMax}명까지 가능합니다.`); return; }
+
+            return { adult, child };
+        }
+
+        async function submitOrder() {
+            const selection = getBookingSelection();
+            if (!selection) return;
+
+            const csrfTokenMeta  = document.querySelector('meta[name="_csrf"]');
+            const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfTokenMeta && csrfHeaderMeta) headers[csrfHeaderMeta.content] = csrfTokenMeta.content;
+
+            try {
+                const response = await fetch('/order', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ accomId, checkInDate: selectedCheckIn, checkOutDate: selectedCheckOut, adultCount: selection.adult, childCount: selection.child })
+                });
+                if (response.ok) {
+                    const orderId = await response.text();
+                    window.location.href = `/orders/${orderId}`;
+                } else {
+                    const message = await response.text();
+                    alert('예약 실패: ' + message);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        async function submitToCart() {
+            const selection = getBookingSelection();
+            if (!selection) return;
 
             const csrfTokenMeta  = document.querySelector('meta[name="_csrf"]');
             const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
@@ -1116,7 +1151,7 @@
                 const response = await fetch('/cart', {
                     method: 'POST',
                     headers: headers,
-                    body: JSON.stringify({ accomId, checkInDate: selectedCheckIn, checkOutDate: selectedCheckOut, adultCount: adult, childCount: child })
+                    body: JSON.stringify({ accomId, checkInDate: selectedCheckIn, checkOutDate: selectedCheckOut, adultCount: selection.adult, childCount: selection.child })
                 });
                 if (response.ok) {
                     alert('장바구니에 담았습니다. 장바구니에서 예약을 확정해 주세요.');
