@@ -649,3 +649,36 @@
         min-height: 110px;
     }
 }
+
+.transport-map-controls{
+    margin-top:15px;
+    display:flex;
+    gap:10px;
+}
+
+.transport-map-controls button{
+    background:#ff6b2c;
+    color:white;
+    border:none;
+    padding:10px 18px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.rental-brand-grid{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    margin-top:15px;
+    align-items:center;
+}
+
+.rental-brand-grid img{
+    height:40px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.rental-brand-grid img:hover{
+    transform:scale(1.1);
+}
