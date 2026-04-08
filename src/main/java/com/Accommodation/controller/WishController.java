@@ -30,7 +30,6 @@ public class WishController {
                            Model model,
                            Principal principal) {
         List<WishListDto> wishItems = wishService.getWishList(principal.getName(), sort);
-        model.addAttribute("compactHeader", true);
         model.addAttribute("wishItems", wishItems);
         model.addAttribute("wishCount", wishItems.size());
         model.addAttribute("selectedSort", sort);

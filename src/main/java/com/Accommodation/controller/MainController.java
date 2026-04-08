@@ -4,7 +4,6 @@ import com.Accommodation.constant.AccomType;
 import com.Accommodation.dto.AccomSearchDto;
 import com.Accommodation.dto.MainAccomDto;
 import com.Accommodation.service.AccomService;
-import com.Accommodation.service.LocalActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,7 +27,6 @@ public class MainController {
     private static final String RECENT_VIEWED_COOKIE_DELIMITER_PATTERN = "[,-]";
 
     private final AccomService accomService;
-    private final LocalActivityService localActivityService;
 
     @GetMapping({"/", "/main"})
     public String main(AccomSearchDto accomSearchDto,
@@ -41,7 +39,6 @@ public class MainController {
         model.addAttribute("accomPage", accomPage);
         model.addAttribute("accomSearchDto", accomSearchDto);
         model.addAttribute("maxPage", 5);
-        model.addAttribute("activityList", localActivityService.getMainActivities());
 
         return "main";
     }
