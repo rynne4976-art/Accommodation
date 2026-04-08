@@ -20,6 +20,7 @@ public class AccomSearchDto {
     private String searchBy;
     private String searchQuery;
     private Integer minPrice;
+    private Integer maxPrice;
     private Double minRating;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)

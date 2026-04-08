@@ -55,6 +55,10 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
         return minPrice == null ? null : QAccom.accom.pricePerNight.goe(minPrice);
     }
 
+    private BooleanExpression priceLoe(Integer maxPrice) {
+        return maxPrice == null ? null : QAccom.accom.pricePerNight.loe(maxPrice);
+    }
+
     private BooleanExpression ratingGoe(Double minRating) {
         QAccom accom = QAccom.accom;
         return minRating == null ? null : avgRatingExpression(accom).goe(minRating);
@@ -138,6 +142,7 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         gradeEq(accomSearchDto.getGrade()),
                         statusEq(accomSearchDto.getAccomStatus()),
                         priceGoe(accomSearchDto.getMinPrice()),
+                        priceLoe(accomSearchDto.getMaxPrice()),
                         ratingGoe(accomSearchDto.getMinRating()),
                         availableForStay(accomSearchDto.getCheckInDate(), accomSearchDto.getCheckOutDate())
                 )
@@ -156,6 +161,7 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         gradeEq(accomSearchDto.getGrade()),
                         statusEq(accomSearchDto.getAccomStatus()),
                         priceGoe(accomSearchDto.getMinPrice()),
+                        priceLoe(accomSearchDto.getMaxPrice()),
                         ratingGoe(accomSearchDto.getMinRating()),
                         availableForStay(accomSearchDto.getCheckInDate(), accomSearchDto.getCheckOutDate())
                 )
@@ -202,6 +208,7 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         gradeEq(accomSearchDto.getGrade()),
                         statusEq(accomSearchDto.getAccomStatus()),
                         priceGoe(accomSearchDto.getMinPrice()),
+                        priceLoe(accomSearchDto.getMaxPrice()),
                         ratingGoe(accomSearchDto.getMinRating()),
                         availableForStay(accomSearchDto.getCheckInDate(), accomSearchDto.getCheckOutDate())
                 )
@@ -220,6 +227,7 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         gradeEq(accomSearchDto.getGrade()),
                         statusEq(accomSearchDto.getAccomStatus()),
                         priceGoe(accomSearchDto.getMinPrice()),
+                        priceLoe(accomSearchDto.getMaxPrice()),
                         ratingGoe(accomSearchDto.getMinRating()),
                         availableForStay(accomSearchDto.getCheckInDate(), accomSearchDto.getCheckOutDate())
                 )

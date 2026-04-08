@@ -4,13 +4,14 @@ import com.Accommodation.constant.AccomType;
 import com.Accommodation.dto.AccomSearchDto;
 import com.Accommodation.dto.MainAccomDto;
 import com.Accommodation.service.AccomService;
-import org.springframework.web.bind.annotation.CookieValue;
+import com.Accommodation.service.LocalActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -27,6 +28,7 @@ public class MainController {
     private static final String RECENT_VIEWED_COOKIE_DELIMITER_PATTERN = "[,-]";
 
     private final AccomService accomService;
+    private final LocalActivityService localActivityService;
 
     @GetMapping({"/", "/main"})
     public String main(AccomSearchDto accomSearchDto,
@@ -39,6 +41,7 @@ public class MainController {
         model.addAttribute("accomPage", accomPage);
         model.addAttribute("accomSearchDto", accomSearchDto);
         model.addAttribute("maxPage", 5);
+        model.addAttribute("activityList", localActivityService.getMainActivities());
 
         return "main";
     }
@@ -137,16 +140,15 @@ public class MainController {
         Pageable pageable = PageRequest.of(currentPage - 1, 5);
         Page<MainAccomDto> accomPage = accomService.getMainAccomPage(accomSearchDto, pageable);
 
-        System.out.println("현재페이지 = " + accomPage.getNumber());
-        System.out.println("총페이지 = " + accomPage.getTotalPages());
-        System.out.println("총데이터 = " + accomPage.getTotalElements());
-
-
         model.addAttribute("accomList", accomPage.getContent());
         model.addAttribute("accomPage", accomPage);
         model.addAttribute("accomSearchDto", accomSearchDto);
         model.addAttribute("pageTitle", pageTitle);
         model.addAttribute("pageDescription", pageDescription);
+        model.addAttribute("sectionEyebrow", pageTitle + " Collection");
+        model.addAttribute("sectionTitle", pageTitle + " 숙소 목록");
+        model.addAttribute("sectionDescription", "현재 등록된 숙소 중 해당 유형만 모아 보여드립니다.");
+        model.addAttribute("emptyMessage", pageTitle + " 유형에 등록된 숙소가 없습니다.");
         model.addAttribute("currentPath", currentPath);
 
         return viewName;
@@ -163,6 +165,17 @@ public class MainController {
         model.addAttribute("accomList", accomPage.getContent());
         model.addAttribute("accomPage", accomPage);
         model.addAttribute("accomSearchDto", accomSearchDto);
+        model.addAttribute("pageTitle", "숙소 검색 결과");
+        model.addAttribute(
+                "pageDescription",
+                accomSearchDto.getSearchQuery() != null && !accomSearchDto.getSearchQuery().isBlank()
+                        ? accomSearchDto.getSearchQuery() + " 검색 결과를 확인해보세요."
+                        : "조건에 맞는 숙소를 확인해보세요."
+        );
+        model.addAttribute("sectionEyebrow", "searchList");
+        model.addAttribute("sectionTitle", "검색된 숙소 목록");
+        model.addAttribute("sectionDescription", "검색어와 필터 조건에 맞는 숙소만 모아서 보여드립니다.");
+        model.addAttribute("emptyMessage", "검색 조건에 맞는 숙소가 없습니다.");
         model.addAttribute("currentPath", "/searchList");
 
         return "category/searchList";
@@ -198,7 +211,4 @@ public class MainController {
                 .limit(20)
                 .collect(Collectors.toList());
     }
-
-
-
 }
