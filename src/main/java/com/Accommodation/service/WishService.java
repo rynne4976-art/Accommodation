@@ -2,7 +2,6 @@ package com.Accommodation.service;
 
 import com.Accommodation.dto.WishListDto;
 import com.Accommodation.entity.Accom;
-import com.Accommodation.entity.AccomImg;
 import com.Accommodation.entity.Member;
 import com.Accommodation.entity.Wish;
 import com.Accommodation.repository.AccomRepository;
@@ -50,43 +49,15 @@ public class WishService {
     }
 
     @Transactional(readOnly = true)
-    public boolean isWished(Long accomId, String email) {
-        return wishRepository.existsByMemberEmailAndAccomId(email, accomId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Long> getWishedAccomIds(String email) {
-        return wishRepository.findByMemberEmailOrderByRegTimeDesc(email).stream()
-                .map(wish -> wish.getAccom().getId())
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
     public List<WishListDto> getWishList(String email, String sort) {
-        List<WishListDto> wishItems = wishRepository.findByMemberEmailOrderByRegTimeDesc(email).stream()
-                .map(wish -> {
-                    Accom accom = wish.getAccom();
-                    return new WishListDto(
-                            accom.getId(),
-                            accom.getAccomName(),
-                            accom.getAccomType(),
-                            accom.getGrade(),
-                            accom.getAccomDetail(),
-                            accom.getLocation(),
-                            accom.getPricePerNight(),
-                            getRepImgUrl(accom),
-                            accom.getAvgRating(),
-                            accom.getReviewCount()
-                    );
-                })
-                .toList();
+        List<WishListDto> wishItems = wishRepository.findWishListDtosByMemberEmailOrderByRegTimeDesc(email);
 
         return sortWishItems(wishItems, sort);
     }
 
     @Transactional(readOnly = true)
     public int getWishCount(String email) {
-        return wishRepository.findByMemberEmailOrderByRegTimeDesc(email).size();
+        return Math.toIntExact(wishRepository.countByMemberEmail(email));
     }
 
     private List<WishListDto> sortWishItems(List<WishListDto> wishItems, String sort) {
@@ -110,13 +81,5 @@ public class WishService {
         return wishItems.stream()
                 .sorted(comparator)
                 .toList();
-    }
-
-    private String getRepImgUrl(Accom accom) {
-        return accom.getAccomImgList().stream()
-                .filter(img -> "Y".equals(img.getRepImgYn()))
-                .map(AccomImg::getImgUrl)
-                .findFirst()
-                .orElse("");
     }
 }

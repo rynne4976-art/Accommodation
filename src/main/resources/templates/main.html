@@ -129,6 +129,7 @@
         <a class="area-card" th:href="@{/searchList(searchQuery='경주')}"><img th:src="@{/images/main/gyeongju.png}" alt="경주"><span>경주</span></a>
     </div>
 </section>
+
 <section class="local-activities">
     <div class="local-activities__head">
         <p class="local-activities__eyebrow">LOCAL ACTIVITIES</p>
@@ -140,7 +141,7 @@
 
     <div class="local-activities__grid">
         <article class="activity-card">
-            <a class="activity-card__link" th:href="@{/searchList(searchQuery='서울')}">
+            <a class="activity-card__link" th:href="@{/activities/서울}">
                 <div class="activity-card__image-wrap">
                     <img th:src="@{/images/main/seoul.png}" alt="서울 즐길거리">
                     <span class="activity-card__label">서울</span>
@@ -151,13 +152,13 @@
                         전시, 야경 명소, 실내 체험, 문화 공간까지
                         서울에서 가볍게 즐길 수 있는 코스로 모아봤어요.
                     </p>
-                    <span class="activity-card__button">지역 숙소 보러가기</span>
+                    <span class="activity-card__button">지역 행사 보러가기</span>
                 </div>
             </a>
         </article>
 
         <article class="activity-card">
-            <a class="activity-card__link" th:href="@{/searchList(searchQuery='부산')}">
+            <a class="activity-card__link" th:href="@{/activities/부산}">
                 <div class="activity-card__image-wrap">
                     <img th:src="@{/images/main/busan.png}" alt="부산 즐길거리">
                     <span class="activity-card__label">부산</span>
@@ -168,13 +169,13 @@
                         해변 산책, 전망 명소, 로컬 체험과 함께
                         부산에서 즐길 수 있는 대표 코스를 확인해보세요.
                     </p>
-                    <span class="activity-card__button">지역 숙소 보러가기</span>
+                    <span class="activity-card__button">지역 행사 보러가기</span>
                 </div>
             </a>
         </article>
 
         <article class="activity-card">
-            <a class="activity-card__link" th:href="@{/searchList(searchQuery='강릉')}">
+            <a class="activity-card__link" th:href="@{/activities/강릉}">
                 <div class="activity-card__image-wrap">
                     <img th:src="@{/images/main/gangneung.png}" alt="강릉 즐길거리">
                     <span class="activity-card__label">강릉</span>
@@ -184,13 +185,13 @@
                     <p>
                         바다 풍경과 함께 즐길 수 있는 카페, 산책, 체험형 여행 코스를 중심으로 구성했어요.
                     </p>
-                    <span class="activity-card__button">지역 숙소 보러가기</span>
+                    <span class="activity-card__button">지역 행사 보러가기</span>
                 </div>
             </a>
         </article>
 
         <article class="activity-card">
-            <a class="activity-card__link" th:href="@{/searchList(searchQuery='제주')}">
+            <a class="activity-card__link" th:href="@{/activities/제주}">
                 <div class="activity-card__image-wrap">
                     <img th:src="@{/images/main/jeju.png}" alt="제주 즐길거리">
                     <span class="activity-card__label">제주</span>
@@ -200,13 +201,13 @@
                     <p>
                         오름, 해변, 드라이브, 야외 체험처럼 제주에서만 즐길 수 있는 여행 포인트를 담았어요.
                     </p>
-                    <span class="activity-card__button">지역 숙소 보러가기</span>
+                    <span class="activity-card__button">지역 행사 보러가기</span>
                 </div>
             </a>
         </article>
 
         <article class="activity-card">
-            <a class="activity-card__link" th:href="@{/searchList(searchQuery='경주')}">
+            <a class="activity-card__link" th:href="@{/activities/경주}">
                 <div class="activity-card__image-wrap">
                     <img th:src="@{/images/main/gyeongju.png}" alt="경주 즐길거리">
                     <span class="activity-card__label">경주</span>
@@ -217,7 +218,7 @@
                         한옥 감성, 역사 명소, 야경 스팟까지
                         경주에서 즐길 수 있는 대표 여행 코스를 담았어요.
                     </p>
-                    <span class="activity-card__button">지역 숙소 보러가기</span>
+                    <span class="activity-card__button">지역 행사 보러가기</span>
                 </div>
             </a>
         </article>

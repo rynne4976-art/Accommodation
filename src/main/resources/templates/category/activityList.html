@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layouts}">
+<head>
+    <meta charset="UTF_8">
+    <link rel="stylesheet" th:href="@{/css/activity.css}">
+</head>
+
+<th:block layout:fragment="content">
+    <section class="activity-hero">
+        <div class="activity-hero__overlay">
+            <p class="activity-hero__eyebrow">LOCAL ACTIVITIES</p>
+            <h1 th:text="${activityPage.headline}">부산 여행 추천</h1>
+            <p th:text="${activityPage.subHeadline}">
+                지역에서 즐길 수 있는 행사, 축제, 대표 관광지를 모아봤습니다.
+            </p>
+
+            <div class="activity-hero__actions">
+                <a class="activity-hero__button activity-hero__button--ghost"
+                   th:href="@{/searchList(searchQuery=${activityPage.regionName})}">
+                    지역 숙소 보러가기
+                </a>
+                <a class="activity-hero__button activity-hero__button--ghost"
+                   th:href="@{/main}">
+                    메인으로 돌아가기
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="activity-region-nav">
+        <a th:href="@{/activities/서울}"
+           th:classappend="${activityPage.regionName == '서울'} ? ' is-active'">서울</a>
+        <a th:href="@{/activities/부산}"
+           th:classappend="${activityPage.regionName == '부산'} ? ' is-active'">부산</a>
+        <a th:href="@{/activities/강릉}"
+           th:classappend="${activityPage.regionName == '강릉'} ? ' is-active'">강릉</a>
+        <a th:href="@{/activities/제주}"
+           th:classappend="${activityPage.regionName == '제주'} ? ' is-active'">제주</a>
+        <a th:href="@{/activities/경주}"
+           th:classappend="${activityPage.regionName == '경주'} ? ' is-active'">경주</a>
+    </section>
+
+    <section class="activity-featured-section"
+             th:if="${activityPage.featuredSection != null and activityPage.featuredSection.cards != null and !#lists.isEmpty(activityPage.featuredSection.cards)}">
+        <div class="activity-featured-section__head">
+            <div>
+                <p class="activity-list-section__eyebrow">FEATURED LINKS</p>
+                <h2 th:text="${activityPage.featuredSection.title}">부산 여행 추천</h2>
+                <p th:text="${activityPage.featuredSection.subtitle}">
+                    검색 결과와 별도로 바로 이동할 수 있는 지역 대표 링크입니다.
+                </p>
+            </div>
+        </div>
+
+        <div class="activity-featured-slider"
+             th:with="cardCount=${#lists.size(activityPage.featuredSection.cards)}"
+             th:attr="data-card-count=${cardCount}">
+            <button class="activity-featured-slider__control activity-featured-slider__control--prev"
+                    type="button"
+                    aria-label="이전 카드"
+                    th:if="${cardCount > 4}">
+                &#8249;
+            </button>
+
+            <div class="activity-featured-track"
+                 th:classappend="${cardCount > 4} ? ' is-scrollable'">
+                <a class="activity-featured-card"
+                   th:each="card : ${activityPage.featuredSection.cards}"
+                   th:href="${card.linkUrl}"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    <div class="activity-featured-card__overlay">
+                        <h3 th:text="${card.title}">대표 링크</h3>
+                        <p th:text="${card.subtitle}">설명</p>
+                    </div>
+                </a>
+            </div>
+
+            <button class="activity-featured-slider__control activity-featured-slider__control--next"
+                    type="button"
+                    aria-label="다음 카드"
+                    th:if="${cardCount > 4}">
+                &#8250;
+            </button>
+        </div>
+    </section>
+
+    <section class="activity-list-section">
+        <div class="activity-list-section__head">
+            <p class="activity-list-section__eyebrow">TRAVEL LIST</p>
+            <h2 th:text="${activityPage.regionName + ' 지역 행사 · 축제 · 즐길거리'}">
+                지역 행사 · 축제 · 즐길거리
+            </h2>
+            <p class="activity-list-section__sub">
+                지역별 행사, 축제, 대표 관광 정보를 세로 리스트 형태로 확인할 수 있습니다.
+            </p>
+        </div>
+
+        <div class="activity-list-vertical"
+             th:if="${activityList != null and !#lists.isEmpty(activityList)}">
+            <article class="activity-row-card" th:each="item : ${activityList}">
+                <div class="activity-row-card__media"
+                     th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}">
+                    <img th:src="${item.imageUrl}"
+                         alt="즐길거리 이미지"
+                         onerror="this.style.display='none'">
+                </div>
+
+                <div class="activity-row-card__body">
+                    <div class="activity-row-card__meta">
+                        <span th:if="${item.category != null and !#strings.isEmpty(item.category)}"
+                              th:text="${item.category}">행사/축제</span>
+                        <span th:if="${item.period != null and !#strings.isEmpty(item.period)}"
+                              th:text="${item.period}">2026.04.01 ~ 2026.04.30</span>
+                    </div>
+
+                    <h3 th:text="${item.title}">행사 제목</h3>
+
+                    <p class="activity-row-card__address"
+                       th:if="${item.address != null and !#strings.isEmpty(item.address)}"
+                       th:text="${item.address}">
+                        주소
+                    </p>
+
+                    <p class="activity-row-card__summary"
+                       th:text="${item.summary != null and !#strings.isEmpty(item.summary) ? item.summary : '상세 설명이 아직 제공되지 않습니다.'}">
+                        설명
+                    </p>
+
+                    <p class="activity-row-card__phone"
+                       th:if="${item.tel != null and !#strings.isEmpty(item.tel)}">
+                        문의: <span th:text="${item.tel}">000-0000-0000</span>
+                    </p>
+
+                    <div class="activity-row-card__actions">
+                        <a class="activity-row-card__button"
+                           th:if="${item.externalUrl != null and !#strings.isEmpty(item.externalUrl)}"
+                           th:href="${item.externalUrl}"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            행사/축제 링크 보기
+                        </a>
+
+                        <a class="activity-row-card__button activity-row-card__button--ghost"
+                           th:if="${item.detailUrl != null and !#strings.isEmpty(item.detailUrl)}"
+                           th:href="${item.detailUrl}"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            상세 정보 보기
+                        </a>
+
+                        <a class="activity-row-card__button activity-row-card__button--ghost"
+                           th:href="@{/searchList(searchQuery=${activityPage.regionName})}">
+                            이 지역 숙소 보기
+                        </a>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <div class="activity-empty"
+             th:if="${activityList == null or #lists.isEmpty(activityList)}">
+            <p>현재 표시할 지역 즐길거리 정보가 없습니다.</p>
+            <a th:href="@{/main}">메인으로 이동</a>
+        </div>
+    </section>
+
+    <script th:src="@{/js/activity-featured-slider.js}"></script>
+</th:block>
+
+</html>

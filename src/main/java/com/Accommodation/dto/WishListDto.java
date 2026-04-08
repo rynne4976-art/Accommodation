@@ -32,4 +32,11 @@ public class WishListDto {
         this.avgRating = avgRating;
         this.reviewCount = reviewCount;
     }
+
+    public WishListDto(Long accomId, String accomName, AccomType accomType, AccomGrade grade,
+                       String accomDetail, String location, Integer pricePerNight,
+                       String imgUrl, Double avgRating, Long reviewCount) {
+        this(accomId, accomName, accomType, grade, accomDetail, location, pricePerNight,
+                imgUrl, avgRating, reviewCount != null ? reviewCount.intValue() : 0);
+    }
 }

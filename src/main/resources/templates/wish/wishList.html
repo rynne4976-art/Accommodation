@@ -10,7 +10,7 @@
     <link rel="stylesheet" th:href="@{/css/wish.css}">
 </head>
 
-<div layout:fragment="content">
+<th:block layout:fragment="content">
     <section class="wish-page">
         <div class="wish-page__inner">
             <header class="wish-page__header" data-wish-header>
@@ -128,5 +128,5 @@
         </div>
     </section>
     <script th:src="@{/js/wish.js}"></script>
-</div>
+</th:block>
 </html>
