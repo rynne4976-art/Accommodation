@@ -106,9 +106,6 @@
                     </th:block>
                 </div>
 
-                <div class="accom-detail-actions">
-                    <a th:href="@{/transport(accomId=${accom.id})}" class="detail-action secondary">교통 보기</a>
-                </div>
             </div>
         </section>
 
@@ -214,7 +211,7 @@
                     </div>
 
                     <div class="order-form-group">
-                        <label>투숙 인원</label>
+                        <label>투숙 정보</label>
                         <div class="guest-row">
                             <div class="guest-input-box">
                                 <span class="guest-label">성인</span>
@@ -223,6 +220,10 @@
                             <div class="guest-input-box">
                                 <span class="guest-label">아동</span>
                                 <input type="number" id="childCount" value="0" min="0" oninput="onGuestChange()">
+                            </div>
+                            <div class="guest-input-box">
+                                <span class="guest-label">객실 수</span>
+                                <input type="number" id="roomCount" value="1" min="1" oninput="onGuestChange()">
                             </div>
                         </div>
                         <p class="order-form-hint" id="guestHint">최대 <span id="guestHintMax"></span>명까지 가능합니다.</p>
@@ -247,6 +248,7 @@
 
                     <div class="order-form-actions">
                         <button type="button" class="btn-order" style="width:100%;" onclick="submitToCart()">장바구니 담기</button>
+                        <button type="button" class="btn-back" style="width:100%;" onclick="submitOrder()">예약하기</button>
                     </div>
                 </aside>
             </div>
@@ -329,9 +331,12 @@
         </section>
 
         <section id="location-info" class="accom-detail-info-card">
-            <div class="detail-section-header">
-                <span class="accom-detail-label subtle">Location</span>
-                <h2>위치 정보</h2>
+            <div class="detail-section-header detail-section-header--location">
+                <div>
+                    <span class="accom-detail-label subtle">Location</span>
+                    <h2>위치 정보</h2>
+                </div>
+                <a th:href="@{/transport(accomId=${accom.id})}" class="location-transport-link">교통 정보 바로가기 →</a>
             </div>
 
             <div class="detail-section-card location-section-card">
@@ -734,6 +739,7 @@
         let nights           = 0;
         let lastAvailabilityKey     = '';
         let availabilityController  = null;
+        let latestRemainingRooms    = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('guestHintMax').textContent = effectiveMax;
@@ -981,6 +987,7 @@
 
         function getAdultCount() { return parseInt(document.getElementById('adultCount').value || '0', 10); }
         function getChildCount() { return parseInt(document.getElementById('childCount').value || '0', 10); }
+        function getRoomCount()  { return parseInt(document.getElementById('roomCount').value || '0', 10); }
 
         function calcSurchargePerNight(adult, child) {
             const total = adult + child;
@@ -995,17 +1002,24 @@
         function onGuestChange() {
             const adult = getAdultCount();
             const child = getChildCount();
+            const roomCount = getRoomCount();
             const total = adult + child;
             const hint  = document.getElementById('guestHint');
             let error = false;
             if (adult < 1) {
                 hint.textContent = '성인은 최소 1명 이상이어야 합니다.';
                 error = true;
+            } else if (roomCount < 1) {
+                hint.textContent = '객실 수는 최소 1실 이상이어야 합니다.';
+                error = true;
             } else if (total < typeMinGuests) {
                 hint.textContent = `이 숙소 유형은 최소 ${typeMinGuests}인 이상이어야 합니다.`;
                 error = true;
             } else if (total > effectiveMax) {
                 hint.textContent = `최대 ${effectiveMax}명까지 가능합니다.`;
+                error = true;
+            } else if (latestRemainingRooms !== null && roomCount > latestRemainingRooms) {
+                hint.textContent = `잔여 객실은 ${latestRemainingRooms}실입니다.`;
                 error = true;
             } else {
                 hint.textContent = `최대 ${effectiveMax}명까지 가능합니다.`;
@@ -1044,9 +1058,10 @@
 
             const adult          = getAdultCount();
             const child          = getChildCount();
+            const roomCount      = getRoomCount();
             const surcharge      = calcSurchargePerNight(adult, child);
-            const baseTotal      = pricePerNight * nights;
-            const surchargeTotal = surcharge * nights;
+            const baseTotal      = pricePerNight * nights * roomCount;
+            const surchargeTotal = surcharge * nights * roomCount;
             const grandTotal     = baseTotal + surchargeTotal;
 
             basePriceEl.textContent = baseTotal.toLocaleString('ko-KR') + '원';
@@ -1067,9 +1082,25 @@
             el.innerHTML = `<span class="${cls}">${text}</span>`;
         }
 
+        async function fetchRemainingRooms() {
+            const response = await fetch(
+                `/orders/accom/${accomId}/availability?checkInDate=${encodeURIComponent(selectedCheckIn)}&checkOutDate=${encodeURIComponent(selectedCheckOut)}`
+            );
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+            const data = await response.json();
+            return typeof data.remainingRooms === 'number' ? data.remainingRooms : null;
+        }
+
         async function updateAvailability(remainingEl) {
             if (!remainingEl) return;
-            if (!selectedCheckIn || !selectedCheckOut) { setAvailabilityBadge(remainingEl, '-'); lastAvailabilityKey = ''; return; }
+            if (!selectedCheckIn || !selectedCheckOut) {
+                latestRemainingRooms = null;
+                setAvailabilityBadge(remainingEl, '-');
+                lastAvailabilityKey = '';
+                return;
+            }
             const key = `${selectedCheckIn}_${selectedCheckOut}`;
             if (key === lastAvailabilityKey) return;
             lastAvailabilityKey = key;
@@ -1083,6 +1114,7 @@
                 if (!response.ok) { setAvailabilityBadge(remainingEl, '-'); return; }
                 const data = await response.json();
                 const remaining = typeof data.remainingRooms === 'number' ? data.remainingRooms : null;
+                latestRemainingRooms = remaining;
                 if (remaining === null) {
                     setAvailabilityBadge(remainingEl, '-');
                 } else if (remaining <= 0) {
@@ -1092,20 +1124,35 @@
                 } else {
                     setAvailabilityBadge(remainingEl, '예약가능', 'available');
                 }
+                onGuestChange();
             } catch (error) {
+                latestRemainingRooms = null;
                 if (error.name !== 'AbortError') setAvailabilityBadge(remainingEl, '-');
             }
         }
 
-        async function submitToCart() {
+        function getBookingSelection() {
             if (!selectedCheckIn || !selectedCheckOut) { alert('체크인과 체크아웃 날짜를 선택해 주세요.'); return; }
             if (nights <= 0) { alert('체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.'); return; }
             const adult = getAdultCount();
             const child = getChildCount();
+            const roomCount = getRoomCount();
             const total = adult + child;
             if (adult < 1) { alert('성인은 최소 1명 이상이어야 합니다.'); return; }
+            if (roomCount < 1) { alert('객실 수는 최소 1실 이상이어야 합니다.'); return; }
             if (total < typeMinGuests) { alert(`이 숙소 유형은 최소 ${typeMinGuests}인 이상이어야 합니다.`); return; }
             if (total > effectiveMax) { alert(`최대 ${effectiveMax}명까지 가능합니다.`); return; }
+            if (latestRemainingRooms !== null && roomCount > latestRemainingRooms) {
+                alert(`예약 가능한 객실 수를 초과했습니다. 잔여 객실은 ${latestRemainingRooms}실입니다.`);
+                return;
+            }
+
+            return { adult, child, roomCount };
+        }
+
+        async function submitOrder() {
+            const selection = getBookingSelection();
+            if (!selection) return;
 
             const csrfTokenMeta  = document.querySelector('meta[name="_csrf"]');
             const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
@@ -1113,10 +1160,51 @@
             if (csrfTokenMeta && csrfHeaderMeta) headers[csrfHeaderMeta.content] = csrfTokenMeta.content;
 
             try {
+                const remainingRooms = await fetchRemainingRooms();
+                if (remainingRooms !== null && selection.roomCount > remainingRooms) {
+                    alert(`예약 가능한 객실 수를 초과했습니다. 잔여 객실은 ${remainingRooms}실입니다.`);
+                    latestRemainingRooms = remainingRooms;
+                    onGuestChange();
+                    return;
+                }
+                const response = await fetch('/order', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ accomId, checkInDate: selectedCheckIn, checkOutDate: selectedCheckOut, adultCount: selection.adult, childCount: selection.child, roomCount: selection.roomCount })
+                });
+                if (response.ok) {
+                    const orderId = await response.text();
+                    window.location.href = `/orders/${orderId}`;
+                } else {
+                    const message = await response.text();
+                    alert('예약 실패: ' + message);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        async function submitToCart() {
+            const selection = getBookingSelection();
+            if (!selection) return;
+
+            const csrfTokenMeta  = document.querySelector('meta[name="_csrf"]');
+            const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfTokenMeta && csrfHeaderMeta) headers[csrfHeaderMeta.content] = csrfTokenMeta.content;
+
+            try {
+                const remainingRooms = await fetchRemainingRooms();
+                if (remainingRooms !== null && selection.roomCount > remainingRooms) {
+                    alert(`예약 가능한 객실 수를 초과했습니다. 잔여 객실은 ${remainingRooms}실입니다.`);
+                    latestRemainingRooms = remainingRooms;
+                    onGuestChange();
+                    return;
+                }
                 const response = await fetch('/cart', {
                     method: 'POST',
                     headers: headers,
-                    body: JSON.stringify({ accomId, checkInDate: selectedCheckIn, checkOutDate: selectedCheckOut, adultCount: adult, childCount: child })
+                    body: JSON.stringify({ accomId, checkInDate: selectedCheckIn, checkOutDate: selectedCheckOut, adultCount: selection.adult, childCount: selection.child, roomCount: selection.roomCount })
                 });
                 if (response.ok) {
                     alert('장바구니에 담았습니다. 장바구니에서 예약을 확정해 주세요.');

@@ -29,13 +29,16 @@ public class CartListItemDto {
     /** 아동 수 */
     private final int childCount;
 
+    /** 객실 수 */
+    private final int roomCount;
+
     /** 1박 기본 요금 */
     private final int pricePerNight;
 
     /** 1박 추가 요금 (인원 초과분) */
     private final int surchargePerNight;
 
-    /** 총 결제 예상 금액 = (기본 + 추가) × 박 수 */
+    /** 총 결제 예상 금액 = (기본 + 추가) × 박 수 × 객실 수 */
     private final int totalPrice;
 
     private final String repImgUrl;
@@ -51,6 +54,7 @@ public class CartListItemDto {
         this.nights        = (int) ChronoUnit.DAYS.between(cartItem.getCheckInDate(), cartItem.getCheckOutDate());
         this.adultCount    = cartItem.getAdultCount();
         this.childCount    = cartItem.getChildCount();
+        this.roomCount     = cartItem.getRoomCount();
         this.pricePerNight = cartItem.getAccom().getPricePerNight();
         this.surchargePerNight = GuestPricingUtils.calculateSurchargePerNight(
                 cartItem.getAccom().getAccomType(),
@@ -58,7 +62,7 @@ public class CartListItemDto {
                 cartItem.getChildCount(),
                 cartItem.getAccom().getPricePerNight()
         );
-        this.totalPrice = (this.pricePerNight + this.surchargePerNight) * this.nights;
+        this.totalPrice = (this.pricePerNight + this.surchargePerNight) * this.nights * this.roomCount;
         this.repImgUrl  = repImgUrl;
     }
 }

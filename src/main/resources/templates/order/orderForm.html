@@ -136,15 +136,15 @@
                     </span>
                 </div>
 
-                <!-- 투숙 인원 (성인 / 아동 분리) -->
+                <!-- 투숙 정보 -->
                 <div class="order-form-group">
-                    <label>투숙 인원</label>
+                    <label>투숙 정보</label>
                     <div class="guest-row">
                         <div class="guest-input-box">
                             <span class="guest-label">성인</span>
                             <input type="number"
                                    id="adultCount"
-                                   value="1"
+                                   th:value="${adultCount}"
                                    min="1"
                                    oninput="onGuestChange()">
                         </div>
@@ -152,8 +152,16 @@
                             <span class="guest-label">아동</span>
                             <input type="number"
                                    id="childCount"
-                                   value="0"
+                                   th:value="${childCount}"
                                    min="0"
+                                   oninput="onGuestChange()">
+                        </div>
+                        <div class="guest-input-box">
+                            <span class="guest-label">객실 수</span>
+                            <input type="number"
+                                   id="roomCount"
+                                   th:value="${roomCount}"
+                                   min="1"
                                    oninput="onGuestChange()">
                         </div>
                     </div>
@@ -225,6 +233,7 @@
         let nights     = 0;
         let lastAvailabilityKey = '';
         let availabilityController = null;
+        let latestRemainingRooms = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('guestHintMax').textContent = effectiveMax;
@@ -495,6 +504,7 @@
         // ── 인원 변경 & 추가요금 계산 ────────────────────────────────────────
         function getAdultCount()  { return parseInt(document.getElementById('adultCount').value  || '0', 10); }
         function getChildCount()  { return parseInt(document.getElementById('childCount').value  || '0', 10); }
+        function getRoomCount()   { return parseInt(document.getElementById('roomCount').value   || '0', 10); }
 
         /**
          * 1박 추가 요금 계산
@@ -513,6 +523,7 @@
         function onGuestChange() {
             const adult = getAdultCount();
             const child = getChildCount();
+            const roomCount = getRoomCount();
             const total = adult + child;
             const hint  = document.getElementById('guestHint');
 
@@ -520,11 +531,17 @@
             if (adult < 1) {
                 hint.textContent = '성인은 최소 1명 이상이어야 합니다.';
                 error = true;
+            } else if (roomCount < 1) {
+                hint.textContent = '객실 수는 최소 1실 이상이어야 합니다.';
+                error = true;
             } else if (total < typeMinGuests) {
                 hint.textContent = `이 숙소 유형은 최소 ${typeMinGuests}인 이상이어야 합니다.`;
                 error = true;
             } else if (total > effectiveMax) {
                 hint.textContent = `최대 ${effectiveMax}명까지 가능합니다.`;
+                error = true;
+            } else if (latestRemainingRooms !== null && roomCount > latestRemainingRooms) {
+                hint.textContent = `잔여 객실은 ${latestRemainingRooms}실입니다.`;
                 error = true;
             } else {
                 hint.textContent = `최대 ${effectiveMax}명까지 가능합니다.`;
@@ -566,9 +583,10 @@
 
             const adult       = getAdultCount();
             const child       = getChildCount();
+            const roomCount   = getRoomCount();
             const surcharge   = calcSurchargePerNight(adult, child);
-            const baseTotal   = pricePerNight * nights;
-            const surchargeTotal = surcharge * nights;
+            const baseTotal   = pricePerNight * nights * roomCount;
+            const surchargeTotal = surcharge * nights * roomCount;
             const grandTotal  = baseTotal + surchargeTotal;
 
             basePriceEl.textContent = baseTotal.toLocaleString('ko-KR') + '원';
@@ -590,9 +608,21 @@
             el.innerHTML = `<span class="${cls}">${text}</span>`;
         }
 
+        async function fetchRemainingRooms() {
+            const response = await fetch(
+                `/orders/accom/${accomId}/availability?checkInDate=${encodeURIComponent(selectedCheckIn)}&checkOutDate=${encodeURIComponent(selectedCheckOut)}`
+            );
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+            const data = await response.json();
+            return typeof data.remainingRooms === 'number' ? data.remainingRooms : null;
+        }
+
         async function updateAvailability(remainingEl) {
             if (!remainingEl) return;
             if (!selectedCheckIn || !selectedCheckOut) {
+                latestRemainingRooms = null;
                 setAvailabilityBadge(remainingEl, '-');
                 lastAvailabilityKey = '';
                 return;
@@ -619,6 +649,7 @@
                 }
                 const data = await response.json();
                 const remaining = typeof data.remainingRooms === 'number' ? data.remainingRooms : null;
+                latestRemainingRooms = remaining;
                 if (remaining === null) {
                     setAvailabilityBadge(remainingEl, '-');
                 } else if (remaining <= 0) {
@@ -629,7 +660,9 @@
                 } else {
                     setAvailabilityBadge(remainingEl, '예약가능', 'available');
                 }
+                onGuestChange();
             } catch (error) {
+                latestRemainingRooms = null;
                 if (error.name === 'AbortError') {
                     return;
                 }
@@ -649,10 +682,15 @@
 
             const adult = getAdultCount();
             const child = getChildCount();
+            const roomCount = getRoomCount();
             const total = adult + child;
 
             if (adult < 1) {
                 alert('성인은 최소 1명 이상이어야 합니다.');
+                return;
+            }
+            if (roomCount < 1) {
+                alert('객실 수는 최소 1실 이상이어야 합니다.');
                 return;
             }
             if (total < typeMinGuests) {
@@ -661,6 +699,10 @@
             }
             if (total > effectiveMax) {
                 alert(`최대 ${effectiveMax}명까지 가능합니다.`);
+                return;
+            }
+            if (latestRemainingRooms !== null && roomCount > latestRemainingRooms) {
+                alert(`예약 가능한 객실 수를 초과했습니다. 잔여 객실은 ${latestRemainingRooms}실입니다.`);
                 return;
             }
 
@@ -672,6 +714,13 @@
             }
 
             try {
+                const remainingRooms = await fetchRemainingRooms();
+                if (remainingRooms !== null && roomCount > remainingRooms) {
+                    latestRemainingRooms = remainingRooms;
+                    onGuestChange();
+                    alert(`예약 가능한 객실 수를 초과했습니다. 잔여 객실은 ${remainingRooms}실입니다.`);
+                    return;
+                }
                 const response = await fetch('/cart', {
                     method: 'POST',
                     headers: headers,
@@ -680,7 +729,8 @@
                         checkInDate:  selectedCheckIn,
                         checkOutDate: selectedCheckOut,
                         adultCount:   adult,
-                        childCount:   child
+                        childCount:   child,
+                        roomCount:    roomCount
                     })
                 });
 
@@ -699,6 +749,7 @@
         function applyCartEditContext() {
             const adultParam = urlParams.get('adultCount');
             const childParam = urlParams.get('childCount');
+            const roomParam = urlParams.get('roomCount');
             const backButton = document.querySelector('.btn-back');
             const submitButton = document.querySelector('.btn-order');
             const title = document.querySelector('.order-form-page__title');
@@ -708,6 +759,9 @@
             }
             if (childParam !== null) {
                 document.getElementById('childCount').value = childParam;
+            }
+            if (roomParam !== null) {
+                document.getElementById('roomCount').value = roomParam;
             }
 
             if (!cartItemId) return; // 수정 모드가 아니면 종료

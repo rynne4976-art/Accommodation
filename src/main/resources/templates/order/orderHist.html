@@ -156,7 +156,7 @@
                     <div class="order-item__name" th:text="${item.accomName}">숙소명</div>
                     <div class="order-item__meta">
                         <div th:text="${item.checkInDate + ' ~ ' + item.checkOutDate}">체크인/체크아웃</div>
-                        <div th:text="${item.count + '박 · ' + item.guestCount + '명'}">숙박 정보</div>
+                        <div th:text="${item.count + '박 · ' + item.guestCount + '명 · 객실 ' + item.roomCount + '실'}">숙박 정보</div>
                     </div>
                 </div>
                 <div class="order-item__price"

@@ -287,7 +287,7 @@
                     </div>
                 </div>
                 <div class="order-item__price"
-                     th:text="${#numbers.formatInteger(item.orderPrice * item.count, 3, 'COMMA')} + '원'">0원</div>
+                     th:text="${#numbers.formatInteger(item.totalPrice, 3, 'COMMA')} + '원'">0원</div>
             </div>
 
             <div class="order-card__footer">
@@ -338,7 +338,7 @@
                     </div>
                 </div>
                 <div class="order-item__price order-item__price--cancelled"
-                     th:text="${#numbers.formatInteger(item.orderPrice * item.count, 3, 'COMMA')} + '원'">0원</div>
+                     th:text="${#numbers.formatInteger(item.totalPrice, 3, 'COMMA')} + '원'">0원</div>
             </div>
         </div>
     </section>

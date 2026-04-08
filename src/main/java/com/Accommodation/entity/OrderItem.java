@@ -53,6 +53,9 @@ public class OrderItem extends BaseEntity {
     /** 아동 수 */
     private int childCount;
 
+    /** 객실 수 */
+    private int roomCount = 1;
+
     @OneToMany(
             mappedBy = "orderItem",
             cascade = CascadeType.ALL,
@@ -61,9 +64,9 @@ public class OrderItem extends BaseEntity {
     @OrderBy("stayDate ASC")
     private List<OrderStayDate> stayDateList = new ArrayList<>();
 
-    /** 총 결제 금액 = (기본 요금 + 추가 요금) × 박 수 */
+    /** 총 결제 금액 = (기본 요금 + 추가 요금) × 박 수 × 객실 수 */
     public int getTotalPrice() {
-        return (orderPrice + surchargePerNight) * count;
+        return (orderPrice + surchargePerNight) * count * roomCount;
     }
 
     /**

@@ -41,6 +41,7 @@ public class OrderController {
                             @RequestParam(required = false) LocalDate checkOutDate,
                             @RequestParam(required = false, defaultValue = "1") Integer adultCount,
                             @RequestParam(required = false, defaultValue = "0") Integer childCount,
+                            @RequestParam(required = false, defaultValue = "1") Integer roomCount,
                             @RequestParam(required = false) Long cartItemId,
                             Principal principal,
                             Model model) {
@@ -67,6 +68,7 @@ public class OrderController {
             model.addAttribute("checkOutDate", checkOutDate);
             model.addAttribute("adultCount", adultCount);
             model.addAttribute("childCount", childCount);
+            model.addAttribute("roomCount", roomCount);
             model.addAttribute("cartItemId", cartItemId);
             model.addAttribute("isEditingCart", cartItemId != null);
             model.addAttribute("operationDays", operationDays);

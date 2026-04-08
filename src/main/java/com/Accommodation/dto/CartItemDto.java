@@ -28,4 +28,8 @@ public class CartItemDto {
     /** 아동 수 (0명 이상) */
     @Min(value = 0, message = "아동 수는 0명 이상이어야 합니다.")
     private int childCount = 0;
+
+    /** 객실 수 (최소 1실) */
+    @Min(value = 1, message = "객실 수는 최소 1실 이상이어야 합니다.")
+    private int roomCount = 1;
 }

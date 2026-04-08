@@ -20,7 +20,7 @@ public interface OrderStayDateRepository extends JpaRepository<OrderStayDate, Lo
      * @param excludeOrderItemId 수정 시 본인 항목을 카운트에서 제외 (null 이면 제외 없음)
      */
     @Query("""
-            SELECT COUNT(osd.id)
+            SELECT COALESCE(SUM(osd.orderItem.roomCount), 0)
             FROM OrderStayDate osd
             WHERE osd.accom.id = :accomId
               AND osd.stayDate = :stayDate
@@ -43,7 +43,7 @@ public interface OrderStayDateRepository extends JpaRepository<OrderStayDate, Lo
             WHERE osd.accom.id = :accomId
               AND osd.orderItem.bookingStatus = :confirmedStatus
             GROUP BY osd.stayDate
-            HAVING COUNT(osd.id) >= :roomCount
+            HAVING COALESCE(SUM(osd.orderItem.roomCount), 0) >= :roomCount
             ORDER BY osd.stayDate ASC
             """)
     List<LocalDate> findSoldOutDates(@Param("accomId") Long accomId,
@@ -57,7 +57,7 @@ public interface OrderStayDateRepository extends JpaRepository<OrderStayDate, Lo
      * result[0] = stayDate (LocalDate), result[1] = count (Long)
      */
     @Query("""
-            SELECT osd.stayDate, COUNT(osd.id)
+            SELECT osd.stayDate, COALESCE(SUM(osd.orderItem.roomCount), 0)
             FROM OrderStayDate osd
             WHERE osd.accom.id = :accomId
               AND osd.stayDate >= :from

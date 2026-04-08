@@ -435,8 +435,8 @@
                         <div class="order-side-note__item">
                             <span class="order-side-note__label">숙박 수 / 인원</span>
                             <div class="order-side-note__value"
-                                 th:text="${order.orderItemDtos[0].count + '박 · ' + order.orderItemDtos[0].guestCount + '명'}">
-                                2박 · 2명
+                                 th:text="${order.orderItemDtos[0].count + '박 · ' + order.orderItemDtos[0].guestCount + '명 · 객실 ' + order.orderItemDtos[0].roomCount + '실'}">
+                                2박 · 2명 · 객실 1실
                             </div>
                         </div>
                         <div class="order-side-note__item">
@@ -474,6 +474,10 @@
                         <div class="order-room__item">
                             <span class="order-room__label">인원 수</span>
                             <div class="order-room__value" th:text="${item.guestCount + '명'}">2명</div>
+                        </div>
+                        <div class="order-room__item">
+                            <span class="order-room__label">객실 수</span>
+                            <div class="order-room__value" th:text="${item.roomCount + '실'}">1실</div>
                         </div>
                         <div class="order-room__item">
                             <span class="order-room__label">예약 상태</span>
