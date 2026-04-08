@@ -52,6 +52,13 @@
             padding: 28px 32px;
             box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
             margin-bottom: 20px;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 28px 66px rgba(15, 23, 42, 0.11);
         }
 
         .order-card__top {
@@ -265,7 +272,10 @@
             <p>예약 내역이 없습니다.</p>
         </div>
 
-        <div th:each="order : ${orders}" class="order-card">
+        <div th:each="order : ${orders}"
+             class="order-card"
+             th:attr="data-order-id=${order.orderId}"
+             onclick="goToOrderDetail(this)">
             <div class="order-card__top">
                 <span class="order-card__date"
                       th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">날짜</span>
@@ -293,7 +303,7 @@
             <div class="order-card__footer">
                 <button class="btn-order-action btn-order-cancel"
                         th:data-order-id="${order.orderId}"
-                        onclick="cancelOrder(this)">
+                        onclick="cancelOrder(this, event)">
                     예약 취소
                 </button>
             </div>
@@ -311,7 +321,10 @@
             <p>취소된 예약이 없습니다.</p>
         </div>
 
-        <div th:each="order : ${cancelledOrders}" class="order-card order-card--cancelled">
+        <div th:each="order : ${cancelledOrders}"
+             class="order-card order-card--cancelled"
+             th:attr="data-order-id=${order.orderId}"
+             onclick="goToOrderDetail(this)">
             <div class="order-card__top">
                 <div>
                     <span class="order-card__date"
@@ -353,8 +366,15 @@
         return document.querySelector('meta[name="_csrf"]').getAttribute('content');
     }
 
+    function goToOrderDetail(element) {
+        const orderId = element.getAttribute('data-order-id');
+        if (!orderId) return;
+        window.location.href = '/orders/' + orderId;
+    }
+
     // ── 예약 취소 ──────────────────────────────────────────────────────────────
-    function cancelOrder(btn) {
+    function cancelOrder(btn, event) {
+        if (event) event.stopPropagation();
         if (!confirm('예약을 취소하시겠습니까?')) return;
         const orderId = btn.getAttribute('data-order-id');
 
