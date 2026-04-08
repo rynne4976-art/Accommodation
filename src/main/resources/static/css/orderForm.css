@@ -456,10 +456,12 @@
 .guest-row {
     display: flex;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
 .guest-input-box {
     flex: 1;
+    min-width: 110px;
 }
 
 .guest-label {

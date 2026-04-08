@@ -24,6 +24,7 @@ public class OrderItemDto {
     private Integer guestCount;
     private int adultCount;
     private int childCount;
+    private int roomCount;
     private BookingStatus bookingStatus;
 
     public OrderItemDto(OrderItem orderItem, String imgUrl) {
@@ -40,12 +41,13 @@ public class OrderItemDto {
         this.guestCount        = orderItem.getGuestCount();
         this.adultCount        = orderItem.getAdultCount();
         this.childCount        = orderItem.getChildCount();
+        this.roomCount         = orderItem.getRoomCount();
         this.bookingStatus     = orderItem.getBookingStatus();
     }
 
-    /** 총 결제 금액 = (기본 + 추가) × 박 수 */
+    /** 총 결제 금액 = (기본 + 추가) × 박 수 × 객실 수 */
     public int getTotalPrice() {
-        return (orderPrice + surchargePerNight) * count;
+        return (orderPrice + surchargePerNight) * count * roomCount;
     }
 
     private String toGradeLabel(OrderItem orderItem) {

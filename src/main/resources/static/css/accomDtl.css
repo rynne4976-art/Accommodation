@@ -9,28 +9,48 @@
     top: 0;
     z-index: 5;
     display: flex;
-    gap: 28px;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
     margin-top: 28px;
-    padding: 0 8px;
-    background: rgba(247, 247, 247, 0.92);
-    border-bottom: 1px solid #dfe5ee;
-    backdrop-filter: blur(8px);
+    margin-bottom: 22px;
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid #e7ecf3;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    backdrop-filter: blur(12px);
     overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.accom-detail-tab-nav::-webkit-scrollbar {
+    display: none;
 }
 
 .tab-nav-link {
     flex: 0 0 auto;
-    padding: 18px 4px 16px;
-    color: #475467;
+    min-width: 104px;
+    padding: 13px 18px;
+    border-radius: 12px;
+    color: #526071;
     text-decoration: none;
+    font-size: 1rem;
     font-weight: 700;
-    border-bottom: 3px solid transparent;
+    line-height: 1;
+    text-align: center;
+    transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .tab-nav-link:hover,
 .tab-nav-link:focus {
     color: #1f4acc;
-    border-bottom-color: #1f4acc;
+    background: #eef4ff;
+}
+
+.tab-nav-link:focus-visible {
+    outline: 2px solid rgba(31, 74, 204, 0.18);
+    outline-offset: 2px;
 }
 
 .accom-detail-hero {

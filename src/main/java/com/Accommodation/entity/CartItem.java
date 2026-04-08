@@ -48,4 +48,8 @@ public class CartItem extends BaseTimeEntity {
     /** 아동 수 (0명 이상) */
     @Column(nullable = false)
     private int childCount = 0;
+
+    /** 객실 수 (최소 1실) */
+    @Column(nullable = false)
+    private int roomCount = 1;
 }

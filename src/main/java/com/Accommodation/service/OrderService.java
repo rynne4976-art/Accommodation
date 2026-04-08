@@ -65,6 +65,7 @@ public class OrderService {
 
         int adultCount = cartItem.getAdultCount();
         int childCount = cartItem.getChildCount();
+        int roomCount  = cartItem.getRoomCount();
         int surcharge  = GuestPricingUtils.calculateSurchargePerNight(
                 accom.getAccomType(), adultCount, childCount, accom.getPricePerNight());
         int nights = (int) ChronoUnit.DAYS.between(cartItem.getCheckInDate(), cartItem.getCheckOutDate());
@@ -76,6 +77,7 @@ public class OrderService {
         orderItem.setSurchargePerNight(surcharge);
         orderItem.setAdultCount(adultCount);
         orderItem.setChildCount(childCount);
+        orderItem.setRoomCount(roomCount);
         orderItem.setGuestCount(adultCount + childCount);
         orderItem.setCheckInDate(cartItem.getCheckInDate());
         orderItem.setCheckOutDate(cartItem.getCheckOutDate());
@@ -107,10 +109,11 @@ public class OrderService {
 
         int adultCount = orderDto.getAdultCount();
         int childCount = orderDto.getChildCount();
+        int roomCount  = orderDto.getRoomCount();
 
         GuestPricingUtils.validateGuestCount(accom.getAccomType(), adultCount, childCount);
         validateBooking(accom, orderDto.getCheckInDate(), orderDto.getCheckOutDate(),
-                adultCount + childCount, null);
+                adultCount + childCount, null, roomCount);
 
         int surcharge = GuestPricingUtils.calculateSurchargePerNight(
                 accom.getAccomType(), adultCount, childCount, accom.getPricePerNight());
@@ -122,6 +125,7 @@ public class OrderService {
         orderItem.setSurchargePerNight(surcharge);
         orderItem.setAdultCount(adultCount);
         orderItem.setChildCount(childCount);
+        orderItem.setRoomCount(roomCount);
         orderItem.setGuestCount(adultCount + childCount);
         orderItem.setCheckInDate(orderDto.getCheckInDate());
         orderItem.setCheckOutDate(orderDto.getCheckOutDate());
@@ -197,7 +201,7 @@ public class OrderService {
                     .orElseThrow(EntityNotFoundException::new);
 
             validateBooking(accom, dto.getCheckInDate(), dto.getCheckOutDate(),
-                    item.getGuestCount(), item.getId());
+                    item.getGuestCount(), item.getId(), item.getRoomCount());
 
             item.setCheckInDate(dto.getCheckInDate());
             item.setCheckOutDate(dto.getCheckOutDate());
@@ -290,10 +294,10 @@ public class OrderService {
     @Transactional(readOnly = true)
     public int getRemainingRooms(Long accomId, LocalDate checkInDate, LocalDate checkOutDate) {
         if (checkInDate == null || checkOutDate == null) {
-            throw new IllegalArgumentException("泥댄겕??/泥댄겕?꾩썐 ?좎쭨???꾩닔?낅땲??");
+            throw new IllegalArgumentException("체크인/체크아웃 날짜는 필수입니다.");
         }
         if (!checkOutDate.isAfter(checkInDate)) {
-            throw new IllegalArgumentException("泥댄겕?꾩썐 ?좎쭨??泥댄겕???좎쭨蹂대떎 ?댄썑?ъ빞 ?⑸땲??");
+            throw new IllegalArgumentException("체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.");
         }
 
         Accom accom = accomRepository.findById(accomId)
@@ -381,7 +385,8 @@ public class OrderService {
                                 LocalDate checkInDate,
                                 LocalDate checkOutDate,
                                 int totalGuestCount,
-                                Long excludeOrderItemId) {
+                                Long excludeOrderItemId,
+                                int requestedRoomCount) {
 
         if (!"Y".equals(accom.getReserveStatCd())) {
             throw new OutOfStockException("현재 예약이 불가능한 숙소입니다.");
@@ -398,6 +403,16 @@ public class OrderService {
         if (totalGuestCount > accom.getGuestCount()) {
             throw new IllegalArgumentException(
                     "투숙 인원이 최대 수용 인원(" + accom.getGuestCount() + "명)을 초과합니다.");
+        }
+        Integer totalRoomCount = accom.getRoomCount();
+        if (totalRoomCount == null || totalRoomCount <= 0) {
+            throw new IllegalArgumentException("예약 가능한 객실이 없는 숙소입니다.");
+        }
+        if (requestedRoomCount < 1) {
+            throw new IllegalArgumentException("객실 수는 최소 1실 이상이어야 합니다.");
+        }
+        if (requestedRoomCount > totalRoomCount) {
+            throw new IllegalArgumentException("객실 수가 전체 보유 객실 수를 초과합니다.");
         }
 
         AccomOperationPolicy policy = accom.getOperationPolicy();
@@ -444,7 +459,7 @@ public class OrderService {
             long confirmedCount = orderStayDateRepository.countConfirmedByDate(
                     accom.getId(), stayDate, BookingStatus.CONFIRMED, excludeOrderItemId);
 
-            if (confirmedCount >= accom.getRoomCount()) {
+            if (confirmedCount + requestedRoomCount > totalRoomCount) {
                 throw new IllegalArgumentException(
                         "선택한 날짜 중 예약이 마감된 날짜가 있습니다: " + stayDate);
             }

@@ -19,12 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ?λ컮援щ땲(?덉빟 ?湲? ?쒕퉬??
+ * 장바구니(예약 대기) 서비스.
  *
- * <p>?먮쫫: ?덉빟?섍린 ?????λ컮援щ땲 異붽?(PENDING) ???덉빟 ?뺤젙(CONFIRMED ??Order ?앹꽦)</p>
+ * <p>흐름: 예약하기 버튼은 장바구니 추가(PENDING) 또는 예약 확정(CONFIRMED 주문 생성)으로 이어진다.</p>
  * <ul>
- *   <li>?λ컮援щ땲 異붽? ?? roomCount 蹂寃??놁쓬, CONFIRMED ?덉빟 湲곗??쇰줈 留뚯떎 ?щ?留?泥댄겕</li>
- *   <li>?덉빟 ?뺤젙 ?? ?ш?利???Order ?앹꽦, 留뚯떎?????좎쭨???ㅻⅨ ?ъ슜???λ컮援щ땲??SSE ?뚮┝</li>
+ *   <li>장바구니 추가 시 객실 수(roomCount)는 차감하지 않고, CONFIRMED 예약 기준으로만 재고를 확인한다.</li>
+ *   <li>예약 확정 시 재검증 후 Order를 생성하고, 만실된 날짜가 있으면 다른 사용자의 장바구니도 영향을 받는다.</li>
  * </ul>
  */
 @Service
@@ -38,8 +38,8 @@ public class CartService {
     private final OrderService orderService;
 
     /**
-     * ?덉빟 ?湲??λ컮援щ땲)????ぉ??異붽??쒕떎.
-     * roomCount ??以꾩씠吏 ?딆쑝硫? CONFIRMED ?덉빟 湲곗??쇰줈 留뚯떎 ?щ?留??뺤씤?쒕떎.
+     * 예약 대기(장바구니) 항목을 추가한다.
+     * roomCount는 즉시 차감하지 않으며, CONFIRMED 예약 기준으로만 재고를 확인한다.
      */
     public Long addCartItem(CartItemDto dto, String email) {
         Accom accom = accomRepository.findWithOperationInfoById(dto.getAccomId())
@@ -47,7 +47,7 @@ public class CartService {
 
         Member member = memberRepository.findByEmail(email);
         if (member == null) {
-            throw new EntityNotFoundException("?뚯썝 ?뺣낫瑜?李얠쓣 ???놁뒿?덈떎.");
+            throw new EntityNotFoundException("회원 정보를 찾을 수 없습니다.");
         }
 
         GuestPricingUtils.validateGuestCount(accom.getAccomType(), dto.getAdultCount(), dto.getChildCount());
@@ -57,7 +57,8 @@ public class CartService {
                 dto.getCheckInDate(),
                 dto.getCheckOutDate(),
                 dto.getAdultCount() + dto.getChildCount(),
-                null
+                null,
+                dto.getRoomCount()
         );
 
         CartItem cartItem = new CartItem();
@@ -67,6 +68,7 @@ public class CartService {
         cartItem.setCheckOutDate(dto.getCheckOutDate());
         cartItem.setAdultCount(dto.getAdultCount());
         cartItem.setChildCount(dto.getChildCount());
+        cartItem.setRoomCount(dto.getRoomCount());
 
         cartItemRepository.save(cartItem);
         return cartItem.getId();
@@ -96,7 +98,8 @@ public class CartService {
                                 cartItem.getCheckInDate(),
                                 cartItem.getCheckOutDate(),
                                 cartItem.getAdultCount() + cartItem.getChildCount(),
-                                null
+                                null,
+                                cartItem.getRoomCount()
                         );
                         return null;
                     } catch (Exception ex) {
@@ -115,13 +118,13 @@ public class CartService {
 
     public void removeCartItem(Long cartItemId, String email) {
         CartItem cartItem = cartItemRepository.findByIdAndMemberEmail(cartItemId, email)
-                .orElseThrow(() -> new EntityNotFoundException("?λ컮援щ땲 ??ぉ??李얠쓣 ???놁뒿?덈떎."));
+                .orElseThrow(() -> new EntityNotFoundException("장바구니 항목을 찾을 수 없습니다."));
         cartItemRepository.delete(cartItem);
     }
 
     public void updateCartItem(Long cartItemId, CartItemDto dto, String email) {
         CartItem cartItem = cartItemRepository.findByIdAndMemberEmail(cartItemId, email)
-                .orElseThrow(() -> new EntityNotFoundException("?λ컮援щ땲 ??ぉ??李얠쓣 ???놁뒿?덈떎."));
+                .orElseThrow(() -> new EntityNotFoundException("장바구니 항목을 찾을 수 없습니다."));
 
         Accom accom = accomRepository.findWithOperationInfoById(dto.getAccomId())
                 .orElseThrow(EntityNotFoundException::new);
@@ -133,7 +136,8 @@ public class CartService {
                 dto.getCheckInDate(),
                 dto.getCheckOutDate(),
                 dto.getAdultCount() + dto.getChildCount(),
-                null
+                null,
+                dto.getRoomCount()
         );
 
         cartItem.setAccom(accom);
@@ -141,14 +145,15 @@ public class CartService {
         cartItem.setCheckOutDate(dto.getCheckOutDate());
         cartItem.setAdultCount(dto.getAdultCount());
         cartItem.setChildCount(dto.getChildCount());
+        cartItem.setRoomCount(dto.getRoomCount());
     }
 
     /**
-     * ?λ컮援щ땲???⑥씪 ??ぉ???덉빟 ?뺤젙?쇰줈 ?꾪솚?쒕떎.
+     * 장바구니의 단일 항목을 예약 확정으로 전환한다.
      */
     public Long confirmCartItem(Long cartItemId, String email) {
         CartItem cartItem = cartItemRepository.findByIdAndMemberEmail(cartItemId, email)
-                .orElseThrow(() -> new EntityNotFoundException("?λ컮援щ땲 ??ぉ??李얠쓣 ???놁뒿?덈떎."));
+                .orElseThrow(() -> new EntityNotFoundException("장바구니 항목을 찾을 수 없습니다."));
 
         Accom accom = accomRepository.findWithOperationInfoById(cartItem.getAccom().getId())
                 .orElseThrow(EntityNotFoundException::new);
@@ -158,7 +163,8 @@ public class CartService {
                 cartItem.getCheckInDate(),
                 cartItem.getCheckOutDate(),
                 cartItem.getAdultCount() + cartItem.getChildCount(),
-                null
+                null,
+                cartItem.getRoomCount()
         );
 
         Long orderId = orderService.createOrderFromCartItem(cartItem, email);
@@ -167,12 +173,12 @@ public class CartService {
     }
 
     /**
-     * ?λ컮援щ땲??紐⑤뱺 ??ぉ???쒖꽌?濡??덉빟 ?뺤젙?쒕떎.
+     * 장바구니의 모든 항목을 순서대로 예약 확정한다.
      */
     public List<Long> confirmAllCartItems(String email) {
         List<CartItem> cartItems = cartItemRepository.findByMemberEmailOrderByRegTimeDesc(email);
         if (cartItems.isEmpty()) {
-            throw new IllegalStateException("?λ컮援щ땲媛 鍮꾩뼱 ?덉뒿?덈떎.");
+            throw new IllegalStateException("장바구니가 비어 있습니다.");
         }
 
         List<Long> orderIds = new ArrayList<>();
@@ -185,7 +191,8 @@ public class CartService {
                     cartItem.getCheckInDate(),
                     cartItem.getCheckOutDate(),
                     cartItem.getAdultCount() + cartItem.getChildCount(),
-                    null
+                    null,
+                    cartItem.getRoomCount()
             );
 
             Long orderId = orderService.createOrderFromCartItem(cartItem, email);

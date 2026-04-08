@@ -77,18 +77,19 @@
                                     <span th:text="'성인 ' + ${item.adultCount} + '명'">성인 1명</span>
                                     <span th:if="${item.childCount > 0}"
                                           th:text="' · 아동 ' + ${item.childCount} + '명'">아동 1명</span>
+                                    <span th:text="' · 객실 ' + ${item.roomCount} + '실'">객실 1실</span>
                                 </div>
                             </div>
 
                             <div class="cart-item__price-area">
                                 <div class="cart-item__price-row">
                                     <span class="cart-item__price-label">기본 숙박비</span>
-                                    <span th:text="${#numbers.formatInteger(item.pricePerNight * item.nights, 0, 'COMMA')} + '원'">0원</span>
+                                    <span th:text="${#numbers.formatInteger(item.pricePerNight * item.nights * item.roomCount, 0, 'COMMA')} + '원'">0원</span>
                                 </div>
                                 <div class="cart-item__price-row cart-item__price-row--surcharge"
                                      th:if="${item.surchargePerNight > 0}">
                                     <span class="cart-item__price-label">인원 추가 요금</span>
-                                    <span th:text="'+' + ${#numbers.formatInteger(item.surchargePerNight * item.nights, 0, 'COMMA')} + '원'">+0원</span>
+                                    <span th:text="'+' + ${#numbers.formatInteger(item.surchargePerNight * item.nights * item.roomCount, 0, 'COMMA')} + '원'">+0원</span>
                                 </div>
                                 <div class="cart-item__price-row cart-item__price-row--total">
                                     <span class="cart-item__price-label">합계</span>
@@ -103,7 +104,7 @@
                                 </div>
                                 <div class="cart-item__action-buttons">
                                     <a class="cart-item__edit-btn"
-                                       th:href="@{/orders/accom/{accomId}(accomId=${item.accomId},checkInDate=${item.checkInDate},checkOutDate=${item.checkOutDate},adultCount=${item.adultCount},childCount=${item.childCount},cartItemId=${item.cartItemId})}">
+                                       th:href="@{/orders/accom/{accomId}(accomId=${item.accomId},checkInDate=${item.checkInDate},checkOutDate=${item.checkOutDate},adultCount=${item.adultCount},childCount=${item.childCount},roomCount=${item.roomCount},cartItemId=${item.cartItemId})}">
                                         수정
                                     </a>
                                     <button type="button"
