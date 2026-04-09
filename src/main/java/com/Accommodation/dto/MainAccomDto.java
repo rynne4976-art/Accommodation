@@ -21,6 +21,7 @@ public class MainAccomDto {
     private Integer pricePerNight;
     private String location;
     private Integer roomCount;
+    private Integer guestCount;
     private Double avgRating;
     private Integer reviewCount;
     private LocalTime checkInTime;
@@ -29,7 +30,7 @@ public class MainAccomDto {
     @QueryProjection
     public MainAccomDto(Long id, String accomName, AccomType accomType, AccomGrade grade, String accomDetail,
                         String imgUrl, Integer pricePerNight, String location,
-                        Integer roomCount, Double avgRating, Integer reviewCount,
+                        Integer roomCount, Integer guestCount, Double avgRating, Integer reviewCount,
                         LocalTime checkInTime, LocalTime checkOutTime) {
         this.id = id;
         this.accomName = accomName;
@@ -40,6 +41,7 @@ public class MainAccomDto {
         this.pricePerNight = pricePerNight;
         this.location = location;
         this.roomCount = roomCount;
+        this.guestCount = guestCount;
         this.avgRating = avgRating;
         this.reviewCount = reviewCount;
         this.checkInTime = checkInTime;

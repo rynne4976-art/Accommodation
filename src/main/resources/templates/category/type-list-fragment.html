@@ -19,7 +19,7 @@
 
         <section class="type-search-panel">
             <div class="booking-shell type-booking-shell">
-                <form class="booking-bar" th:action="${currentPath}" method="get">
+                <form class="booking-bar" th:action="@{${currentPath}}" method="get">
                     <input type="hidden" name="accomType"
                            th:if="${accomSearchDto != null and accomSearchDto.accomType != null}"
                            th:value="${accomSearchDto.accomType.name()}">
@@ -133,7 +133,7 @@
         </section>
 
         <section class="type-filter-panel">
-            <form class="type-filter-form" method="get">
+            <form class="type-filter-form" th:action="@{${currentPath}}" method="get">
                 <input type="hidden" name="searchQuery"
                        th:value="${accomSearchDto != null ? accomSearchDto.searchQuery : ''}">
                 <input type="hidden" name="accomType"
@@ -317,19 +317,48 @@
                         <div class="type-info-column type-info-column--right">
                             <p class="type-stay-time"
                                th:text="${accom.reviewCount != null ? '리뷰 ' + #numbers.formatInteger(accom.reviewCount, 1, 'COMMA') + '개 · 평점 ' + #numbers.formatDecimal(accom.avgRating != null ? accom.avgRating : 0.0, 1, 1) : '리뷰 0개 · 평점 0.0'}">리뷰 0개 · 평점 0.0</p>
-                            <p class="type-stock"
-                               th:classappend="${accom.roomCount != null and accom.roomCount > 0} ? ' is-open' : ' is-soldout'"
-                               th:text="${accom.roomCount != null and accom.roomCount > 0 ? '남은객실 ' + #numbers.formatInteger(accom.roomCount, 1, 'COMMA') + '개' : '예약 마감'}">남은객실 0개</p>
 
                             <div class="type-price-box">
                                 <span class="type-sale-price">1박 기준 요금</span>
                                 <strong th:text="${#numbers.formatInteger(accom.pricePerNight, 3, 'COMMA')} + '원'">0원</strong>
                             </div>
 
+                            <p class="type-stock"
+                               th:classappend="(${accom.roomCount != null and accom.roomCount > 0} ? ' is-open' : ' is-soldout') + (${accomSearchDto == null or accomSearchDto.checkInDate == null or accomSearchDto.checkOutDate == null} ? ' is-hidden' : '')"
+                               th:attr="data-stock-label='true',data-accom-id=${accom.id},data-total-room-count=${accom.roomCount != null ? accom.roomCount : 0}"
+                               th:text="${accom.roomCount != null and accom.roomCount > 0 ? '날짜 선택 후 확인' : '예약 마감'}">날짜 선택 후 확인</p>
+
                             <div class="type-card-bottom">
                                 <div class="type-action-box">
-                                    <a class="type-book-btn"
-                                       th:href="@{/accom/{accomId}(accomId=${accom.id})}">예약하기</a>
+                                    <button type="button"
+                                            class="type-cart-icon-btn js-open-booking"
+                                            th:attr="data-accom-id=${accom.id},
+                                                     data-accom-name=${accom.accomName},
+                                                     data-price=${accom.pricePerNight},
+                                                     data-room-count=${accom.roomCount},
+                                                     data-guest-count=${accom.guestCount},
+                                                     data-accom-type=${accom.accomType},
+                                                     data-check-in-time=${accom.checkInTime != null ? #temporals.format(accom.checkInTime, 'HH:mm') : ''},
+                                                     data-check-out-time=${accom.checkOutTime != null ? #temporals.format(accom.checkOutTime, 'HH:mm') : ''}">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <circle cx="9" cy="19" r="1.5"></circle>
+                                            <circle cx="18" cy="19" r="1.5"></circle>
+                                            <path d="M4 5h2l2.2 9h9.6l2.2-7H7.2"></path>
+                                        </svg>
+                                    </button>
+
+                                    <button type="button"
+                                            class="type-book-btn js-open-booking"
+                                            th:attr="data-accom-id=${accom.id},
+                                                     data-accom-name=${accom.accomName},
+                                                     data-price=${accom.pricePerNight},
+                                                     data-room-count=${accom.roomCount},
+                                                     data-guest-count=${accom.guestCount},
+                                                     data-accom-type=${accom.accomType},
+                                                     data-check-in-time=${accom.checkInTime != null ? #temporals.format(accom.checkInTime, 'HH:mm') : ''},
+                                                     data-check-out-time=${accom.checkOutTime != null ? #temporals.format(accom.checkOutTime, 'HH:mm') : ''}">
+                                        예약하기
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -413,6 +442,155 @@
                               minRating=${accomSearchDto != null ? accomSearchDto.minRating : null},
                               checkInDate=${accomSearchDto != null ? accomSearchDto.checkInDate : null},
                               checkOutDate=${accomSearchDto != null ? accomSearchDto.checkOutDate : null})}">다음 5개</a>
+        </div>
+
+        <div id="categoryBookingConfig"
+             th:attr="data-is-authenticated=${#authorization.expression('isAuthenticated()')},
+              data-login-url=@{/members/login},
+              data-csrf-header=${_csrf.headerName},
+              data-csrf-token=${_csrf.token}">
+        </div>
+
+        <div class="category-booking-modal" id="categoryBookingModal" aria-hidden="true">
+            <div class="category-booking-modal__backdrop"></div>
+
+            <div class="category-booking-modal__dialog" role="dialog" aria-modal="true" aria-label="예약 옵션 선택">
+                <button type="button" class="category-booking-modal__close js-booking-close" aria-label="닫기">×</button>
+
+                <div class="category-booking-modal__body">
+                    <div class="category-booking-modal__main">
+                        <div class="category-booking-panel">
+                            <div class="category-booking-info-grid">
+                                <div class="category-booking-info-box">
+                                    <div class="category-booking-info-box__label">체크인 / 체크아웃</div>
+                                    <div class="category-booking-info-box__value" id="modalCheckTimeText">미등록</div>
+                                </div>
+                                <div class="category-booking-info-box">
+                                    <div class="category-booking-info-box__label">운영 객실</div>
+                                    <div class="category-booking-info-box__value" id="modalRoomCountText">0개</div>
+                                </div>
+                            </div>
+
+                            <div class="calendar-card category-booking-calendar-card">
+                                <div class="calendar-header">
+                                    <div class="calendar-title">예약 가능 날짜 선택</div>
+                                    <div class="calendar-nav">
+                                        <button type="button" id="modalPrevMonthBtn">&#8249;</button>
+                                        <button type="button" id="modalNextMonthBtn">&#8250;</button>
+                                    </div>
+                                </div>
+                                <div id="modalCalendarMonthLabel" class="calendar-month-label"></div>
+                                <div class="calendar-weekdays">
+                                    <div class="calendar-weekday">일</div>
+                                    <div class="calendar-weekday">월</div>
+                                    <div class="calendar-weekday">화</div>
+                                    <div class="calendar-weekday">수</div>
+                                    <div class="calendar-weekday">목</div>
+                                    <div class="calendar-weekday">금</div>
+                                    <div class="calendar-weekday">토</div>
+                                </div>
+                                <div id="modalCalendarGrid" class="calendar-grid"></div>
+                                <div class="calendar-legend">
+                                    <span class="calendar-legend__item">
+                                        <span class="calendar-legend__chip chip--available">운영</span> 예약가능
+                                    </span>
+                                    <span class="calendar-legend__item">
+                                        <span class="calendar-legend__chip chip--nonop">비운영</span> 비운영
+                                    </span>
+                                    <span class="calendar-legend__item">
+                                        <span class="calendar-legend__chip chip--soldout">마감</span> 마감일
+                                    </span>
+                                </div>
+                                <div class="selection-guide">
+                                    운영일만 선택할 수 있습니다.<br>
+                                    첫 번째 클릭은 체크인, 두 번째 클릭은 체크아웃으로 처리됩니다.<br>
+                                    이미 선택한 날짜를 다시 누르면 선택이 해제됩니다.
+                                </div>
+                            </div>
+
+                            <p class="category-booking-hint">
+                                날짜를 선택한 뒤 장바구니 또는 예약을 진행해 주세요.
+                            </p>
+
+                            <input type="hidden" id="modalCheckInDate">
+                            <input type="hidden" id="modalCheckOutDate">
+                        </div>
+                    </div>
+
+                    <aside class="category-booking-summary">
+                        <div class="category-booking-summary__title">예약 정보</div>
+
+                        <div class="category-booking-summary__row">
+                            <span>체크인</span>
+                            <strong id="modalSummaryCheckIn">선택 전</strong>
+                        </div>
+                        <div class="category-booking-summary__row">
+                            <span>체크아웃</span>
+                            <strong id="modalSummaryCheckOut">선택 전</strong>
+                        </div>
+                        <div class="category-booking-summary__row">
+                            <span>숙박일수</span>
+                            <strong id="modalSummaryNights">0박</strong>
+                        </div>
+                        <div class="category-booking-summary__row">
+                            <span>체크인 시간</span>
+                            <strong id="modalSummaryCheckInTime">미등록</strong>
+                        </div>
+                        <div class="category-booking-summary__row">
+                            <span>체크아웃 시간</span>
+                            <strong id="modalSummaryCheckOutTime">미등록</strong>
+                        </div>
+                        <div class="category-booking-summary__row">
+                            <span>잔여 객실</span>
+                            <strong id="modalSummaryRemaining">-</strong>
+                        </div>
+
+                        <div class="category-booking-guest-box">
+                            <label class="category-booking-guest-box__title">투숙 정보</label>
+
+                            <div class="category-booking-guest-grid">
+                                <div class="category-booking-field">
+                                    <label for="modalAdultCount">성인</label>
+                                    <input type="number" id="modalAdultCount" min="1" value="1">
+                                </div>
+                                <div class="category-booking-field">
+                                    <label for="modalChildCount">아동</label>
+                                    <input type="number" id="modalChildCount" min="0" value="0">
+                                </div>
+                                <div class="category-booking-field category-booking-field--full">
+                                    <label for="modalRoomCount">객실 수</label>
+                                    <input type="number" id="modalRoomCount" min="1" value="1">
+                                </div>
+                            </div>
+
+                            <p class="category-booking-hint" id="modalGuestHint">최대 1명까지 가능합니다.</p>
+                            <div class="category-booking-surcharge-guide" id="modalSurchargeGuide"></div>
+                        </div>
+
+                        <div class="category-booking-total-row">
+                            <span>기본 숙박비</span>
+                            <strong id="modalBasePrice">0원</strong>
+                        </div>
+                        <div class="category-booking-total-row" id="modalSurchargeRow" style="display:none;">
+                            <span>인원 추가 요금</span>
+                            <strong id="modalSurchargePrice">0원</strong>
+                        </div>
+                        <div class="category-booking-total-row category-booking-total-row--final">
+                            <span>TOTAL</span>
+                            <strong id="modalTotalPrice">0원</strong>
+                        </div>
+
+                        <div class="category-booking-actions">
+                            <button type="button" class="btn-order" id="modalCartBtn">
+                                장바구니 담기
+                            </button>
+                            <button type="button" class="btn-back" id="modalOrderBtn">
+                                예약하기
+                            </button>
+                        </div>
+                    </aside>
+                </div>
+            </div>
         </div>
     </section>
 </th:block>

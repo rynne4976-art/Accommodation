@@ -192,6 +192,7 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
                         accom.pricePerNight,
                         accom.location,
                         accom.roomCount,
+                        accom.guestCount,
                         avgRatingExpr,
                         reviewCountExpr.intValue(),
                         policy.checkInTime,

@@ -32,7 +32,7 @@ public class AccomFormDto {
     private Long id;
 
     @NotBlank(message = "숙소명을 입력해 주세요.")
-    @Size(max = 100, message = "숙소명은 100자 이하로 입력해 주세요.")
+    @Size(min = 5, max = 100, message = "숙소명은 5자 이상 100자 이하로 입력해 주세요.")
     private String accomName;
 
     @NotNull(message = "1박 가격을 입력해 주세요.")
@@ -49,7 +49,6 @@ public class AccomFormDto {
     @NotNull(message = "숙소 등급을 선택해 주세요.")
     private AccomGrade grade;
 
-    @NotBlank(message = "주소를 입력해 주세요.")
     @Size(max = 255, message = "주소는 255자 이하로 입력해 주세요.")
     private String location;
 
