@@ -14,18 +14,10 @@
     }
 
     const steps = ['type', 'location', 'dates', 'confirm'];
-
-    const state = {
-        initialized: false,
-        step: 'type',
-        booking: emptyBooking()
-    };
-
     const presets = {
         type: ['호텔', '리조트', '펜션', '모텔', '게스트하우스', '전체'],
         location: ['서울', '부산', '제주', '강릉', '경주', '직접 입력']
     };
-
     const typeMap = {
         '호텔': 'HOTEL',
         '리조트': 'RESORT',
@@ -33,6 +25,12 @@
         '모텔': 'MOTEL',
         '게스트하우스': 'GUESTHOUSE',
         '전체': ''
+    };
+
+    const state = {
+        initialized: false,
+        step: 'type',
+        booking: emptyBooking()
     };
 
     toggle.addEventListener('click', function () {
@@ -62,6 +60,7 @@
         if (!value) {
             return;
         }
+
         input.value = '';
         pushMessage('user', value);
         handleInput(value);
@@ -233,6 +232,7 @@
 
     function renderConfirmStage() {
         clearStage();
+
         const summary = document.createElement('div');
         summary.className = 'chatbot-summary';
         summary.innerHTML = [
@@ -241,6 +241,7 @@
             summaryItem('체크인', state.booking.checkInDate || '-'),
             summaryItem('체크아웃', state.booking.checkOutDate || '-')
         ].join('');
+
         stage.appendChild(summary);
         setQuickActions(['검색하기', '날짜 수정', '다시 선택']);
     }
@@ -371,6 +372,7 @@
 
     function setQuickActions(items) {
         clearQuickActions();
+
         items.forEach(function (label) {
             const button = document.createElement('button');
             button.type = 'button';

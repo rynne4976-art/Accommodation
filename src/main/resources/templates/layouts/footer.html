@@ -1,5 +1,9 @@
 <footer th:fragment="footer">
 
+  <style>
+    @import url('/css/chatbot.css');
+  </style>
+
   <div class="footer-container">
 
     <p>© 2026 Accommodation</p>
@@ -12,5 +16,8 @@
     <p>Email : contact@accommodation.com</p>
     <p>Tel : 02-123-4567</p>
   </div>
+
+  <div th:replace="~{layouts/chatbot :: chatbot}"></div>
+  <script th:src="@{/js/chatbot.js}"></script>
 
 </footer>
