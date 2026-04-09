@@ -20,7 +20,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Map;
 
 /**
  * 🧾 MemberController (회원 컨트롤러)
@@ -84,6 +87,12 @@ public class MemberController {
         }
         model.addAttribute("redirectUrl", redirectUrl);
         return "member/memberLoginForm";
+    }
+
+    @GetMapping("/members/check-email")
+    @ResponseBody
+    public Map<String, Object> checkEmailDuplicate(@RequestParam("email") String email) {
+        return Map.of("duplicate", memberService.existsByEmail(email));
     }
 
     @GetMapping("/members/mypage")
@@ -198,6 +207,13 @@ public class MemberController {
                              BindingResult bindingResult,
                              Model model,
                              RedirectAttributes redirectAttributes) {
+
+        if (!bindingResult.hasFieldErrors("password")
+                && memberFormDto.getPassword() != null
+                && memberFormDto.getConfirmPassword() != null
+                && !memberFormDto.getPassword().equals(memberFormDto.getConfirmPassword())) {
+            bindingResult.rejectValue("confirmPassword", "password.mismatch", "비밀번호가 일치하지 않습니다.");
+        }
 
         if (bindingResult.hasErrors()) {
             return "member/memberForm";

@@ -62,7 +62,9 @@
            th:if="${kakaoLoginEnabled}"
            th:href="${redirectUrl != null and !#strings.isEmpty(redirectUrl)} ? @{/oauth2/authorization/kakao(redirectUrl=${redirectUrl})} : @{/oauth2/authorization/kakao}">
             <span class="social-login__mark social-login__mark--kakao" aria-hidden="true">
-                <span class="social-login__icon social-login__icon--kakao">K</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="social-login__icon social-login__icon--kakao">
+                    <path fill="currentColor" d="M12 5c-4.55 0-8 2.78-8 6.4 0 2.29 1.41 4.26 3.61 5.39l-.73 3.02c-.06.25.21.44.43.31l3.5-1.97c.39.06.79.09 1.19.09 4.55 0 8-2.78 8-6.4S16.55 5 12 5Z"/>
+                </svg>
             </span>
             <span class="social-login__text">카카오 계정으로 로그인</span>
         </a>

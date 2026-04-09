@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -68,12 +69,23 @@ class MemberControllerFlowTest {
                         .param("name", "테스트회원")
                         .param("email", "dup@test.com")
                         .param("password", "Password123!")
+                        .param("confirmPassword", "Password123!")
                         .param("number", "01012345678")
                         .param("postcode", "12345")
                         .param("address", "서울시 강남구")
                         .param("detailAddress", "101호"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("이미 가입된 회원입니다.")));
+    }
+
+    @Test
+    @DisplayName("이메일 중복 확인 API는 중복 여부를 반환한다")
+    void checkEmailDuplicateReturnsDuplicateFlag() throws Exception {
+        given(memberService.existsByEmail("dup@test.com")).willReturn(true);
+
+        mockMvc.perform(get("/members/check-email").param("email", "dup@test.com"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("{\"duplicate\":true}"));
     }
 
     @Test

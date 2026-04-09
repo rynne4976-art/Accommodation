@@ -9,9 +9,20 @@
             <a th:href="@{/main}">Ac.com</a>
         </div>
 
-        <div class="search-bar" th:if="${compactHeader == null or !compactHeader}">
-            <input type="text" placeholder="검색어를 입력하세요">
-        </div>
+        <form class="search-bar"
+              th:if="${(compactHeader == null or !compactHeader) and currentUri != '/main' and currentUri != '/'}"
+              th:action="@{/searchList}"
+              method="get">
+            <input type="text"
+                   name="searchQuery"
+                   th:value="${param.searchQuery}"
+                   placeholder="지역명 또는 숙소명을 검색하세요">
+            <button type="submit" class="search-bar__submit" aria-label="검색">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M10 4a6 6 0 1 0 3.874 10.582l4.272 4.272 1.414-1.414-4.272-4.272A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/>
+                </svg>
+            </button>
+        </form>
 
         <div class="menu-right">
             <div sec:authorize="isAnonymous()" class="menu-group">
