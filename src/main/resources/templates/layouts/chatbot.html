@@ -1,0 +1,57 @@
+<div th:fragment="chatbot" class="chatbot-widget" xmlns:th="http://www.thymeleaf.org">
+    <button type="button"
+            id="chatbot-toggle"
+            class="chatbot-toggle"
+            aria-label="Open AI chatbot"
+            aria-controls="chatbot-window"
+            aria-expanded="false">
+        <span class="chatbot-toggle__icon" aria-hidden="true">
+            <svg viewBox="0 0 80 80" role="img">
+                <path d="M40 8c17.7 0 32 13.8 32 30.8 0 5.2-1.4 10.2-4 14.6l1.8 10.8-9.8-2.2C54.4 66.4 47.4 69 40 69 22.3 69 8 55.2 8 38.8S22.3 8 40 8Z" fill="#2ea8d6"/>
+                <path d="M33 21c0-3.9 3.1-7 7-7s7 3.1 7 7v2.6h-2.8V21c0-2.3-1.9-4.2-4.2-4.2s-4.2 1.9-4.2 4.2v2.6H33V21Z" fill="#ece8df"/>
+                <circle cx="40" cy="12.5" r="1.8" fill="#ece8df"/>
+                <path d="M20 38.5c0-8.6 7-15.5 15.5-15.5h9c8.6 0 15.5 7 15.5 15.5S53 54 44.5 54h-9C27 54 20 47.1 20 38.5Z" fill="#ffffff"/>
+                <rect x="27" y="31.5" width="26" height="14" rx="7" fill="#4e4e4e"/>
+                <circle cx="34.5" cy="38.5" r="2.2" fill="#39c3ff"/>
+                <circle cx="45.5" cy="38.5" r="2.2" fill="#39c3ff"/>
+                <circle cx="18.5" cy="38.5" r="2.2" fill="#ece8df"/>
+                <circle cx="61.5" cy="38.5" r="2.2" fill="#ece8df"/>
+            </svg>
+        </span>
+    </button>
+
+    <section id="chatbot-window" class="chatbot-window is-hidden" aria-label="AI booking chatbot">
+        <header class="chatbot-window__header">
+            <div class="chatbot-window__brand">
+                <span class="chatbot-window__avatar" aria-hidden="true">
+                    <svg viewBox="0 0 80 80" role="img">
+                        <path d="M40 8c17.7 0 32 13.8 32 30.8 0 5.2-1.4 10.2-4 14.6l1.8 10.8-9.8-2.2C54.4 66.4 47.4 69 40 69 22.3 69 8 55.2 8 38.8S22.3 8 40 8Z" fill="#2ea8d6"/>
+                        <path d="M20 38.5c0-8.6 7-15.5 15.5-15.5h9c8.6 0 15.5 7 15.5 15.5S53 54 44.5 54h-9C27 54 20 47.1 20 38.5Z" fill="#ffffff"/>
+                        <rect x="27" y="31.5" width="26" height="14" rx="7" fill="#4e4e4e"/>
+                        <circle cx="34.5" cy="38.5" r="2.2" fill="#39c3ff"/>
+                        <circle cx="45.5" cy="38.5" r="2.2" fill="#39c3ff"/>
+                    </svg>
+                </span>
+                <div>
+                    <strong>AI 숙소 챗봇</strong>
+                    <p>빠른 예약 쇼트컷</p>
+                </div>
+            </div>
+            <button type="button" id="chatbot-close" class="chatbot-window__close" aria-label="Close chatbot">&times;</button>
+        </header>
+
+        <div id="chatbot-flow" class="chatbot-flow"></div>
+        <div id="chatbot-messages" class="chatbot-window__messages"></div>
+        <div id="chatbot-stage" class="chatbot-stage"></div>
+        <div id="chatbot-quick-actions" class="chatbot-window__quick-actions"></div>
+
+        <form id="chatbot-form" class="chatbot-window__form">
+            <input id="chatbot-input" type="text" maxlength="80" placeholder="직접 입력할 지역명을 작성하세요">
+            <button type="submit" id="chatbot-send" aria-label="Send">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 20 21 12 3 4l2.8 7.1L14 12l-8.2.9L3 20Z"></path>
+                </svg>
+            </button>
+        </form>
+    </section>
+</div>
