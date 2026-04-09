@@ -14,6 +14,59 @@
     }
 
     let selectedDateSet = new Set(config.initialSelectedDates || []);
+    let rangeAnchorDate = null;
+
+    function formatDate(date) {
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return yyyy + '-' + mm + '-' + dd;
+    }
+
+    function getTodayString() {
+        const now = new Date();
+        return formatDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+    }
+
+    function filterSelectedDatesByRange(startValue, endValue) {
+        if (!startValue || !endValue) {
+            selectedDateSet.clear();
+            rangeAnchorDate = null;
+            return;
+        }
+
+        selectedDateSet = new Set(Array.from(selectedDateSet).filter(function (dateValue) {
+            return dateValue >= startValue && dateValue <= endValue;
+        }));
+    }
+
+    function isHoliday(date) {
+        const monthDay = String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+        const solarHolidayMap = new Set([
+            '01-01',
+            '03-01',
+            '05-05',
+            '06-06',
+            '08-15',
+            '10-03',
+            '10-09',
+            '12-25'
+        ]);
+
+        return solarHolidayMap.has(monthDay);
+    }
+
+    function selectDateRange(startValue, endValue) {
+        const from = startValue <= endValue ? startValue : endValue;
+        const to = startValue <= endValue ? endValue : startValue;
+        let cursor = new Date(from + 'T00:00:00');
+        const last = new Date(to + 'T00:00:00');
+
+        while (cursor <= last) {
+            selectedDateSet.add(formatDate(cursor));
+            cursor.setDate(cursor.getDate() + 1);
+        }
+    }
 
     function isOperationDateListValid() {
         return app.getCheckedOperationDates().length > 0;
@@ -43,6 +96,8 @@
             updateOperationDateState();
             return;
         }
+
+        filterSelectedDatesByRange(startValue, endValue);
 
         const savedSelectedDates = new Set(selectedDateSet);
         const dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
@@ -101,20 +156,51 @@
                 checkbox.value = dateValue;
                 checkbox.checked = savedSelectedDates.has(dateValue);
                 checkbox.className = 'operation-calendar-input';
+                checkbox.disabled = dateValue < startValue || dateValue > endValue;
 
-                checkbox.addEventListener('change', function () {
-                    if (checkbox.checked) {
+                label.addEventListener('click', function (event) {
+                    event.preventDefault();
+
+                    if (checkbox.disabled) {
+                        return;
+                    }
+
+                    if (!rangeAnchorDate) {
+                        selectedDateSet.clear();
+                        rangeAnchorDate = dateValue;
+                        selectedDateSet.add(dateValue);
+                    } else if (dateValue < rangeAnchorDate) {
+                        selectedDateSet.clear();
+                        rangeAnchorDate = dateValue;
                         selectedDateSet.add(dateValue);
                     } else {
-                        selectedDateSet.delete(dateValue);
+                        selectedDateSet.clear();
+                        selectDateRange(rangeAnchorDate, dateValue);
+                        rangeAnchorDate = null;
                     }
-                    label.classList.toggle('is-selected', checkbox.checked);
+
+                    renderOperationDates();
                     updateOperationDateState();
                 });
 
                 const cell = document.createElement('span');
                 cell.className = 'operation-calendar-cell';
                 cell.textContent = String(day);
+                cell.dataset.dayOfWeek = String(date.getDay());
+                if (date.getDay() === 0) {
+                    cell.classList.add('is-sunday');
+                }
+                if (date.getDay() === 6) {
+                    cell.classList.add('is-saturday');
+                }
+                if (isHoliday(date)) {
+                    cell.classList.add('is-holiday');
+                }
+
+                if (checkbox.disabled) {
+                    label.classList.add('is-disabled');
+                    checkbox.checked = false;
+                }
 
                 if (checkbox.checked) {
                     label.classList.add('is-selected');
@@ -134,7 +220,11 @@
 
     if (selectAllOperationDatesBtn) {
         selectAllOperationDatesBtn.addEventListener('click', function () {
+            rangeAnchorDate = null;
             document.querySelectorAll('input[name="operationDateList"]').forEach(function (input) {
+                if (input.disabled) {
+                    return;
+                }
                 input.checked = true;
                 selectedDateSet.add(input.value);
                 input.closest('.operation-calendar-label')?.classList.add('is-selected');
@@ -145,6 +235,7 @@
 
     if (clearAllOperationDatesBtn) {
         clearAllOperationDatesBtn.addEventListener('click', function () {
+            rangeAnchorDate = null;
             document.querySelectorAll('input[name="operationDateList"]').forEach(function (input) {
                 input.checked = false;
                 selectedDateSet.delete(input.value);
@@ -155,16 +246,45 @@
     }
 
     operationStartDateInput.addEventListener('change', function () {
+        const today = getTodayString();
+        if (operationStartDateInput.value && operationStartDateInput.value < today) {
+            operationStartDateInput.value = today;
+        }
+        operationEndDateInput.min = operationStartDateInput.value || today;
+        if (operationEndDateInput.value && operationStartDateInput.value && operationEndDateInput.value < operationStartDateInput.value) {
+            operationEndDateInput.value = operationStartDateInput.value;
+        }
+        rangeAnchorDate = null;
         app.setFocusedInvalid('operationStartDate', !app.validateField('operationStartDate'));
         app.setFocusedInvalid('operationEndDate', !app.validateField('operationEndDate'));
         renderOperationDates();
     });
 
     operationEndDateInput.addEventListener('change', function () {
+        const today = getTodayString();
+        operationEndDateInput.min = operationStartDateInput.value || today;
+        if (operationEndDateInput.value && operationEndDateInput.value < operationEndDateInput.min) {
+            operationEndDateInput.value = operationEndDateInput.min;
+        }
+        rangeAnchorDate = null;
         app.setFocusedInvalid('operationStartDate', !app.validateField('operationStartDate'));
         app.setFocusedInvalid('operationEndDate', !app.validateField('operationEndDate'));
         renderOperationDates();
     });
+
+    (function initDateBounds() {
+        const today = getTodayString();
+        operationStartDateInput.min = today;
+        operationEndDateInput.min = operationStartDateInput.value || today;
+
+        if (operationStartDateInput.value && operationStartDateInput.value < today) {
+            operationStartDateInput.value = today;
+        }
+
+        if (operationEndDateInput.value && operationEndDateInput.value < operationEndDateInput.min) {
+            operationEndDateInput.value = operationEndDateInput.min;
+        }
+    })();
 
     renderOperationDates();
 })();

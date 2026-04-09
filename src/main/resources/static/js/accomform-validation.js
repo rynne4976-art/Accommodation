@@ -3,8 +3,11 @@
 
     const accomTypeSelect = document.getElementById('accomType');
     const guestCountHint = document.getElementById('guestCountHint');
+    const accomNameSuccessMessage = document.getElementById('accomNameSuccessMessage');
+    const guestCountSuccessMessage = document.getElementById('guestCountSuccessMessage');
+    const form = document.querySelector('.accom-form');
 
-    if (!accomTypeSelect || !guestCountHint) {
+    if (!accomTypeSelect || !guestCountHint || !form) {
         return;
     }
 
@@ -29,6 +32,13 @@
 
     const app = window.accomFormApp || {};
 
+    function getVisibleField(fieldName) {
+        if (fieldName === 'operationStartDate' || fieldName === 'operationEndDate') {
+            return document.getElementById('operationPeriodTrigger') || fields[fieldName];
+        }
+        return document.getElementById(fieldName + 'Trigger') || fields[fieldName];
+    }
+
     function setFocusedInvalid(fieldName, visible) {
         const field = fields[fieldName];
         if (!field) {
@@ -36,6 +46,10 @@
         }
 
         field.classList.toggle('is-invalid', visible);
+        const visibleField = getVisibleField(fieldName);
+        if (visibleField && visibleField !== field) {
+            visibleField.classList.toggle('is-invalid', visible);
+        }
     }
 
     function getGuestCountRange() {
@@ -82,7 +96,7 @@
         switch (fieldName) {
             case 'accomName': {
                 const value = fields.accomName.value.trim();
-                return value.length > 0 && value.length <= 100;
+                return value.length >= 5 && value.length <= 100;
             }
             case 'pricePerNight': {
                 const value = fields.pricePerNight.value.trim();
@@ -106,10 +120,8 @@
                 return fields.accomType.value !== '';
             case 'grade':
                 return fields.grade.value !== '';
-            case 'location': {
-                const value = buildLocationValue();
-                return value.length > 0 && value.length <= 255;
-            }
+            case 'location':
+                return buildLocationValue().length <= 255;
             case 'accomDetail': {
                 const value = fields.accomDetail.value.trim();
                 return value.length >= 10 && value.length <= 1000;
@@ -135,9 +147,75 @@
         }
     }
 
+    function validateOperationDateList() {
+        const operationDateListBox = document.getElementById('operationDateListBox');
+        const isValid = getCheckedOperationDates().length > 0;
+
+        if (operationDateListBox) {
+            operationDateListBox.classList.toggle('is-invalid', !isValid);
+        }
+
+        return isValid;
+    }
+
+    function validateForm() {
+        syncLocationField();
+
+        const fieldNames = [
+            'accomName', 'pricePerNight', 'roomCount', 'guestCount', 'accomType', 'grade',
+            'accomDetail', 'status', 'operationStartDate', 'operationEndDate',
+            'checkInTime', 'checkOutTime'
+        ];
+
+        let firstInvalidField = null;
+
+        fieldNames.forEach(function (fieldName) {
+            const isValid = validateField(fieldName);
+            setFocusedInvalid(fieldName, !isValid);
+
+            if (!isValid && !firstInvalidField && fields[fieldName]) {
+                firstInvalidField = getVisibleField(fieldName);
+            }
+        });
+
+        const operationDateListValid = validateOperationDateList();
+        if (!operationDateListValid && !firstInvalidField) {
+            firstInvalidField = document.getElementById('operationDateListBox');
+        }
+
+        if (firstInvalidField && typeof firstInvalidField.focus === 'function') {
+            firstInvalidField.focus();
+        }
+
+        return !firstInvalidField && operationDateListValid;
+    }
+
     function syncLocationField() {
         fields.location.value = buildLocationValue();
-        setFocusedInvalid('location', !validateField('location'));
+    }
+
+    function updateAccomNameSuccess() {
+        if (!accomNameSuccessMessage) {
+            return;
+        }
+
+        const isValid = validateField('accomName');
+        const hasValue = fields.accomName.value.trim().length > 0;
+        accomNameSuccessMessage.style.display = isValid && hasValue ? 'block' : 'none';
+    }
+
+    function updateGuestCountFeedback() {
+        const hasValue = fields.guestCount.value.trim().length > 0;
+        const isValid = validateField('guestCount');
+
+        guestCountHint.classList.toggle('is-invalid', hasValue && !isValid);
+        guestCountHint.style.display = isValid && hasValue ? 'none' : 'block';
+
+        if (!guestCountSuccessMessage) {
+            return;
+        }
+
+        guestCountSuccessMessage.style.display = isValid && hasValue ? 'block' : 'none';
     }
 
     function bindFocusValidation(fieldName) {
@@ -152,14 +230,32 @@
 
         field.addEventListener('input', function () {
             setFocusedInvalid(fieldName, !validateField(fieldName));
+            if (fieldName === 'accomName') {
+                updateAccomNameSuccess();
+            }
+            if (fieldName === 'guestCount') {
+                updateGuestCountFeedback();
+            }
         });
 
         field.addEventListener('change', function () {
             setFocusedInvalid(fieldName, !validateField(fieldName));
+            if (fieldName === 'accomName') {
+                updateAccomNameSuccess();
+            }
+            if (fieldName === 'guestCount') {
+                updateGuestCountFeedback();
+            }
         });
 
         field.addEventListener('blur', function () {
             setFocusedInvalid(fieldName, !validateField(fieldName));
+            if (fieldName === 'accomName') {
+                updateAccomNameSuccess();
+            }
+            if (fieldName === 'guestCount') {
+                updateGuestCountFeedback();
+            }
         });
     }
 
@@ -194,6 +290,7 @@
     accomTypeSelect.addEventListener('change', function () {
         updateGuestCountRule();
         setFocusedInvalid('guestCount', !validateField('guestCount'));
+        updateGuestCountFeedback();
     });
 
     fields.checkInTime.addEventListener('change', function () {
@@ -206,6 +303,14 @@
 
     updateGuestCountRule();
     syncLocationField();
+    updateAccomNameSuccess();
+    updateGuestCountFeedback();
+
+    form.addEventListener('submit', function (event) {
+        if (!validateForm()) {
+            event.preventDefault();
+        }
+    });
 
     app.fields = fields;
     app.setFocusedInvalid = setFocusedInvalid;
@@ -214,6 +319,8 @@
     app.syncLocationField = syncLocationField;
     app.getCheckedOperationDates = getCheckedOperationDates;
     app.validateField = validateField;
+    app.validateOperationDateList = validateOperationDateList;
+    app.validateForm = validateForm;
     app.updateGuestCountRule = updateGuestCountRule;
     window.accomFormApp = app;
 })();

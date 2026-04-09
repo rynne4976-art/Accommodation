@@ -22,8 +22,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Map;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 @Controller
@@ -95,6 +97,38 @@ public class OrderController {
         }
     }
 
+    @GetMapping("/orders/accom/{accomId}/booking-meta")
+    @ResponseBody
+    public ResponseEntity<?> getBookingMeta(@PathVariable Long accomId) {
+        try {
+            Accom accom = accomService.getAccomDtl(accomId);
+            AccomOperationPolicy policy = accom.getOperationPolicy();
+
+            List<String> operationDays = accom.getOperationDayList() == null
+                    ? Collections.emptyList()
+                    : accom.getOperationDayList().stream()
+                    .map(AccomOperationDay::getOperationDate)
+                    .map(LocalDate::toString)
+                    .toList();
+
+            List<String> soldOutDays = orderService.getSoldOutDates(accomId).stream()
+                    .map(LocalDate::toString)
+                    .toList();
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("operationDays", operationDays);
+            payload.put("soldOutDays", soldOutDays);
+            payload.put("operationStartDate", policy != null ? policy.getOperationStartDate() : null);
+            payload.put("operationEndDate", policy != null ? policy.getOperationEndDate() : null);
+            payload.put("checkInTime", formatTime(policy != null ? policy.getCheckInTime() : null));
+            payload.put("checkOutTime", formatTime(policy != null ? policy.getCheckOutTime() : null));
+
+            return new ResponseEntity<>(payload, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     /**
      * 월별 날짜별 잔여 객실 수 조회 (캘린더 badge 표시용)
      * GET /orders/accom/{accomId}/monthly-availability?year=2026&month=4
@@ -111,6 +145,10 @@ public class OrderController {
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
+    }
+
+    private String formatTime(LocalTime localTime) {
+        return localTime != null ? localTime.toString() : "";
     }
 
     // ── 주문 생성 (AJAX POST) ─────────────────────────────────────────────────

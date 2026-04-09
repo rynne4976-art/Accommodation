@@ -288,6 +288,7 @@ public class AccomService {
                 accom.getPricePerNight(),
                 accom.getLocation(),
                 accom.getRoomCount(),
+                accom.getGuestCount(),
                 accom.getAvgRating(),
                 accom.getReviewCount(),
                 accom.getOperationPolicy() != null ? accom.getOperationPolicy().getCheckInTime() : null,

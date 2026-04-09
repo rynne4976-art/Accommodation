@@ -60,28 +60,31 @@
                 <div class="form-grid">
                     <div class="form-group full-width">
                         <label for="accomName">숙소명 <span class="required-indicator">*</span></label>
-                        <input type="text" th:field="*{accomName}" id="accomName" placeholder="1~100자 이내로 입력">
+                        <input type="text" th:field="*{accomName}" id="accomName" placeholder="5~100자 이내로 입력"
+                               th:classappend="${#fields.hasErrors('accomName')} ? ' is-invalid' : ''">
+                        <p class="field-success" id="accomNameSuccessMessage" style="display:none;">사용가능한 상호명입니다.</p>
+                        <p class="field-error" th:if="${#fields.hasErrors('accomName')}" th:errors="*{accomName}"></p>
                     </div>
 
                     <div class="form-group">
                         <label for="pricePerNight">1박 가격 <span class="required-indicator">*</span></label>
-                        <input type="number" th:field="*{pricePerNight}" id="pricePerNight" placeholder="0보다 큰 금액 입력">
+                        <input type="number" th:field="*{pricePerNight}" id="pricePerNight" placeholder="0보다 큰 금액 입력"
+                               step="10000"
+                               th:classappend="${#fields.hasErrors('pricePerNight')} ? ' is-invalid' : ''">
+                        <p class="field-error" th:if="${#fields.hasErrors('pricePerNight')}" th:errors="*{pricePerNight}"></p>
                     </div>
 
                     <div class="form-group">
                         <label for="roomCount">객실 수 <span class="required-indicator">*</span></label>
-                        <input type="number" th:field="*{roomCount}" id="roomCount" min="0" placeholder="0 이상 입력">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="guestCount">투숙 가능 인원 <span class="required-indicator">*</span></label>
-                        <input type="number" th:field="*{guestCount}" id="guestCount" min="2" max="10" placeholder="숙소 유형에 맞는 인원 입력">
-                        <p class="field-hint" id="guestCountHint">호텔, 리조트, 펜션은 2~10명 / 게스트하우스, 모텔은 1~6명</p>
+                        <input type="number" th:field="*{roomCount}" id="roomCount" min="0" placeholder="0 이상 입력"
+                               th:classappend="${#fields.hasErrors('roomCount')} ? ' is-invalid' : ''">
+                        <p class="field-error" th:if="${#fields.hasErrors('roomCount')}" th:errors="*{roomCount}"></p>
                     </div>
 
                     <div class="form-group">
                         <label for="accomType">숙소 유형 <span class="required-indicator">*</span></label>
-                        <select th:field="*{accomType}" id="accomType">
+                        <select th:field="*{accomType}" id="accomType"
+                                th:classappend="${#fields.hasErrors('accomType')} ? ' is-invalid' : ''">
                             <option value="">선택해 주세요.</option>
                             <option th:value="HOTEL">호텔</option>
                             <option th:value="MOTEL">모텔</option>
@@ -89,11 +92,22 @@
                             <option th:value="RESORT">리조트</option>
                             <option th:value="GUESTHOUSE">게스트하우스</option>
                         </select>
+                        <p class="field-error" th:if="${#fields.hasErrors('accomType')}" th:errors="*{accomType}"></p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="guestCount">투숙 가능 인원 <span class="required-indicator">*</span></label>
+                        <input type="number" th:field="*{guestCount}" id="guestCount" min="2" max="10" placeholder="숙소 유형에 맞는 인원 입력"
+                               th:classappend="${#fields.hasErrors('guestCount')} ? ' is-invalid' : ''">
+                        <p class="field-hint" id="guestCountHint">숙소 유형을 먼저 선택해 주세요.</p>
+                        <p class="field-success" id="guestCountSuccessMessage" style="display:none;">투숙 가능한 인원입니다.</p>
+                        <p class="field-error" th:if="${#fields.hasErrors('guestCount')}" th:errors="*{guestCount}"></p>
                     </div>
 
                     <div class="form-group">
                         <label for="grade">숙소 등급 <span class="required-indicator">*</span></label>
-                        <select th:field="*{grade}" id="grade">
+                        <select th:field="*{grade}" id="grade"
+                                th:classappend="${#fields.hasErrors('grade')} ? ' is-invalid' : ''">
                             <option value="">선택해 주세요.</option>
                             <option th:value="FIVE">5성급</option>
                             <option th:value="FOUR">4성급</option>
@@ -101,10 +115,11 @@
                             <option th:value="TWO">2성급</option>
                             <option th:value="ONE">1성급</option>
                         </select>
+                        <p class="field-error" th:if="${#fields.hasErrors('grade')}" th:errors="*{grade}"></p>
                     </div>
 
                     <div class="form-group full-width">
-                        <label for="postcode">주소 <span class="required-indicator">*</span></label>
+                        <label for="postcode">주소</label>
                         <input type="hidden" th:field="*{location}" id="location">
                         <div class="address-search-row">
                             <input type="text" th:field="*{postcode}" id="postcode" placeholder="우편번호" readonly>
@@ -116,17 +131,21 @@
 
                     <div class="form-group full-width">
                         <label for="accomDetail">숙소 설명 <span class="required-indicator">*</span></label>
-                        <textarea th:field="*{accomDetail}" id="accomDetail" rows="7" placeholder="10~1000자 이내로 입력"></textarea>
+                        <textarea th:field="*{accomDetail}" id="accomDetail" rows="7" placeholder="10~1000자 이내로 입력"
+                                  th:classappend="${#fields.hasErrors('accomDetail')} ? ' is-invalid' : ''"></textarea>
+                        <p class="field-error" th:if="${#fields.hasErrors('accomDetail')}" th:errors="*{accomDetail}"></p>
                     </div>
 
                     <div class="form-group">
                         <label for="status">숙소 상태 <span class="required-indicator">*</span></label>
-                        <select th:field="*{status}" id="status">
+                        <select th:field="*{status}" id="status"
+                                th:classappend="${#fields.hasErrors('status')} ? ' is-invalid' : ''">
                             <option value="">선택해 주세요.</option>
                             <option th:value="OPEN">운영중</option>
                             <option th:value="CLOSED">운영중지</option>
                             <option th:value="READY">준비중</option>
                         </select>
+                        <p class="field-error" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></p>
                     </div>
 
                     <div class="form-group file-group">
@@ -140,43 +159,146 @@
                         </p>
                     </div>
 
-                    <div class="form-group">
-                        <label for="operationStartDate">운영 시작일 <span class="required-indicator">*</span></label>
-                        <input type="date"
+                    <div class="form-group full-width period-group">
+                        <label for="operationPeriodTrigger">운영 기간 <span class="required-indicator">*</span></label>
+                        <input type="hidden"
                                name="operationStartDate"
                                th:value="${accomFormDto.operationStartDate != null ? #temporals.format(accomFormDto.operationStartDate, 'yyyy-MM-dd') : ''}"
                                id="operationStartDate">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="operationEndDate">운영 종료일 <span class="required-indicator">*</span></label>
-                        <input type="date"
+                        <input type="hidden"
                                name="operationEndDate"
                                th:value="${accomFormDto.operationEndDate != null ? #temporals.format(accomFormDto.operationEndDate, 'yyyy-MM-dd') : ''}"
                                id="operationEndDate">
+                        <button type="button"
+                                class="picker-trigger"
+                                id="operationPeriodTrigger"
+                                th:classappend="${#fields.hasErrors('operationStartDate') or #fields.hasErrors('operationEndDate')} ? ' is-invalid' : ''"
+                                data-picker-trigger="operationPeriod">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2Zm11 8H6v10h12V10Zm0-4H6v2h12V6Z"/>
+                            </svg>
+                            <span id="operationPeriodLabel">운영 시작일 - 운영 종료일</span>
+                        </button>
+                        <div class="picker-popup calendar-popup" id="operationPeriodPopup">
+                            <div class="calendar-header">
+                                <button class="calendar-nav" id="operationPeriodPrevMonthBtn" type="button">&lsaquo;</button>
+                                <div></div>
+                                <button class="calendar-nav" id="operationPeriodNextMonthBtn" type="button">&rsaquo;</button>
+                            </div>
+                            <div class="calendar-months">
+                                <div class="calendar-month">
+                                    <h3 class="calendar-month-title" id="operationPeriodMonthTitleLeft"></h3>
+                                    <div class="calendar-weekdays">
+                                        <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                                    </div>
+                                    <div class="calendar-days" id="operationPeriodMonthDaysLeft"></div>
+                                </div>
+                                <div class="calendar-month">
+                                    <h3 class="calendar-month-title" id="operationPeriodMonthTitleRight"></h3>
+                                    <div class="calendar-weekdays">
+                                        <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                                    </div>
+                                    <div class="calendar-days" id="operationPeriodMonthDaysRight"></div>
+                                </div>
+                            </div>
+                            <div class="calendar-footer">
+                                <button class="calendar-reset" id="operationPeriodResetBtn" type="button">선택 초기화</button>
+                                <span class="calendar-summary" id="operationPeriodSummary">운영 시작일 - 운영 종료일</span>
+                            </div>
+                        </div>
+                        <p class="field-error" th:if="${#fields.hasErrors('operationStartDate')}" th:errors="*{operationStartDate}"></p>
+                        <p class="field-error" th:if="${#fields.hasErrors('operationEndDate')}" th:errors="*{operationEndDate}"></p>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group period-time-group">
                         <label for="checkInTime">체크인 시간 <span class="required-indicator">*</span></label>
-                        <input type="time"
+                        <input type="hidden"
                                name="checkInTime"
                                th:value="${accomFormDto.checkInTime != null ? #temporals.format(accomFormDto.checkInTime, 'HH:mm') : ''}"
-                               step="60"
                                id="checkInTime">
+                        <button type="button"
+                                class="picker-trigger"
+                                id="checkInTimeTrigger"
+                                th:classappend="${#fields.hasErrors('checkInTime')} ? ' is-invalid' : ''"
+                                data-picker-trigger="checkInTime">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 2.75a9.25 9.25 0 1 0 9.25 9.25A9.26 9.26 0 0 0 12 2.75Zm0 1.5A7.75 7.75 0 1 1 4.25 12 7.76 7.76 0 0 1 12 4.25Zm0 2.5a.75.75 0 0 1 .75.75v3.94l2.53 1.46a.75.75 0 1 1-.75 1.3l-2.9-1.67a.75.75 0 0 1-.38-.65V7.5a.75.75 0 0 1 .75-.75Z"/>
+                            </svg>
+                            <span id="checkInTimeLabel">시간을 선택해 주세요.</span>
+                        </button>
+                        <div class="picker-popup time-popup" id="checkInTimePopup">
+                            <div class="time-popup__header">
+                                <strong>체크인 시간 선택</strong>
+                            </div>
+                            <div class="time-meridiem" id="checkInTimeMeridiem">
+                                <button type="button" class="time-meridiem__button" data-meridiem="AM">오전</button>
+                                <button type="button" class="time-meridiem__button" data-meridiem="PM">오후</button>
+                            </div>
+                            <div class="time-scroll-picker">
+                                <div class="time-scroll-picker__column">
+                                    <span class="time-scroll-picker__label">시</span>
+                                    <div class="time-scroll-picker__list" id="checkInTimeHourList"></div>
+                                </div>
+                                <div class="time-scroll-picker__divider">:</div>
+                                <div class="time-scroll-picker__column">
+                                    <span class="time-scroll-picker__label">분</span>
+                                    <div class="time-scroll-picker__list" id="checkInTimeMinuteList"></div>
+                                </div>
+                            </div>
+                            <div class="calendar-footer">
+                                <button class="calendar-reset" id="checkInTimeResetBtn" type="button">선택 초기화</button>
+                                <span class="calendar-summary" id="checkInTimeSummary">시간을 선택해 주세요.</span>
+                            </div>
+                        </div>
+                        <p class="field-error" th:if="${#fields.hasErrors('checkInTime')}" th:errors="*{checkInTime}"></p>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group period-time-group">
                         <label for="checkOutTime">체크아웃 시간 <span class="required-indicator">*</span></label>
-                        <input type="time"
+                        <input type="hidden"
                                name="checkOutTime"
                                th:value="${accomFormDto.checkOutTime != null ? #temporals.format(accomFormDto.checkOutTime, 'HH:mm') : ''}"
-                               step="60"
                                id="checkOutTime">
+                        <button type="button"
+                                class="picker-trigger"
+                                id="checkOutTimeTrigger"
+                                th:classappend="${#fields.hasErrors('checkOutTime')} ? ' is-invalid' : ''"
+                                data-picker-trigger="checkOutTime">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 2.75a9.25 9.25 0 1 0 9.25 9.25A9.26 9.26 0 0 0 12 2.75Zm0 1.5A7.75 7.75 0 1 1 4.25 12 7.76 7.76 0 0 1 12 4.25Zm0 2.5a.75.75 0 0 1 .75.75v3.94l2.53 1.46a.75.75 0 1 1-.75 1.3l-2.9-1.67a.75.75 0 0 1-.38-.65V7.5a.75.75 0 0 1 .75-.75Z"/>
+                            </svg>
+                            <span id="checkOutTimeLabel">시간을 선택해 주세요.</span>
+                        </button>
+                        <div class="picker-popup time-popup" id="checkOutTimePopup">
+                            <div class="time-popup__header">
+                                <strong>체크아웃 시간 선택</strong>
+                            </div>
+                            <div class="time-meridiem" id="checkOutTimeMeridiem">
+                                <button type="button" class="time-meridiem__button" data-meridiem="AM">오전</button>
+                                <button type="button" class="time-meridiem__button" data-meridiem="PM">오후</button>
+                            </div>
+                            <div class="time-scroll-picker">
+                                <div class="time-scroll-picker__column">
+                                    <span class="time-scroll-picker__label">시</span>
+                                    <div class="time-scroll-picker__list" id="checkOutTimeHourList"></div>
+                                </div>
+                                <div class="time-scroll-picker__divider">:</div>
+                                <div class="time-scroll-picker__column">
+                                    <span class="time-scroll-picker__label">분</span>
+                                    <div class="time-scroll-picker__list" id="checkOutTimeMinuteList"></div>
+                                </div>
+                            </div>
+                            <div class="calendar-footer">
+                                <button class="calendar-reset" id="checkOutTimeResetBtn" type="button">선택 초기화</button>
+                                <span class="calendar-summary" id="checkOutTimeSummary">시간을 선택해 주세요.</span>
+                            </div>
+                        </div>
+                        <p class="field-error" th:if="${#fields.hasErrors('checkOutTime')}" th:errors="*{checkOutTime}"></p>
                     </div>
 
                     <div class="form-group full-width">
                         <label>운영일 선택 <span class="required-indicator">*</span></label>
-                        <p class="field-hint">운영 시작일과 종료일을 선택한 뒤 달력에서 실제 운영할 날짜를 클릭해 주세요.</p>
+                        <p class="field-hint">운영 기간을 정한 뒤 달력에서 시작일을 먼저 클릭하고 종료일을 클릭하면 사이 날짜가 모두 선택됩니다.</p>
 
                         <div class="operation-date-area" id="operationDateArea">
                             <div class="operation-date-actions">
@@ -185,9 +307,11 @@
                             </div>
 
                             <div id="operationDateListBox"
-                                 class="operation-date-box">
+                                 class="operation-date-box"
+                                 th:classappend="${#fields.hasErrors('operationDateList')} ? ' is-invalid' : ''">
                                 <p class="operation-date-placeholder">운영 기간을 먼저 선택해 주세요.</p>
                             </div>
+                            <p class="field-error" th:if="${#fields.hasErrors('operationDateList')}" th:errors="*{operationDateList}"></p>
                         </div>
                     </div>
                 </div>
@@ -212,11 +336,13 @@
 
 <script th:inline="javascript">
     window.accomFormConfig = {
-        initialSelectedDates: /*[[${accomFormDto.operationDateList}]]*/ []
+        initialSelectedDates: /*[[${accomFormDto.operationDateList}]]*/ [],
+        today: /*[[${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}]]*/ ''
     };
 </script>
 <script th:src="@{/js/accomform-validation.js}"></script>
 <script th:src="@{/js/accomform-address.js}"></script>
+<script th:src="@{/js/accomform-picker.js}"></script>
 <script th:src="@{/js/accomform-operation.js}"></script>
 
 </body>
