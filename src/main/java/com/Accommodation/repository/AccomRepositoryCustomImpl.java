@@ -36,7 +36,9 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
     private BooleanExpression accomNameLike(String searchQuery) {
         return (searchQuery == null || searchQuery.trim().isEmpty())
                 ? null
-                : QAccom.accom.accomName.containsIgnoreCase(searchQuery);
+                : QAccom.accom.accomName.containsIgnoreCase(searchQuery)
+                .or(QAccom.accom.location.containsIgnoreCase(searchQuery))
+                .or(QAccom.accom.accomDetail.containsIgnoreCase(searchQuery));
     }
 
     private BooleanExpression accomTypeEq(AccomType accomType) {
