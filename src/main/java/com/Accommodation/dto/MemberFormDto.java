@@ -45,13 +45,15 @@ public class MemberFormDto {
     )
     private String password;
 
+    private String confirmPassword;
+
     /**
      * 🏠 휴대폰 번호
      */
     @NotBlank(message = "휴대폰 번호는 필수 입력 값입니다.")
     @Pattern(
             regexp = "^(01[016789])-?(\\d{3,4})-?(\\d{4})$",
-            message = "휴대폰 번호는 010-0000-0000 또는 01000000000 형식으로 입력해주세요."
+            message = "휴대폰 번호를 정확히 입력해주세요."
     )
     private String number;
 

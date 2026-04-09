@@ -162,10 +162,72 @@ body {
     background: #f1ebff;
 }
 
+.password-checklist {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.password-checklist__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 18px;
+    color: #667085;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.password-checklist__item::before {
+    content: "•";
+    color: #cbd5e1;
+    font-size: 14px;
+}
+
+.password-checklist__item.is-valid {
+    color: #15803d;
+}
+
+.password-checklist__item.is-valid::before {
+    content: "✓";
+    color: #15803d;
+    font-weight: 700;
+}
+
 .field-error {
     margin: 0;
+    min-height: 20px;
     font-size: 13px;
     color: #c62828;
+    visibility: hidden;
+}
+
+.field-error.is-visible {
+    visibility: visible;
+}
+
+.field-error.is-error {
+    color: #c62828;
+}
+
+.field-error.is-success {
+    color: #15803d;
+}
+
+.form-group input.is-invalid,
+.form-group select.is-invalid {
+    border-color: #c62828;
+    box-shadow: 0 0 0 4px rgba(198, 40, 40, 0.12);
+}
+
+.phone-field.is-invalid {
+    padding: 8px;
+    margin: -8px;
+    border-radius: 14px;
+    background: rgba(198, 40, 40, 0.05);
 }
 
 .auth-submit {
@@ -259,15 +321,13 @@ body {
 }
 
 .social-login__mark--kakao {
-    border-color: rgba(25, 25, 25, 0.12);
-    background: rgba(255, 255, 255, 0.28);
+    border-color: #e8c700;
+    background: #fee500;
 }
 
 .social-login__icon--kakao {
-    width: auto;
-    height: auto;
-    font-size: 15px;
-    font-weight: 900;
+    width: 20px;
+    height: 20px;
     color: #191919;
 }
 
@@ -303,6 +363,10 @@ body {
     }
 
     .address-search-row {
+        grid-template-columns: 1fr;
+    }
+
+    .password-checklist {
         grid-template-columns: 1fr;
     }
 }

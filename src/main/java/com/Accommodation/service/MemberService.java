@@ -76,6 +76,11 @@ public class MemberService {
         return member;
     }
 
+    @Transactional(readOnly = true)
+    public boolean existsByEmail(String email) {
+        return StringUtils.hasText(email) && memberRepository.findByEmail(email) != null;
+    }
+
     public void updateMember(String email, MemberUpdateDto memberUpdateDto) {
         Member member = getMemberByEmail(email);
         member.updateProfile(memberUpdateDto);

@@ -47,6 +47,7 @@ public class SecurityConfig {
                                 "/main",
                                 "/main/**",
                                 "/searchList",
+                                "/activities/**",
                                 "/recent-viewed",
                                 "/reviews/accom/**",
                                 "/orders/accom/*/availability",
@@ -58,6 +59,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(
                                 "/members/new",
+                                "/members/check-email",
                                 "/members/login",
                                 "/css/**",
                                 "/js/**"
