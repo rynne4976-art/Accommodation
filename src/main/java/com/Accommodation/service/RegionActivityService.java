@@ -12,14 +12,15 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -30,14 +31,10 @@ public class RegionActivityService {
     private final String baseUrl;
     private final String mobileApp;
 
-    private static final Pattern LINK_PATTERN =
-            Pattern.compile("href\\s*=\\s*\"([^\"]+)\"", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SINGLE_QUOTE_LINK_PATTERN =
-            Pattern.compile("href\\s*=\\s*'([^']+)'", Pattern.CASE_INSENSITIVE);
-    private static final Pattern URL_PATTERN =
-            Pattern.compile("(https?://[^\\s<>\"']+)", Pattern.CASE_INSENSITIVE);
-
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final long CACHE_TTL_MILLIS = Duration.ofMinutes(10).toMillis();
+
+    private final Map<String, CachedRegionActivityPage> pageCache = new ConcurrentHashMap<>();
 
     private static final List<RegionConfig> REGION_CONFIGS = List.of(
             new RegionConfig("서울", "/images/main/seoul.png", "서울 여행에 추천", "서울에서 즐길 수 있는 행사, 축제, 대표 관광지를 모아봤습니다."),
@@ -48,6 +45,14 @@ public class RegionActivityService {
     );
 
     private static final Map<String, RegionConfig> REGION_MAP = createRegionMap();
+
+    private static final Map<String, List<String>> PRIORITY_SPOTS = Map.of(
+            "서울", List.of("경복궁", "남산타워", "남산 서울타워", "명동", "북촌한옥마을", "창덕궁", "광화문", "인사동", "롯데월드", "청계천"),
+            "부산", List.of("해운대", "광안리", "감천문화마을", "태종대", "송도해수욕장", "송정", "자갈치시장", "국제시장", "용궁사", "부산타워"),
+            "강릉", List.of("경포대", "경포해변", "안목해변", "안목", "주문진", "오죽헌", "정동진", "강문해변", "선교장", "경포호"),
+            "제주", List.of("성산일출봉", "한라산", "우도", "협재해수욕장", "협재", "중문관광단지", "섭지코지", "용두암", "천지연폭포", "비자림"),
+            "경주", List.of("불국사", "첨성대", "동궁과 월지", "동궁월지", "황리단길", "대릉원", "석굴암", "월정교", "경주월드", "보문호")
+    );
 
     public RegionActivityService(
             @Value("${tour.api.service-key:}") String serviceKey,
@@ -62,14 +67,21 @@ public class RegionActivityService {
 
     public RegionActivityPageDto getRegionActivityPage(String regionName) {
         RegionConfig config = REGION_MAP.get(regionName);
-
         if (config == null) {
             config = REGION_MAP.get("서울");
         }
 
-        List<RegionActivityItemDto> items = searchActivities(config.regionName(), 20);
+        String cacheKey = config.regionName();
+        long now = System.currentTimeMillis();
 
-        return new RegionActivityPageDto(
+        CachedRegionActivityPage cached = pageCache.get(cacheKey);
+        if (cached != null && (now - cached.cachedAt()) < CACHE_TTL_MILLIS) {
+            return cached.pageDto();
+        }
+
+        List<RegionActivityItemDto> items = searchActivities(config.regionName(), 60);
+
+        RegionActivityPageDto pageDto = new RegionActivityPageDto(
                 config.regionName(),
                 config.imagePath(),
                 config.headline(),
@@ -77,6 +89,9 @@ public class RegionActivityService {
                 getFeaturedSection(config.regionName()),
                 items
         );
+
+        pageCache.put(cacheKey, new CachedRegionActivityPage(pageDto, now));
+        return pageDto;
     }
 
     private RegionFeaturedSectionDto getFeaturedSection(String regionName) {
@@ -146,93 +161,30 @@ public class RegionActivityService {
 
         Map<String, RegionActivityItemDto> merged = new LinkedHashMap<>();
 
-        List<RegionActivityItemDto> festivalItems = searchFestival(regionName, 12);
+        List<RegionActivityItemDto> festivalItems = searchFestival(regionName, 15);
         for (RegionActivityItemDto item : festivalItems) {
             merged.putIfAbsent(buildMergeKey(item), item);
         }
 
-        List<RegionActivityItemDto> areaItems = searchAreaBased(regionName, 20);
+        List<RegionActivityItemDto> areaItems = searchAreaBased(regionName, 45);
         for (RegionActivityItemDto item : areaItems) {
             merged.putIfAbsent(buildMergeKey(item), item);
         }
 
-        List<String> regionKeywords = getRegionKeywords(regionName);
-        for (String keyword : regionKeywords) {
-            List<RegionActivityItemDto> items = searchByKeyword(keyword, 8);
-            for (RegionActivityItemDto item : items) {
-                merged.putIfAbsent(buildMergeKey(item), item);
-            }
+        List<RegionActivityItemDto> sorted = sortByPriority(regionName, new ArrayList<>(merged.values()));
+
+        if (sorted.size() > size) {
+            return sorted.subList(0, size);
         }
-
-        return merged.values().stream()
-                .limit(size)
-                .toList();
-    }
-
-    private List<String> getRegionKeywords(String regionName) {
-        return switch (regionName) {
-            case "서울" -> List.of(
-                    "서울 축제",
-                    "서울 전시",
-                    "서울 공연",
-                    "서울 한강",
-                    "서울 야경",
-                    "서울 체험"
-            );
-            case "부산" -> List.of(
-                    "부산 축제",
-                    "부산 해운대",
-                    "부산 광안리",
-                    "부산 야경",
-                    "부산 체험",
-                    "부산 공연"
-            );
-            case "강릉" -> List.of(
-                    "강릉 축제",
-                    "강릉 단오",
-                    "강릉 바다",
-                    "강릉 체험",
-                    "강릉 커피",
-                    "강릉 관광"
-            );
-            case "제주" -> List.of(
-                    "제주 축제",
-                    "제주 오름",
-                    "제주 유채꽃",
-                    "제주 체험",
-                    "제주 관광",
-                    "제주 전시"
-            );
-            case "경주" -> List.of(
-                    "경주 축제",
-                    "경주 벚꽃",
-                    "경주 문화유산",
-                    "경주 체험",
-                    "경주 공연",
-                    "경주 관광"
-            );
-            default -> List.of(
-                    regionName + " 축제",
-                    regionName + " 관광",
-                    regionName + " 체험"
-            );
-        };
-    }
-
-    private String buildMergeKey(RegionActivityItemDto item) {
-        String title = item.getTitle() == null ? "" : item.getTitle().trim();
-        String externalUrl = item.getExternalUrl() == null ? "" : item.getExternalUrl().trim();
-        String detailUrl = item.getDetailUrl() == null ? "" : item.getDetailUrl().trim();
-        return title + "|" + externalUrl + "|" + detailUrl;
+        return sorted;
     }
 
     private List<RegionActivityItemDto> searchFestival(String regionName, int size) {
-        try {
-            String startDate = LocalDate.now().format(DATE_FORMATTER);
-            String endDate = LocalDate.now().plusMonths(6).format(DATE_FORMATTER);
+        AreaCode areaCode = getAreaCode(regionName);
 
-            String requestUrl = UriComponentsBuilder
-                    .fromHttpUrl(baseUrl + "/searchFestival2")
+        try {
+            UriComponentsBuilder builder = UriComponentsBuilder
+                    .fromUriString(baseUrl + "/searchFestival2")
                     .queryParam("serviceKey", serviceKey)
                     .queryParam("MobileOS", "ETC")
                     .queryParam("MobileApp", mobileApp)
@@ -240,11 +192,16 @@ public class RegionActivityService {
                     .queryParam("arrange", "Q")
                     .queryParam("numOfRows", size)
                     .queryParam("pageNo", 1)
-                    .queryParam("eventStartDate", startDate)
-                    .queryParam("eventEndDate", endDate)
-                    .encode()
-                    .build()
-                    .toUriString();
+                    .queryParam("eventStartDate", LocalDate.now().format(DATE_FORMATTER));
+
+            if (StringUtils.hasText(areaCode.lDongRegnCd())) {
+                builder.queryParam("lDongRegnCd", areaCode.lDongRegnCd());
+            }
+            if (StringUtils.hasText(areaCode.lDongSignguCd())) {
+                builder.queryParam("lDongSignguCd", areaCode.lDongSignguCd());
+            }
+
+            String requestUrl = builder.encode().build().toUriString();
 
             Map<String, Object> response = restClient.get()
                     .uri(requestUrl)
@@ -252,40 +209,40 @@ public class RegionActivityService {
                     .body(new ParameterizedTypeReference<>() {});
 
             List<Map<String, Object>> rawItems = extractItems(response);
-
             List<RegionActivityItemDto> result = new ArrayList<>();
+
             for (Map<String, Object> raw : rawItems) {
                 String title = stringValue(raw.get("title"));
-                String addr1 = stringValue(raw.get("addr1"));
-                String addr2 = stringValue(raw.get("addr2"));
-                String address = joinAddress(addr1, addr2);
+                if (!StringUtils.hasText(title)) {
+                    continue;
+                }
+
+                String address = joinAddress(
+                        stringValue(raw.get("addr1")),
+                        stringValue(raw.get("addr2"))
+                );
 
                 if (!containsRegion(regionName, title, address)) {
                     continue;
                 }
 
-                String contentId = stringValue(raw.get("contentid"));
                 String imageUrl = firstNotBlank(
                         stringValue(raw.get("firstimage")),
                         stringValue(raw.get("firstimage2"))
-                );
-
-                DetailInfo detailInfo = fetchDetailInfo(contentId, "15");
-
-                String period = formatPeriod(
-                        stringValue(raw.get("eventstartdate")),
-                        stringValue(raw.get("eventenddate"))
                 );
 
                 result.add(RegionActivityItemDto.builder()
                         .title(title)
                         .imageUrl(imageUrl)
                         .address(address)
-                        .period(period)
-                        .detailUrl(buildVisitKoreaDetailUrl(contentId))
-                        .externalUrl(detailInfo.homepageUrl())
+                        .period(formatPeriod(
+                                stringValue(raw.get("eventstartdate")),
+                                stringValue(raw.get("eventenddate"))
+                        ))
+                        .detailUrl(buildVisitKoreaSearchUrl(title, regionName))
+                        .externalUrl(buildVisitKoreaSearchUrl(title, regionName))
                         .category("행사/축제")
-                        .tel(firstNotBlank(stringValue(raw.get("tel")), detailInfo.tel()))
+                        .tel(stringValue(raw.get("tel")))
                         .regionName(regionName)
                         .build());
             }
@@ -305,18 +262,21 @@ public class RegionActivityService {
         }
 
         List<RegionActivityItemDto> result = new ArrayList<>();
-        List<String> contentTypeIds = List.of("12", "14", "15", "25", "28");
+
+        // 여행코스(25)는 제외
+        List<String> contentTypeIds = List.of("12", "14", "28");
+        int rowsPerType = Math.max(8, size / contentTypeIds.size());
 
         for (String contentTypeId : contentTypeIds) {
             try {
                 UriComponentsBuilder builder = UriComponentsBuilder
-                        .fromHttpUrl(baseUrl + "/areaBasedList2")
+                        .fromUriString(baseUrl + "/areaBasedList2")
                         .queryParam("serviceKey", serviceKey)
                         .queryParam("MobileOS", "ETC")
                         .queryParam("MobileApp", mobileApp)
                         .queryParam("_type", "json")
                         .queryParam("arrange", "Q")
-                        .queryParam("numOfRows", 10)
+                        .queryParam("numOfRows", rowsPerType)
                         .queryParam("pageNo", 1)
                         .queryParam("contentTypeId", contentTypeId)
                         .queryParam("lDongRegnCd", areaCode.lDongRegnCd());
@@ -325,10 +285,7 @@ public class RegionActivityService {
                     builder.queryParam("lDongSignguCd", areaCode.lDongSignguCd());
                 }
 
-                String requestUrl = builder
-                        .encode()
-                        .build()
-                        .toUriString();
+                String requestUrl = builder.encode().build().toUriString();
 
                 Map<String, Object> response = restClient.get()
                         .uri(requestUrl)
@@ -343,31 +300,31 @@ public class RegionActivityService {
                         continue;
                     }
 
-                    String contentId = stringValue(raw.get("contentid"));
-                    String imageUrl = firstNotBlank(
-                            stringValue(raw.get("firstimage")),
-                            stringValue(raw.get("firstimage2"))
-                    );
                     String address = joinAddress(
                             stringValue(raw.get("addr1")),
                             stringValue(raw.get("addr2"))
                     );
 
-                    DetailInfo detailInfo = fetchDetailInfo(contentId, contentTypeId);
+                    if (!containsRegion(regionName, title, address)) {
+                        continue;
+                    }
 
-                    result.add(
-                            RegionActivityItemDto.builder()
-                                    .title(title)
-                                    .imageUrl(imageUrl)
-                                    .address(address)
-                                    .period("")
-                                    .detailUrl(buildVisitKoreaDetailUrl(contentId))
-                                    .externalUrl(detailInfo.homepageUrl())
-                                    .category(resolveCategory(contentTypeId))
-                                    .tel(firstNotBlank(stringValue(raw.get("tel")), detailInfo.tel()))
-                                    .regionName(regionName)
-                                    .build()
+                    String imageUrl = firstNotBlank(
+                            stringValue(raw.get("firstimage")),
+                            stringValue(raw.get("firstimage2"))
                     );
+
+                    result.add(RegionActivityItemDto.builder()
+                            .title(title)
+                            .imageUrl(imageUrl)
+                            .address(address)
+                            .period("")
+                            .detailUrl(buildVisitKoreaSearchUrl(title, regionName))
+                            .externalUrl(buildVisitKoreaSearchUrl(title, regionName))
+                            .category(resolveCategory(contentTypeId))
+                            .tel(stringValue(raw.get("tel")))
+                            .regionName(regionName)
+                            .build());
                 }
             } catch (Exception e) {
                 log.warn("TourAPI areaBasedList2 호출 실패 - region={}, contentTypeId={}", regionName, contentTypeId, e);
@@ -377,161 +334,90 @@ public class RegionActivityService {
         return result;
     }
 
+    private List<RegionActivityItemDto> sortByPriority(String regionName, List<RegionActivityItemDto> items) {
+        List<String> prioritySpots = PRIORITY_SPOTS.getOrDefault(regionName, List.of());
+
+        return items.stream()
+                .sorted(
+                        Comparator
+                                .comparingInt((RegionActivityItemDto item) -> getPrioritySpotIndex(item, prioritySpots))
+                                .thenComparingInt(this::getCategoryRank)
+                                .thenComparing(item -> safe(item.getTitle()))
+                )
+                .toList();
+    }
+
+    private int getPrioritySpotIndex(RegionActivityItemDto item, List<String> prioritySpots) {
+        String target = (safe(item.getTitle()) + " " + safe(item.getAddress())).replace(" ", "");
+
+        for (int i = 0; i < prioritySpots.size(); i++) {
+            String keyword = prioritySpots.get(i).replace(" ", "");
+            if (target.contains(keyword)) {
+                return i;
+            }
+        }
+
+        return 999;
+    }
+
+    private int getCategoryRank(RegionActivityItemDto item) {
+        String category = safe(item.getCategory());
+
+        if ("행사/축제".equals(category)) {
+            return 0;
+        }
+        if ("관광지".equals(category)) {
+            return 1;
+        }
+        if ("문화시설".equals(category)) {
+            return 2;
+        }
+        if ("레포츠".equals(category)) {
+            return 3;
+        }
+        return 9;
+    }
+
+    private String buildMergeKey(RegionActivityItemDto item) {
+        return (safe(item.getTitle()) + "|" + safe(item.getAddress())).toLowerCase();
+    }
+
     private AreaCode getAreaCode(String regionName) {
         return switch (regionName) {
             case "서울" -> new AreaCode("11", "");
             case "부산" -> new AreaCode("26", "");
-            case "강릉" -> new AreaCode("51", "170");
+            // 강릉은 시군구 코드까지 고정하면 Tour API 결과가 비는 경우가 있어
+            // 강원권으로 넓게 조회한 뒤 제목/주소의 "강릉" 포함 여부로 다시 필터링한다.
+            case "강릉" -> new AreaCode("51", "");
             case "제주" -> new AreaCode("50", "");
             case "경주" -> new AreaCode("47", "130");
             default -> new AreaCode("", "");
         };
     }
 
-    private List<RegionActivityItemDto> searchByKeyword(String keyword, int size) {
-        try {
-            String requestUrl = UriComponentsBuilder
-                    .fromHttpUrl(baseUrl + "/searchKeyword2")
-                    .queryParam("serviceKey", serviceKey)
-                    .queryParam("MobileOS", "ETC")
-                    .queryParam("MobileApp", mobileApp)
-                    .queryParam("_type", "json")
-                    .queryParam("listYN", "Y")
-                    .queryParam("arrange", "Q")
-                    .queryParam("numOfRows", size)
-                    .queryParam("pageNo", 1)
-                    .queryParam("keyword", keyword)
-                    .encode()
-                    .build()
-                    .toUriString();
-
-            Map<String, Object> response = restClient.get()
-                    .uri(requestUrl)
-                    .retrieve()
-                    .body(new ParameterizedTypeReference<>() {});
-
-            List<Map<String, Object>> rawItems = extractItems(response);
-            return convertItems(rawItems, extractRegionFromKeyword(keyword));
-        } catch (Exception e) {
-            log.error("TourAPI searchKeyword2 호출 실패 - keyword={}", keyword, e);
-            return List.of();
-        }
+    private String resolveCategory(String contentTypeId) {
+        return switch (contentTypeId) {
+            case "12" -> "관광지";
+            case "14" -> "문화시설";
+            case "15" -> "행사/축제";
+            case "28" -> "레포츠";
+            default -> "즐길거리";
+        };
     }
 
-    private List<RegionActivityItemDto> convertItems(List<Map<String, Object>> rawItems, String regionName) {
-        List<RegionActivityItemDto> result = new ArrayList<>();
+    private String buildVisitKoreaSearchUrl(String title, String regionName) {
+        String keyword = firstNotBlank(title, regionName);
 
-        for (Map<String, Object> raw : rawItems) {
-            String title = stringValue(raw.get("title"));
-            if (!StringUtils.hasText(title)) {
-                continue;
-            }
-
-            String contentId = stringValue(raw.get("contentid"));
-            String contentTypeId = stringValue(raw.get("contenttypeid"));
-            String imageUrl = firstNotBlank(
-                    stringValue(raw.get("firstimage")),
-                    stringValue(raw.get("firstimage2"))
-            );
-            String address = joinAddress(
-                    stringValue(raw.get("addr1")),
-                    stringValue(raw.get("addr2"))
-            );
-
-            DetailInfo detailInfo = fetchDetailInfo(contentId, contentTypeId);
-
-            result.add(RegionActivityItemDto.builder()
-                    .title(title)
-                    .imageUrl(imageUrl)
-                    .address(address)
-                    .period("")
-                    .detailUrl(buildVisitKoreaDetailUrl(contentId))
-                    .externalUrl(detailInfo.homepageUrl())
-                    .category(resolveCategory(contentTypeId))
-                    .tel(firstNotBlank(stringValue(raw.get("tel")), detailInfo.tel()))
-                    .regionName(regionName)
-                    .build());
+        if (!StringUtils.hasText(keyword)) {
+            return "https://korean.visitkorea.or.kr/";
         }
 
-        return result;
-    }
-
-    private DetailInfo fetchDetailInfo(String contentId, String contentTypeId) {
-        if (!StringUtils.hasText(contentId)) {
-            return new DetailInfo("", "", "");
-        }
-
-        try {
-            String requestUrl = UriComponentsBuilder
-                    .fromHttpUrl(baseUrl + "/detailCommon2")
-                    .queryParam("serviceKey", serviceKey)
-                    .queryParam("MobileOS", "ETC")
-                    .queryParam("MobileApp", mobileApp)
-                    .queryParam("_type", "json")
-                    .queryParam("contentId", contentId)
-                    .encode()
-                    .build()
-                    .toUriString();
-
-            Map<String, Object> response = restClient.get()
-                    .uri(requestUrl)
-                    .retrieve()
-                    .body(new ParameterizedTypeReference<>() {});
-
-            List<Map<String, Object>> items = extractItems(response);
-
-            if (items.isEmpty()) {
-                return new DetailInfo("", "", "");
-            }
-
-            Map<String, Object> item = items.get(0);
-
-            String overview = stringValue(item.get("overview"));
-            String homepageRaw = stringValue(item.get("homepage"));
-            String homepageUrl = extractHomepageUrl(homepageRaw);
-            String tel = stringValue(item.get("tel"));
-
-            if (!StringUtils.hasText(homepageUrl) && "15".equals(contentTypeId)) {
-                homepageUrl = fetchFestivalHomepage(contentId, contentTypeId);
-            }
-
-            return new DetailInfo(overview, homepageUrl, tel);
-        } catch (Exception e) {
-            log.error("TourAPI detailCommon2 호출 실패 - contentId={}", contentId, e);
-            return new DetailInfo("", "", "");
-        }
-    }
-
-    private String fetchFestivalHomepage(String contentId, String contentTypeId) {
-        try {
-            String requestUrl = UriComponentsBuilder
-                    .fromHttpUrl(baseUrl + "/detailIntro2")
-                    .queryParam("serviceKey", serviceKey)
-                    .queryParam("MobileOS", "ETC")
-                    .queryParam("MobileApp", mobileApp)
-                    .queryParam("_type", "json")
-                    .queryParam("contentId", contentId)
-                    .queryParam("contentTypeId", contentTypeId)
-                    .encode()
-                    .build()
-                    .toUriString();
-
-            Map<String, Object> response = restClient.get()
-                    .uri(requestUrl)
-                    .retrieve()
-                    .body(new ParameterizedTypeReference<>() {});
-
-            List<Map<String, Object>> items = extractItems(response);
-            if (items.isEmpty()) {
-                return "";
-            }
-
-            Map<String, Object> item = items.get(0);
-            return extractHomepageUrl(stringValue(item.get("eventhomepage")));
-        } catch (Exception e) {
-            log.warn("TourAPI detailIntro2 호출 실패 - contentId={}, contentTypeId={}", contentId, contentTypeId, e);
-            return "";
-        }
+        return UriComponentsBuilder
+                .fromUriString("https://korean.visitkorea.or.kr/search/search_list.do")
+                .queryParam("keyword", keyword)
+                .build()
+                .encode()
+                .toUriString();
     }
 
     @SuppressWarnings("unchecked")
@@ -574,32 +460,57 @@ public class RegionActivityService {
         return List.of();
     }
 
-    private String extractHomepageUrl(String homepageRaw) {
-        if (!StringUtils.hasText(homepageRaw)) {
+    private boolean containsRegion(String regionName, String title, String address) {
+        String target = (safe(title) + " " + safe(address)).replace(" ", "");
+        String region = safe(regionName).replace(" ", "");
+
+        if (!StringUtils.hasText(region)) {
+            return false;
+        }
+
+        if (target.contains(region)) {
+            return true;
+        }
+
+        // 강릉은 강원 전체 조회 후 다시 필터링하므로,
+        // 대표 관광지 키워드도 함께 허용해야 결과가 안정적으로 노출된다.
+        if ("강릉".equals(regionName)) {
+            List<String> gangneungKeywords = List.of(
+                    "강릉", "경포", "경포대", "경포해변", "안목", "안목해변",
+                    "주문진", "정동진", "강문", "오죽헌", "선교장"
+            );
+
+            for (String keyword : gangneungKeywords) {
+                String normalizedKeyword = keyword.replace(" ", "");
+                if (target.contains(normalizedKeyword)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private String formatPeriod(String startDate, String endDate) {
+        if (!StringUtils.hasText(startDate) && !StringUtils.hasText(endDate)) {
             return "";
         }
 
-        Matcher matcher = LINK_PATTERN.matcher(homepageRaw);
-        if (matcher.find()) {
-            return matcher.group(1);
+        String formattedStart = formatDate(startDate);
+        String formattedEnd = formatDate(endDate);
+
+        if (StringUtils.hasText(formattedStart) && StringUtils.hasText(formattedEnd)) {
+            return formattedStart + " ~ " + formattedEnd;
         }
 
-        matcher = SINGLE_QUOTE_LINK_PATTERN.matcher(homepageRaw);
-        if (matcher.find()) {
-            return matcher.group(1);
+        return firstNotBlank(formattedStart, formattedEnd);
+    }
+
+    private String formatDate(String value) {
+        if (!StringUtils.hasText(value) || value.length() < 8) {
+            return "";
         }
-
-        String cleaned = homepageRaw
-                .replaceAll("<[^>]*>", " ")
-                .replace("&amp;", "&")
-                .trim();
-
-        matcher = URL_PATTERN.matcher(cleaned);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-
-        return "";
+        return value.substring(0, 4) + "." + value.substring(4, 6) + "." + value.substring(6, 8);
     }
 
     private String joinAddress(String addr1, String addr2) {
@@ -609,96 +520,29 @@ public class RegionActivityService {
         if (StringUtils.hasText(addr1)) {
             return addr1;
         }
-        return addr2;
-    }
-
-    private String cleanText(String value) {
-        if (!StringUtils.hasText(value)) {
-            return "";
-        }
-
-        return value
-                .replaceAll("<[^>]*>", " ")
-                .replace("&nbsp;", " ")
-                .replaceAll("\\s+", " ")
-                .trim();
-    }
-
-    private String limit(String value, int max) {
-        if (!StringUtils.hasText(value)) {
-            return "";
-        }
-
-        String trimmed = value.trim();
-        return trimmed.length() <= max ? trimmed : trimmed.substring(0, max) + "...";
+        return firstNotBlank(addr2);
     }
 
     private String firstNotBlank(String... values) {
+        if (values == null) {
+            return "";
+        }
+
         for (String value : values) {
             if (StringUtils.hasText(value)) {
-                return value;
+                return value.trim();
             }
         }
+
         return "";
     }
 
     private String stringValue(Object value) {
-        return value == null ? "" : String.valueOf(value);
+        return value == null ? "" : String.valueOf(value).trim();
     }
 
-    private boolean containsRegion(String regionName, String title, String address) {
-        String source = (stringValue(title) + " " + stringValue(address)).replace(" ", "");
-        String target = stringValue(regionName).replace(" ", "");
-        return source.contains(target);
-    }
-
-    private String extractRegionFromKeyword(String keyword) {
-        if (!StringUtils.hasText(keyword)) {
-            return "";
-        }
-        return keyword.split(" ")[0];
-    }
-
-    private String resolveCategory(String contentTypeId) {
-        return switch (contentTypeId) {
-            case "12" -> "관광지";
-            case "14" -> "문화시설";
-            case "15" -> "행사/축제";
-            case "25" -> "여행코스";
-            case "28" -> "레포츠";
-            case "32" -> "숙박";
-            case "38" -> "쇼핑";
-            case "39" -> "음식점";
-            default -> "즐길거리";
-        };
-    }
-
-    private String buildVisitKoreaDetailUrl(String contentId) {
-        if (!StringUtils.hasText(contentId)) {
-            return "";
-        }
-        return "https://korean.visitkorea.or.kr/detail/ms_detail.do?cotid=" + contentId;
-    }
-
-    private String formatPeriod(String start, String end) {
-        if (!StringUtils.hasText(start) && !StringUtils.hasText(end)) {
-            return "";
-        }
-
-        String startText = formatDate(start);
-        String endText = formatDate(end);
-
-        if (StringUtils.hasText(startText) && StringUtils.hasText(endText)) {
-            return startText + " ~ " + endText;
-        }
-        return firstNotBlank(startText, endText);
-    }
-
-    private String formatDate(String value) {
-        if (!StringUtils.hasText(value) || value.length() < 8) {
-            return "";
-        }
-        return value.substring(0, 4) + "." + value.substring(4, 6) + "." + value.substring(6, 8);
+    private String safe(String value) {
+        return value == null ? "" : value;
     }
 
     private static Map<String, RegionConfig> createRegionMap() {
@@ -717,16 +561,15 @@ public class RegionActivityService {
     ) {
     }
 
-    private record DetailInfo(
-            String overview,
-            String homepageUrl,
-            String tel
-    ) {
-    }
-
     private record AreaCode(
             String lDongRegnCd,
             String lDongSignguCd
+    ) {
+    }
+
+    private record CachedRegionActivityPage(
+            RegionActivityPageDto pageDto,
+            long cachedAt
     ) {
     }
 }
