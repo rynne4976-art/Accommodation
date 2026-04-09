@@ -14,7 +14,10 @@
     }
 
     function getAuthHeaders() {
-        const headers = {};
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        };
         const csrfHeader = getCsrfHeader();
         const csrfToken = getCsrfToken();
 
@@ -243,6 +246,30 @@
         window.location.href = targetUrl;
     }
 
+    function moveToLoginWithRedirect() {
+        const redirectUrl = window.location.pathname + window.location.search + '#review-info';
+        window.location.href = '/members/login?redirectUrl=' + encodeURIComponent(redirectUrl);
+    }
+
+    function isLoginRedirectResponse(response) {
+        return response.status === 401
+            || response.redirected
+            || response.url.includes('/members/login');
+    }
+
+    async function readJsonResponse(response) {
+        if (isLoginRedirectResponse(response)) {
+            throw new Error('LOGIN_REQUIRED');
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            throw new Error('UNEXPECTED_RESPONSE');
+        }
+
+        return response.json();
+    }
+
     function openReviewModal(button) {
         const isLoggedIn = button.getAttribute('data-logged-in') === 'true';
         const canWriteReview = button.getAttribute('data-can-write-review') === 'true';
@@ -313,7 +340,7 @@
                 body: formData
             });
 
-            const result = await response.json();
+            const result = await readJsonResponse(response);
             alert(result.message || config.reviewRequestFailedMessage || '리뷰 요청을 처리하지 못했습니다.');
 
             if (result.success) {
@@ -321,6 +348,10 @@
                 moveToReviewSection(result.accomId);
             }
         } catch (error) {
+            if (error.message === 'LOGIN_REQUIRED') {
+                moveToLoginWithRedirect();
+                return;
+            }
             alert(config.reviewRequestFailedMessage || '리뷰 요청을 처리하지 못했습니다.');
             console.error(error);
         }
@@ -356,7 +387,7 @@
                 body: formData
             });
 
-            const result = await response.json();
+            const result = await readJsonResponse(response);
             alert(result.message || config.reviewRequestFailedMessage || '리뷰 요청을 처리하지 못했습니다.');
 
             if (result.success) {
@@ -364,6 +395,10 @@
                 moveToReviewSection(result.accomId || accomId);
             }
         } catch (error) {
+            if (error.message === 'LOGIN_REQUIRED') {
+                moveToLoginWithRedirect();
+                return;
+            }
             alert(config.reviewRequestFailedMessage || '리뷰 요청을 처리하지 못했습니다.');
             console.error(error);
         }
@@ -390,7 +425,7 @@
                 body: formData.toString()
             });
 
-            const result = await response.json();
+            const result = await readJsonResponse(response);
             alert(result.message || config.reviewRequestFailedMessage || '리뷰 요청을 처리하지 못했습니다.');
 
             if (result.success) {
@@ -398,6 +433,10 @@
                 moveToReviewSection(result.accomId || accomId);
             }
         } catch (error) {
+            if (error.message === 'LOGIN_REQUIRED') {
+                moveToLoginWithRedirect();
+                return;
+            }
             alert(config.reviewRequestFailedMessage || '리뷰 요청을 처리하지 못했습니다.');
             console.error(error);
         }
@@ -447,7 +486,7 @@
             body: formData.toString()
         });
 
-        return response.json();
+        return readJsonResponse(response);
     }
 
     async function deleteSelectedReviewImagesAjax(reviewId, accomId) {
@@ -476,6 +515,10 @@
                     deletedCount += 1;
                 }
             } catch (error) {
+                if (error.message === 'LOGIN_REQUIRED') {
+                    moveToLoginWithRedirect();
+                    return;
+                }
                 console.error(error);
             }
         }

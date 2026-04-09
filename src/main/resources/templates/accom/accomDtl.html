@@ -710,6 +710,7 @@
         const pricePerNight = /*[[${accom.pricePerNight}]]*/ 0;
         const accomMaxGuest = /*[[${accom.guestCount}]]*/ 10;
         const accomTypeStr  = /*[[${accom.accomType != null ? accom.accomType.name() : 'HOTEL'}]]*/ 'HOTEL';
+        const isAuthenticated = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
 
         const operationDays = /*[[${accom.operationDayList != null ? accom.operationDayList.![#temporals.format(operationDate, 'yyyy-MM-dd')] : T(java.util.Collections).emptyList()}]]*/ [];
         const soldOutDays   = /*[[${soldOutDays}]]*/ [];
@@ -740,6 +741,7 @@
         let lastAvailabilityKey     = '';
         let availabilityController  = null;
         let latestRemainingRooms    = null;
+        const pendingCartStorageKey = 'pendingCartSelection';
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('guestHintMax').textContent = effectiveMax;
@@ -753,6 +755,8 @@
             renderCalendar();
             updateSummary();
             fetchMonthlyRooms(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
+            restorePendingCartSelection();
+            processPendingCartAction();
 
             setInterval(() => {
                 const key = `${currentMonth.getFullYear()}-${currentMonth.getMonth() + 1}`;
@@ -880,6 +884,10 @@
         }
 
         function selectDate(dateString) {
+            if (isDateClosedByCheckInTime(dateString)) {
+                alert('당일 체크인 가능 시간이 지나 선택할 수 없습니다.');
+                return;
+            }
             if (selectedCheckIn === dateString && !selectedCheckOut) {
                 selectedCheckIn = null; selectedCheckOut = null; previewCheckOut = null;
                 renderCalendar(); updateSummary(); return;
@@ -1040,8 +1048,11 @@
             const hiddenCheckIn  = document.getElementById('hiddenCheckInDate');
             const hiddenCheckOut = document.getElementById('hiddenCheckOutDate');
 
+            const beforeCheckIn = selectedCheckIn;
+            const beforeCheckOut = selectedCheckOut;
             if (selectedCheckIn  && isDateUnavailable(selectedCheckIn))  { selectedCheckIn  = null; selectedCheckOut = null; previewCheckOut = null; }
             if (selectedCheckOut && isDateUnavailable(selectedCheckOut)) { selectedCheckOut = null; }
+            const selectionChanged = beforeCheckIn !== selectedCheckIn || beforeCheckOut !== selectedCheckOut;
 
             checkInEl.textContent  = selectedCheckIn  || '선택 전';
             checkOutEl.textContent = selectedCheckOut || '선택 전';
@@ -1074,6 +1085,9 @@
             }
 
             totalEl.textContent = grandTotal.toLocaleString('ko-KR') + '원';
+            if (selectionChanged) {
+                renderCalendar();
+            }
             updateAvailability(remainingEl);
         }
 
@@ -1082,10 +1096,104 @@
             el.innerHTML = `<span class="${cls}">${text}</span>`;
         }
 
+        function collectCurrentBookingState() {
+            return {
+                accomId,
+                path: `${window.location.pathname}${window.location.search}`,
+                selectedCheckIn,
+                selectedCheckOut,
+                adultCount: document.getElementById('adultCount').value,
+                childCount: document.getElementById('childCount').value,
+                roomCount: document.getElementById('roomCount').value
+            };
+        }
+
+        function savePendingCartSelection() {
+            sessionStorage.setItem(
+                pendingCartStorageKey,
+                JSON.stringify({
+                    ...collectCurrentBookingState(),
+                    action: 'addToCart'
+                })
+            );
+        }
+
+        function getPendingCartSelection() {
+            const raw = sessionStorage.getItem(pendingCartStorageKey);
+            if (!raw) return null;
+
+            try {
+                return JSON.parse(raw);
+            } catch (_) {
+                sessionStorage.removeItem(pendingCartStorageKey);
+                return null;
+            }
+        }
+
+        function clearPendingCartSelection() {
+            sessionStorage.removeItem(pendingCartStorageKey);
+        }
+
+        function applyBookingState(state) {
+            if (!state || Number(state.accomId) !== Number(accomId)) return;
+
+            document.getElementById('adultCount').value = state.adultCount ?? '1';
+            document.getElementById('childCount').value = state.childCount ?? '0';
+            document.getElementById('roomCount').value = state.roomCount ?? '1';
+            selectedCheckIn = state.selectedCheckIn || null;
+            selectedCheckOut = state.selectedCheckOut || null;
+            previewCheckOut = null;
+            initCalendarMonth();
+            renderCalendar();
+            onGuestChange();
+        }
+
+        function restorePendingCartSelection() {
+            const pending = getPendingCartSelection();
+            if (!pending) return;
+            if (Number(pending.accomId) !== Number(accomId)) return;
+            applyBookingState(pending);
+        }
+
+        async function processPendingCartAction() {
+            const pending = getPendingCartSelection();
+            if (!pending || pending.action !== 'addToCart') return;
+            if (Number(pending.accomId) !== Number(accomId)) return;
+            if (!isAuthenticated) return;
+
+            await submitToCart({ skipLoginCheck: true, autoTriggered: true });
+        }
+
+        function moveToLoginWithRedirect() {
+            const redirectUrl = `${window.location.pathname}${window.location.search}`;
+            window.location.href = `/members/login?redirectUrl=${encodeURIComponent(redirectUrl)}`;
+        }
+
+        function isLoginRedirectResponse(response) {
+            return response.status === 401
+                || response.redirected
+                || response.url.includes('/members/login');
+        }
+
+        function buildAjaxHeaders(includeJson = false) {
+            const headers = {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            };
+            if (includeJson) {
+                headers['Content-Type'] = 'application/json';
+            }
+            return headers;
+        }
+
         async function fetchRemainingRooms() {
             const response = await fetch(
-                `/orders/accom/${accomId}/availability?checkInDate=${encodeURIComponent(selectedCheckIn)}&checkOutDate=${encodeURIComponent(selectedCheckOut)}`
+                `/orders/accom/${accomId}/availability?checkInDate=${encodeURIComponent(selectedCheckIn)}&checkOutDate=${encodeURIComponent(selectedCheckOut)}`,
+                { headers: buildAjaxHeaders() }
             );
+            if (isLoginRedirectResponse(response)) {
+                throw new Error('LOGIN_REQUIRED');
+            }
             if (!response.ok) {
                 throw new Error(await response.text());
             }
@@ -1109,8 +1217,12 @@
             try {
                 const response = await fetch(
                     `/orders/accom/${accomId}/availability?checkInDate=${encodeURIComponent(selectedCheckIn)}&checkOutDate=${encodeURIComponent(selectedCheckOut)}`,
-                    { signal: availabilityController.signal }
+                    { signal: availabilityController.signal, headers: buildAjaxHeaders() }
                 );
+                if (isLoginRedirectResponse(response)) {
+                    setAvailabilityBadge(remainingEl, '-');
+                    return;
+                }
                 if (!response.ok) { setAvailabilityBadge(remainingEl, '-'); return; }
                 const data = await response.json();
                 const remaining = typeof data.remainingRooms === 'number' ? data.remainingRooms : null;
@@ -1156,7 +1268,7 @@
 
             const csrfTokenMeta  = document.querySelector('meta[name="_csrf"]');
             const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
-            const headers = { 'Content-Type': 'application/json' };
+            const headers = buildAjaxHeaders(true);
             if (csrfTokenMeta && csrfHeaderMeta) headers[csrfHeaderMeta.content] = csrfTokenMeta.content;
 
             try {
@@ -1172,6 +1284,10 @@
                     headers: headers,
                     body: JSON.stringify({ accomId, checkInDate: selectedCheckIn, checkOutDate: selectedCheckOut, adultCount: selection.adult, childCount: selection.child, roomCount: selection.roomCount })
                 });
+                if (isLoginRedirectResponse(response)) {
+                    moveToLoginWithRedirect();
+                    return;
+                }
                 if (response.ok) {
                     const orderId = await response.text();
                     window.location.href = `/orders/${orderId}`;
@@ -1180,17 +1296,28 @@
                     alert('예약 실패: ' + message);
                 }
             } catch (error) {
+                if (error.message === 'LOGIN_REQUIRED') {
+                    moveToLoginWithRedirect();
+                    return;
+                }
                 alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
-        async function submitToCart() {
+        async function submitToCart(options = {}) {
+            const { skipLoginCheck = false, autoTriggered = false } = options;
+            if (!skipLoginCheck && !isAuthenticated) {
+                savePendingCartSelection();
+                moveToLoginWithRedirect();
+                return;
+            }
+
             const selection = getBookingSelection();
             if (!selection) return;
 
             const csrfTokenMeta  = document.querySelector('meta[name="_csrf"]');
             const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
-            const headers = { 'Content-Type': 'application/json' };
+            const headers = buildAjaxHeaders(true);
             if (csrfTokenMeta && csrfHeaderMeta) headers[csrfHeaderMeta.content] = csrfTokenMeta.content;
 
             try {
@@ -1206,14 +1333,28 @@
                     headers: headers,
                     body: JSON.stringify({ accomId, checkInDate: selectedCheckIn, checkOutDate: selectedCheckOut, adultCount: selection.adult, childCount: selection.child, roomCount: selection.roomCount })
                 });
+                if (isLoginRedirectResponse(response)) {
+                    savePendingCartSelection();
+                    moveToLoginWithRedirect();
+                    return;
+                }
                 if (response.ok) {
+                    clearPendingCartSelection();
                     alert('장바구니에 담았습니다. 장바구니에서 예약을 확정해 주세요.');
                     window.location.href = '/cart';
                 } else {
+                    if (!autoTriggered) {
+                        savePendingCartSelection();
+                    }
                     const message = await response.text();
                     alert('담기 실패: ' + message);
                 }
             } catch (error) {
+                if (error.message === 'LOGIN_REQUIRED') {
+                    savePendingCartSelection();
+                    moveToLoginWithRedirect();
+                    return;
+                }
                 alert('오류가 발생했습니다: ' + error.message);
             }
         }

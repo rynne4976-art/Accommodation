@@ -46,7 +46,7 @@
 
         <a class="social-login social-login--google"
            th:if="${googleLoginEnabled}"
-           th:href="@{/oauth2/authorization/google}">
+           th:href="${redirectUrl != null and !#strings.isEmpty(redirectUrl)} ? @{/oauth2/authorization/google(redirectUrl=${redirectUrl})} : @{/oauth2/authorization/google}">
             <span class="social-login__mark" aria-hidden="true">
                 <svg viewBox="0 0 24 24" aria-hidden="true" class="social-login__icon">
                     <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-.9 2.4-2 3.2l3.2 2.5c1.9-1.7 3-4.3 3-7.3 0-.7-.1-1.4-.2-2H12z"/>
@@ -60,7 +60,7 @@
 
         <a class="social-login social-login--kakao"
            th:if="${kakaoLoginEnabled}"
-           th:href="@{/oauth2/authorization/kakao}">
+           th:href="${redirectUrl != null and !#strings.isEmpty(redirectUrl)} ? @{/oauth2/authorization/kakao(redirectUrl=${redirectUrl})} : @{/oauth2/authorization/kakao}">
             <span class="social-login__mark social-login__mark--kakao" aria-hidden="true">
                 <span class="social-login__icon social-login__icon--kakao">K</span>
             </span>

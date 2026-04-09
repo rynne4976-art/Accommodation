@@ -7,6 +7,7 @@ import com.Accommodation.entity.Member;
 import com.Accommodation.exception.MemberException;
 import com.Accommodation.service.MemberService;
 import com.Accommodation.service.OrderService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -69,6 +70,7 @@ public class MemberController {
     public String memberLogin(@RequestParam(value = "error", required = false) String error,
                               @RequestParam(value = "signupSuccess", required = false) String signupSuccess,
                               @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
+                              HttpSession session,
                               Model model) {
         // 로그인 실패와 회원가입 완료 메시지를 같은 로그인 화면에서 처리합니다.
         if (error != null) {
@@ -76,6 +78,9 @@ public class MemberController {
         }
         if (signupSuccess != null) {
             model.addAttribute("signupSuccessMessage", "회원가입이 완료되었습니다. 로그인해주세요.");
+        }
+        if (redirectUrl != null && !redirectUrl.isBlank()) {
+            session.setAttribute("redirectUrl", redirectUrl);
         }
         model.addAttribute("redirectUrl", redirectUrl);
         return "member/memberLoginForm";

@@ -208,6 +208,13 @@
     border-color: #111827;
 }
 
+.calendar-day.is-selected.is-today,
+.calendar-day.is-in-range.is-today {
+    background: #111827;
+    color: #fff;
+    border-color: #111827;
+}
+
 .calendar-day.is-in-range:not(.is-selected) {
     background: #e5e7eb;
     color: #111827;
@@ -247,6 +254,10 @@
 .calendar-day.is-saturday:not(.is-selected):not(.is-soldout) .calendar-day__num { color: #2563eb; }
 /* is-today가 우선 */
 .calendar-day.is-today .calendar-day__num { color: #6366f1; }
+.calendar-day.is-selected .calendar-day__num,
+.calendar-day.is-in-range .calendar-day__num,
+.calendar-day.is-selected.is-today .calendar-day__num,
+.calendar-day.is-in-range.is-today .calendar-day__num { color: #fff; }
 
 .calendar-day__num {
     font-size: 0.94rem;
