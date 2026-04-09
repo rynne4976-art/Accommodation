@@ -26,19 +26,34 @@ public class RoleBasedAuthenticationSuccessHandler implements AuthenticationSucc
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         String redirectUrl = sanitizeRedirectUrl(request.getParameter("redirectUrl"));
+        if (!StringUtils.hasText(redirectUrl) && request.getSession(false) != null) {
+            Object sessionRedirectUrl = request.getSession(false).getAttribute("redirectUrl");
+            if (sessionRedirectUrl instanceof String sessionValue) {
+                redirectUrl = sanitizeRedirectUrl(sessionValue);
+            }
+        }
         if (isSafeRedirectUrl(redirectUrl)) {
+            clearRedirectUrl(request);
             response.sendRedirect(redirectUrl);
             return;
         }
 
         SavedRequest savedRequest = requestCache.getRequest(request, response);
         if (savedRequest != null) {
+            clearRedirectUrl(request);
             new SavedRequestAwareAuthenticationSuccessHandler()
                     .onAuthenticationSuccess(request, response, authentication);
             return;
         }
 
+        clearRedirectUrl(request);
         response.sendRedirect("/main");
+    }
+
+    private void clearRedirectUrl(HttpServletRequest request) {
+        if (request.getSession(false) != null) {
+            request.getSession(false).removeAttribute("redirectUrl");
+        }
     }
 
     private boolean isSafeRedirectUrl(String redirectUrl) {

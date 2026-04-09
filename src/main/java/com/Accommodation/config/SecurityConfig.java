@@ -49,6 +49,8 @@ public class SecurityConfig {
                                 "/searchList",
                                 "/recent-viewed",
                                 "/reviews/accom/**",
+                                "/orders/accom/*/availability",
+                                "/orders/accom/*/monthly-availability",
                                 "/error",
                                 "/error/**",
                                 "/images/**",
