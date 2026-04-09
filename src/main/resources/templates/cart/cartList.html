@@ -40,6 +40,7 @@
                 <div class="cart-list" th:unless="${#lists.isEmpty(cartItems)}">
                     <div class="cart-item"
                          th:each="item : ${cartItems}"
+                         th:classappend="${!item.reservable} ? ' cart-item--disabled' : ''"
                          th:id="'cart-item-' + ${item.cartItemId}">
                         <a class="cart-item__img-wrap" th:href="@{/accom/{id}(id=${item.accomId})}">
                             <img class="cart-item__img"
@@ -104,17 +105,23 @@
 
                             <div class="cart-item__actions">
                                 <div class="cart-item__status-group">
-                                    <span class="cart-item__status-badge">예약 대기</span>
-                                    <span class="cart-item__status-copy">확정 전에 날짜와 인원 정보를 다시 조정할 수 있어요.</span>
+                                    <span class="cart-item__status-badge"
+                                          th:classappend="${!item.reservable} ? ' cart-item__status-badge--disabled' : ''"
+                                          th:text="${item.reservable} ? '예약 대기' : '예약 불가'">예약 대기</span>
+                                    <span class="cart-item__status-copy"
+                                          th:text="${item.reservable ? '확정 전에 날짜와 인원 정보를 다시 조정할 수 있어요.' : item.unavailableReason}">
+                                        확정 전에 날짜와 인원 정보를 다시 조정할 수 있어요.
+                                    </span>
                                 </div>
                                 <div class="cart-item__action-buttons">
                                     <a class="cart-item__edit-btn"
                                        th:href="@{/orders/accom/{accomId}(accomId=${item.accomId},checkInDate=${item.checkInDate},checkOutDate=${item.checkOutDate},adultCount=${item.adultCount},childCount=${item.childCount},roomCount=${item.roomCount},cartItemId=${item.cartItemId})}">
-                                        수정
+                                        <span th:text="${item.reservable ? '수정' : '다시 선택'}">수정</span>
                                     </a>
                                     <button type="button"
                                             class="cart-item__confirm-btn"
                                             th:data-id="${item.cartItemId}"
+                                            th:disabled="${!item.reservable}"
                                             onclick="confirmItem(this)">
                                         예약 확정
                                     </button>
@@ -142,7 +149,7 @@
                 <button type="button"
                         class="cart-summary__button"
                         id="btnConfirmAll"
-                        th:disabled="${cartCount == 0}"
+                        th:disabled="${cartCount == 0 or hasUnreservableItem}"
                         onclick="confirmAll()">
                     전체 예약 확정
                 </button>
@@ -152,20 +159,16 @@
                     <strong>전체 예약 확정</strong>으로 한 번에 처리할 수 있어요.<br>
                     확정 시점에 날짜가 만실이면 예약이 거부됩니다.
                 </p>
+                <p class="cart-summary__warning" th:if="${hasUnreservableItem}">
+                    예약 불가 항목이 있어 전체 예약 확정이 비활성화되었습니다. 수정 후 다시 시도해주세요.
+                </p>
             </aside>
         </div>
     </section>
 
     <script th:inline="javascript">
-        const unavailableCartAccomId = /*[[${unavailableCartAccomId}]]*/ null;
-        const unavailableCartAccomName = /*[[${unavailableCartAccomName}]]*/ null;
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
-
-        if (unavailableCartAccomId) {
-            window.alert("'" + unavailableCartAccomName + "' 숙소는 현재 만실이라 예약 확정이 어렵습니다. 예약 화면에서 다시 선택해주세요.");
-            window.location.href = '/orders/accom/' + unavailableCartAccomId;
-        }
 
         function buildHeaders() {
             const headers = { 'Content-Type': 'application/json' };

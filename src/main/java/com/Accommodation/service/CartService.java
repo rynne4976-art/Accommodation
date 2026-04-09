@@ -83,7 +83,7 @@ public class CartService {
                             .map(AccomImg::getImgUrl)
                             .findFirst()
                             .orElse("");
-                    return new CartListItemDto(cartItem, repImgUrl);
+                    return new CartListItemDto(cartItem, repImgUrl, resolveUnavailableReason(cartItem));
                 })
                 .toList();
     }
@@ -92,28 +92,57 @@ public class CartService {
     public CartListItemDto findFirstUnavailableCartItem(String email) {
         return cartItemRepository.findByMemberEmailOrderByRegTimeDesc(email).stream()
                 .map(cartItem -> {
-                    try {
-                        orderService.validateBooking(
-                                cartItem.getAccom(),
-                                cartItem.getCheckInDate(),
-                                cartItem.getCheckOutDate(),
-                                cartItem.getAdultCount() + cartItem.getChildCount(),
-                                null,
-                                cartItem.getRoomCount()
-                        );
+                    String unavailableReason = resolveUnavailableReason(cartItem);
+                    if (unavailableReason == null) {
                         return null;
-                    } catch (Exception ex) {
-                        String repImgUrl = cartItem.getAccom().getAccomImgList().stream()
-                                .filter(img -> "Y".equals(img.getRepImgYn()))
-                                .map(AccomImg::getImgUrl)
-                                .findFirst()
-                                .orElse("");
-                        return new CartListItemDto(cartItem, repImgUrl);
                     }
+
+                    String repImgUrl = cartItem.getAccom().getAccomImgList().stream()
+                            .filter(img -> "Y".equals(img.getRepImgYn()))
+                            .map(AccomImg::getImgUrl)
+                            .findFirst()
+                            .orElse("");
+                    return new CartListItemDto(cartItem, repImgUrl, unavailableReason);
                 })
                 .filter(item -> item != null)
                 .findFirst()
                 .orElse(null);
+    }
+
+    private String resolveUnavailableReason(CartItem cartItem) {
+        if (cartItem.hasInvalidRoomCount()) {
+            return "선택한 객실 정보가 유효하지 않아 다시 선택이 필요합니다.";
+        }
+
+        try {
+            orderService.validateBooking(
+                    cartItem.getAccom(),
+                    cartItem.getCheckInDate(),
+                    cartItem.getCheckOutDate(),
+                    cartItem.getAdultCount() + cartItem.getChildCount(),
+                    null,
+                    cartItem.getRoomCount()
+            );
+            return null;
+        } catch (Exception ex) {
+            return mapUnavailableReason(ex.getMessage());
+        }
+    }
+
+    private String mapUnavailableReason(String message) {
+        if (message == null || message.isBlank()) {
+            return "선택한 객실 정보가 유효하지 않아 다시 선택이 필요합니다.";
+        }
+        if (message.contains("체크인 시간이 지나")) {
+            return "당일 예약 가능 시간이 지나 다시 선택이 필요합니다.";
+        }
+        if (message.contains("운영하지 않는 날짜")) {
+            return "선택한 날짜에 운영하지 않아 다시 선택이 필요합니다.";
+        }
+        if (message.contains("예약이 마감된 날짜") || message.contains("만실")) {
+            return "선택한 날짜에 예약 가능한 객실이 없어 다시 선택이 필요합니다.";
+        }
+        return "선택한 객실 정보가 유효하지 않아 다시 선택이 필요합니다.";
     }
 
     public void removeCartItem(Long cartItemId, String email) {
@@ -155,6 +184,10 @@ public class CartService {
         CartItem cartItem = cartItemRepository.findByIdAndMemberEmail(cartItemId, email)
                 .orElseThrow(() -> new EntityNotFoundException("장바구니 항목을 찾을 수 없습니다."));
 
+        if (cartItem.hasInvalidRoomCount()) {
+            throw new IllegalStateException("객실 수 정보가 올바르지 않아 예약을 확정할 수 없습니다. 다시 선택해주세요.");
+        }
+
         Accom accom = accomRepository.findWithOperationInfoById(cartItem.getAccom().getId())
                 .orElseThrow(EntityNotFoundException::new);
 
@@ -183,6 +216,10 @@ public class CartService {
 
         List<Long> orderIds = new ArrayList<>();
         for (CartItem cartItem : cartItems) {
+            if (cartItem.hasInvalidRoomCount()) {
+                throw new IllegalStateException("객실 수 정보가 올바르지 않은 장바구니 항목이 있어 전체 예약을 확정할 수 없습니다.");
+            }
+
             Accom accom = accomRepository.findWithOperationInfoById(cartItem.getAccom().getId())
                     .orElseThrow(EntityNotFoundException::new);
 

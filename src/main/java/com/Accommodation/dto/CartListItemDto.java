@@ -41,9 +41,16 @@ public class CartListItemDto {
     /** 총 결제 예상 금액 = (기본 + 추가) × 박 수 × 객실 수 */
     private final int totalPrice;
 
+    private final boolean reservable;
+    private final String unavailableReason;
+
     private final String repImgUrl;
 
     public CartListItemDto(CartItem cartItem, String repImgUrl) {
+        this(cartItem, repImgUrl, null);
+    }
+
+    public CartListItemDto(CartItem cartItem, String repImgUrl, String unavailableReason) {
         this.cartItemId    = cartItem.getId();
         this.accomId       = cartItem.getAccom().getId();
         this.accomName     = cartItem.getAccom().getAccomName();
@@ -63,6 +70,8 @@ public class CartListItemDto {
                 cartItem.getAccom().getPricePerNight()
         );
         this.totalPrice = (this.pricePerNight + this.surchargePerNight) * this.nights * this.roomCount;
+        this.unavailableReason = unavailableReason;
+        this.reservable = unavailableReason == null;
         this.repImgUrl  = repImgUrl;
     }
 }

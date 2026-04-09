@@ -53,6 +53,10 @@ public class CartItem extends BaseTimeEntity {
     @Column(nullable = false)
     private Integer roomCount = 1;
 
+    public boolean hasInvalidRoomCount() {
+        return roomCount == null || roomCount < 1;
+    }
+
     public int getRoomCount() {
         return roomCount == null || roomCount < 1 ? 1 : roomCount;
     }

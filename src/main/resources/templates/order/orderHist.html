@@ -20,6 +20,17 @@
             margin-bottom: 32px;
         }
 
+        .order-page__alert {
+            margin-bottom: 20px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: #fff4e5;
+            color: #9a3412;
+            border: 1px solid #fed7aa;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
         .order-empty {
             text-align: center;
             padding: 80px 0;
@@ -133,6 +144,10 @@
 <div layout:fragment="content">
     <section class="order-page">
         <h2 class="order-page__title">주문 내역</h2>
+
+        <div th:if="${orderErrorMessage}" class="order-page__alert" th:text="${orderErrorMessage}">
+            요청한 예약 정보를 찾을 수 없습니다.
+        </div>
 
         <div th:if="${#lists.isEmpty(orders)}" class="order-empty">
             <p>주문 내역이 없습니다.</p>

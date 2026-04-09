@@ -31,7 +31,9 @@
             </div>
 
             <div sec:authorize="isAuthenticated()" class="user-status-group">
-                <span class="user-greeting">환영합니다, <strong sec:authentication="name">user@example.com</strong>님</span>
+                <span class="user-greeting">환영합니다,
+                    <strong th:text="${#authentication.principal instanceof T(com.Accommodation.config.AuthenticatedMember) ? #authentication.principal.name : #authentication.name}">사용자</strong>님
+                </span>
                 <form th:action="@{/members/logout}" method="post" class="logout-form">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     <button type="submit" class="logout-button header-action-link">
@@ -103,13 +105,13 @@
     <div class="header-bottom" th:if="${compactHeader == null or !compactHeader}">
         <div class="header-bottom-inner">
             <nav class="category-menu">
-                <th:block sec:authorize="hasRole('ADMIN')" th:if="${adminView}">
+                <th:block sec:authorize="hasRole('ADMIN')" th:if="${adminView != null and adminView}">
                     <a th:href="@{/admin/members}">회원 관리</a>
                     <a th:href="@{/admin/accoms}">숙소 관리</a>
                     <a th:href="@{/admin/orders}">예약 관리</a>
                 </th:block>
 
-                <th:block th:unless="${adminView}">
+                <th:block th:unless="${adminView != null and adminView}">
                     <a th:href="@{/main/hotels}">호텔</a>
                     <a th:href="@{/main/resorts}">리조트</a>
                     <a th:href="@{/main/pensions}">펜션</a>
@@ -121,11 +123,11 @@
             </nav>
 
             <a sec:authorize="hasRole('ADMIN')"
-               th:if="${!adminDashboard}"
+               th:if="${adminDashboard == null or !adminDashboard}"
                th:href="@{/admin}"
                class="header-action-link header-bottom-action admin-portal-link">관리자 페이지</a>
             <a sec:authorize="hasRole('ADMIN')"
-               th:if="${adminDashboard}"
+               th:if="${adminDashboard != null and adminDashboard}"
                th:href="@{/main}"
                class="header-action-link header-bottom-action admin-portal-link">메인 보기</a>
         </div>
