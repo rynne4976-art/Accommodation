@@ -20,17 +20,18 @@
         <section class="type-search-panel">
             <div class="booking-shell type-booking-shell">
                 <form class="booking-bar" th:action="@{${currentPath}}" method="get">
+                    <input type="hidden" name="grade" data-shared-field="grade"
+                           th:value="${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : ''}">
+                    <input type="hidden" name="minPrice" data-shared-field="minPrice"
+                           th:value="${accomSearchDto != null and accomSearchDto.minPrice != null ? accomSearchDto.minPrice : ''}">
+                    <input type="hidden" name="maxPrice" data-shared-field="maxPrice"
+                           th:value="${accomSearchDto != null and accomSearchDto.maxPrice != null ? accomSearchDto.maxPrice : ''}">
+                    <input type="hidden" name="minRating" data-shared-field="minRating"
+                           th:value="${accomSearchDto != null and accomSearchDto.minRating != null ? accomSearchDto.minRating : ''}">
+                    <input type="hidden" name="page" value="1">
                     <input type="hidden" name="accomType"
                            th:if="${accomSearchDto != null and accomSearchDto.accomType != null}"
                            th:value="${accomSearchDto.accomType.name()}">
-                    <input type="hidden" name="grade"
-                           th:value="${accomSearchDto != null and accomSearchDto.grade != null ? accomSearchDto.grade.name() : ''}">
-                    <input type="hidden" name="minPrice"
-                           th:value="${accomSearchDto != null and accomSearchDto.minPrice != null ? accomSearchDto.minPrice : ''}">
-                    <input type="hidden" name="maxPrice"
-                           th:value="${accomSearchDto != null and accomSearchDto.maxPrice != null ? accomSearchDto.maxPrice : ''}">
-                    <input type="hidden" name="minRating"
-                           th:value="${accomSearchDto != null and accomSearchDto.minRating != null ? accomSearchDto.minRating : ''}">
                     <input type="hidden" name="checkInDate" id="checkInDateInput"
                            th:value="${accomSearchDto != null and accomSearchDto.checkInDate != null ? #temporals.format(accomSearchDto.checkInDate, 'yyyy-MM-dd') : ''}">
                     <input type="hidden" name="checkOutDate" id="checkOutDateInput"
@@ -145,8 +146,19 @@
 
         <section class="type-filter-panel">
             <form class="type-filter-form" th:action="@{${currentPath}}" method="get">
-                <input type="hidden" name="searchQuery"
+                <input type="hidden" name="searchQuery" data-shared-field="searchQuery"
                        th:value="${accomSearchDto != null ? accomSearchDto.searchQuery : ''}">
+                <input type="hidden" name="checkInDate" data-shared-field="checkInDate"
+                       th:value="${accomSearchDto != null and accomSearchDto.checkInDate != null ? #temporals.format(accomSearchDto.checkInDate, 'yyyy-MM-dd') : ''}">
+                <input type="hidden" name="checkOutDate" data-shared-field="checkOutDate"
+                       th:value="${accomSearchDto != null and accomSearchDto.checkOutDate != null ? #temporals.format(accomSearchDto.checkOutDate, 'yyyy-MM-dd') : ''}">
+                <input type="hidden" name="adultCount" data-shared-field="adultCount"
+                       th:value="${accomSearchDto != null and accomSearchDto.adultCount != null ? accomSearchDto.adultCount : 0}">
+                <input type="hidden" name="childCount" data-shared-field="childCount"
+                       th:value="${accomSearchDto != null and accomSearchDto.childCount != null ? accomSearchDto.childCount : 0}">
+                <input type="hidden" name="roomCount" data-shared-field="roomCount"
+                       th:value="${accomSearchDto != null and accomSearchDto.roomCount != null ? accomSearchDto.roomCount : 1}">
+                <input type="hidden" name="page" value="1">
                 <input type="hidden" name="accomType"
                        th:if="${accomSearchDto != null and accomSearchDto.accomType != null}"
                        th:value="${accomSearchDto.accomType.name()}">
@@ -154,16 +166,6 @@
                        th:value="${accomSearchDto != null and accomSearchDto.minPrice != null ? accomSearchDto.minPrice : ''}">
                 <input type="hidden" name="maxPrice"
                        th:value="${accomSearchDto != null and accomSearchDto.maxPrice != null ? accomSearchDto.maxPrice : ''}">
-                <input type="hidden" name="checkInDate"
-                       th:value="${accomSearchDto != null and accomSearchDto.checkInDate != null ? #temporals.format(accomSearchDto.checkInDate, 'yyyy-MM-dd') : ''}">
-                <input type="hidden" name="checkOutDate"
-                       th:value="${accomSearchDto != null and accomSearchDto.checkOutDate != null ? #temporals.format(accomSearchDto.checkOutDate, 'yyyy-MM-dd') : ''}">
-                <input type="hidden" name="adultCount"
-                       th:value="${accomSearchDto != null and accomSearchDto.adultCount != null ? accomSearchDto.adultCount : 0}">
-                <input type="hidden" name="childCount"
-                       th:value="${accomSearchDto != null and accomSearchDto.childCount != null ? accomSearchDto.childCount : 0}">
-                <input type="hidden" name="roomCount"
-                       th:value="${accomSearchDto != null and accomSearchDto.roomCount != null ? accomSearchDto.roomCount : 1}">
 
                 <div class="type-filter-group">
                     <strong class="type-filter-title">등급</strong>
@@ -221,7 +223,7 @@
                     </div>
                 </div>
 
-                <div class="type-filter-group type-filter-group--with-action">
+                <div class="type-filter-group">
                     <strong class="type-filter-title">가격 1박 (단위: 만원)</strong>
                     <div class="type-filter-row">
                     <div class="type-filter-options">
@@ -256,33 +258,37 @@
                             <span>20 ~</span>
                         </label>
                     </div>
-                    <div class="type-filter-actions">
-                        <button type="submit">조회</button>
-                    </div>
                     </div>
                 </div>
             </form>
         </section>
 
+        <div id="typeListResults">
         <div class="type-list-wrap" th:if="${accomList != null and !#lists.isEmpty(accomList)}">
             <article class="type-card" th:each="accom : ${accomList}">
                 <div class="type-card-left">
                     <div class="type-media-block">
                         <div class="type-thumb-box">
-                            <img class="type-thumb"
-                                 th:if="${accom.imgUrl != null and !#strings.isEmpty(accom.imgUrl)}"
-                                 th:src="${accom.imgUrl}"
-                                 th:alt="${accom.accomName}">
-                            <div class="type-thumb type-thumb--placeholder"
-                                 th:unless="${accom.imgUrl != null and !#strings.isEmpty(accom.imgUrl)}">
-                                <span th:text="${accom.grade}">GRADE</span>
-                            </div>
+                            <a th:href="@{/accom/{accomId}(accomId=${accom.id})}" aria-label="숙소 상세 보기">
+                                <img class="type-thumb"
+                                     th:if="${accom.imgUrl != null and !#strings.isEmpty(accom.imgUrl)}"
+                                     th:src="${accom.imgUrl}"
+                                     th:alt="${accom.accomName}">
+                                <div class="type-thumb type-thumb--placeholder"
+                                     th:unless="${accom.imgUrl != null and !#strings.isEmpty(accom.imgUrl)}">
+                                    <span th:text="${accom.grade}">GRADE</span>
+                                </div>
+                            </a>
                         </div>
 
                         <div class="type-info">
                             <p class="type-category"
                                th:text="${accom.accomType != null ? (accom.accomType.name() == 'HOTEL' ? '호텔' : accom.accomType.name() == 'MOTEL' ? '모텔' : accom.accomType.name() == 'PENSION' ? '펜션' : accom.accomType.name() == 'RESORT' ? '리조트' : accom.accomType.name() == 'GUESTHOUSE' ? '게스트하우스' : accom.accomType) : '숙소'}">숙소</p>
-                            <h3 class="type-room-name" th:text="${accom.accomName}">숙소명</h3>
+                            <h3 class="type-room-name">
+                                <a class="type-room-name__link"
+                                   th:href="@{/accom/{accomId}(accomId=${accom.id})}"
+                                   th:text="${accom.accomName}">숙소명</a>
+                            </h3>
                         </div>
                     </div>
                 </div>
@@ -464,6 +470,8 @@
                               roomCount=${accomSearchDto != null ? accomSearchDto.roomCount : null},
                               checkInDate=${accomSearchDto != null ? accomSearchDto.checkInDate : null},
                               checkOutDate=${accomSearchDto != null ? accomSearchDto.checkOutDate : null})}">다음 5개</a>
+        </div>
+
         </div>
 
         <div id="categoryBookingConfig"

@@ -35,6 +35,9 @@ public class ReviewService {
     private final OrderItemRepository orderItemRepository;
     private final S3FileService s3FileService;
 
+    private static final String REVIEW_LOGIN_REQUIRED_MESSAGE = "리뷰 작성은 회원만 가능합니다.";
+    private static final String REVIEW_USAGE_REQUIRED_MESSAGE = "해당 숙박 업소 이용 이력이 있는 회원만 리뷰 작성 가능합니다.";
+
     public void saveReview(ReviewFormDto reviewFormDto, String email) throws Exception {
         Member member = getMemberOrThrow(email);
 
@@ -46,8 +49,9 @@ public class ReviewService {
             throw new IllegalStateException("이미 해당 숙소에 리뷰를 작성했습니다.");
         }
 
-        if (!canManageReview(member, accom.getId())) {
-            throw new IllegalStateException("체크아웃 이력이 있는 회원만 해당 숙소에 리뷰를 작성할 수 있습니다.");
+        ReviewWriteAccess writeAccess = getWriteAccess(accom.getId(), email);
+        if (!writeAccess.allowed()) {
+            throw new IllegalStateException(writeAccess.denyMessage());
         }
 
         Review review = new Review();
@@ -155,30 +159,12 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public boolean canWriteReview(Long accomId, String email) {
-        Member member = memberRepository.findByEmail(email);
-        if (member == null) {
-            return false;
-        }
-
-        return canManageReview(member, accomId);
+        return getWriteAccess(accomId, email).allowed();
     }
 
     @Transactional(readOnly = true)
     public String getReviewWriteDenyMessage(Long accomId, String email) {
-        if (email == null || email.isBlank()) {
-            return "로그인 후 리뷰를 작성할 수 있습니다.";
-        }
-
-        Member member = memberRepository.findByEmail(email);
-        if (member == null) {
-            return "로그인한 회원 정보를 찾을 수 없습니다.";
-        }
-
-        if (canManageReview(member, accomId)) {
-            return "";
-        }
-
-        return "체크아웃 이력이 있는 회원만 해당 숙소에 리뷰를 작성할 수 있습니다.";
+        return getWriteAccess(accomId, email).denyMessage();
     }
 
     private void saveReviewImages(Review review, List<MultipartFile> reviewImgFileList) throws Exception {
@@ -262,6 +248,23 @@ public class ReviewService {
         return isAdmin(member) || hasCompletedStay(member.getId(), accomId);
     }
 
+    private ReviewWriteAccess getWriteAccess(Long accomId, String email) {
+        if (email == null || email.isBlank()) {
+            return new ReviewWriteAccess(false, REVIEW_LOGIN_REQUIRED_MESSAGE);
+        }
+
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            return new ReviewWriteAccess(false, REVIEW_LOGIN_REQUIRED_MESSAGE);
+        }
+
+        if (canManageReview(member, accomId)) {
+            return new ReviewWriteAccess(true, "");
+        }
+
+        return new ReviewWriteAccess(false, REVIEW_USAGE_REQUIRED_MESSAGE);
+    }
+
     private boolean isAdmin(Member member) {
         return member.getRole() == Role.ADMIN;
     }
@@ -273,5 +276,8 @@ public class ReviewService {
                 LocalDate.now(),
                 BookingStatus.CANCELLED
         );
+    }
+
+    private record ReviewWriteAccess(boolean allowed, String denyMessage) {
     }
 }

@@ -56,57 +56,36 @@
                 <p class="accom-detail-description" th:text="${accom.accomDetail}">숙소 설명</p>
 
                 <div class="accom-detail-highlight">
-                    <div>
-                        <span class="highlight-label">숙소 유형</span>
-                        <strong th:text="${accom.accomType}">HOTEL</strong>
-                    </div>
-                    <div>
-                        <span class="highlight-label">등급</span>
-                        <strong th:text="${accom.grade}">FIVE</strong>
-                    </div>
-                    <div>
-                        <span class="highlight-label">위치</span>
-                        <strong th:text="${accom.location}">서울특별시 중구</strong>
-                    </div>
-                    <div>
-                        <span class="highlight-label">객실 수</span>
-                        <strong th:text="${accom.roomCount} + '개'">0개</strong>
-                    </div>
-                    <div>
-                        <span class="highlight-label">투숙 가능 인원</span>
-                        <strong th:text="${accom.guestCount} + '명'">2명</strong>
-                    </div>
-                    <div>
-                        <span class="highlight-label">1박 가격</span>
-                        <strong th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원'">0원</strong>
-                    </div>
-                    <div>
-                        <span class="highlight-label">평균 별점</span>
-                        <strong th:text="${#numbers.formatDecimal(accom.avgRating, 1, 1)}">0.0</strong>
-                    </div>
-                    <div>
-                        <span class="highlight-label">리뷰 수</span>
-                        <strong th:text="${accom.reviewCount}">0</strong>
+                    <div class="accom-detail-highlight__main">
+                        <div class="accom-detail-highlight__item">
+                            <span class="accom-detail-highlight__icon accom-detail-highlight__icon--star" aria-hidden="true"></span>
+                            <span class="accom-detail-highlight__text"
+                                  th:text="${accom.grade != null ? (accom.grade.name() == 'ONE' ? '1성급' : accom.grade.name() == 'TWO' ? '2성급' : accom.grade.name() == 'THREE' ? '3성급' : accom.grade.name() == 'FOUR' ? '4성급' : accom.grade.name() == 'FIVE' ? '5성급' : accom.grade) : '등급 정보 없음'}">3성급</span>
+                        </div>
+                        <div class="accom-detail-highlight__item">
+                            <span class="accom-detail-highlight__icon accom-detail-highlight__icon--pin" aria-hidden="true"></span>
+                            <span class="accom-detail-highlight__text" th:text="${accom.location}">대전광역시 서구 둔산로 100</span>
+                        </div>
+                        <div class="accom-detail-highlight__item" th:if="${accom.operationPolicy != null}">
+                            <span class="accom-detail-highlight__icon accom-detail-highlight__icon--clock" aria-hidden="true"></span>
+                            <span class="accom-detail-highlight__text"
+                                  th:text="${'체크인 ' + #temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / 체크아웃 ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">체크인 15:00 / 체크아웃 11:10</span>
+                        </div>
+                        <div class="accom-detail-highlight__item">
+                            <span class="accom-detail-highlight__icon accom-detail-highlight__icon--room" aria-hidden="true"></span>
+                            <span class="accom-detail-highlight__text" th:text="${'운영객실 ' + accom.roomCount + '개'}">운영객실 30개</span>
+                        </div>
                     </div>
 
-                    <th:block th:if="${accom.operationPolicy != null}">
-                        <div>
-                            <span class="highlight-label">운영 기간</span>
-                            <strong th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd') + ' ~ ' + #temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">
-                                2026-04-01 ~ 2026-04-30
-                            </strong>
+                    <div class="accom-detail-highlight__side">
+                        <p class="accom-detail-highlight__review"
+                           th:text="${'리뷰 ' + accom.reviewCount + '개 · 평점 ' + #numbers.formatDecimal(accom.avgRating, 1, 1)}">리뷰 10개 · 평점 4.7</p>
+                        <div class="accom-detail-highlight__price-box">
+                            <span class="accom-detail-highlight__price-label">1박 기준 요금</span>
+                            <strong class="accom-detail-highlight__price"
+                                    th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원'">90,000원</strong>
                         </div>
-                        <div>
-                            <span class="highlight-label">체크인 / 체크아웃</span>
-                            <strong th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">
-                                15:00 / 11:00
-                            </strong>
-                        </div>
-                        <div>
-                            <span class="highlight-label">운영 일수</span>
-                            <strong th:text="${#lists.size(accom.operationDayList)} + '일'">0일</strong>
-                        </div>
-                    </th:block>
+                    </div>
                 </div>
 
             </div>
@@ -290,32 +269,24 @@
                 </div>
             </div>
 
-            <div class="detail-section-card" th:if="${accom.operationPolicy != null}">
+            <div class="detail-section-card detail-section-card--operation" th:if="${accom.operationPolicy != null}">
                 <div class="detail-section-header">
                     <span class="accom-detail-label subtle">Operation</span>
                     <h3>운영 정보</h3>
                 </div>
 
-                <div class="detail-bullet-grid">
-                    <div class="detail-bullet-item">
-                        <span>운영 시작일</span>
-                        <strong th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd')}">2026-04-01</strong>
+                <div class="detail-bullet-grid detail-bullet-grid--operation">
+                    <div class="detail-bullet-item detail-bullet-item--operation detail-bullet-item--operation-inline">
+                        <span class="detail-bullet-item__icon detail-bullet-item__icon--calendar" aria-hidden="true"></span>
+                        <strong th:text="${'운영 기간 ' + #temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd') + ' ~ ' + #temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">운영 기간 2026-04-01 ~ 2026-04-30</strong>
                     </div>
-                    <div class="detail-bullet-item">
-                        <span>운영 종료일</span>
-                        <strong th:text="${#temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">2026-04-30</strong>
+                    <div class="detail-bullet-item detail-bullet-item--operation detail-bullet-item--operation-inline">
+                        <span class="detail-bullet-item__icon detail-bullet-item__icon--clock" aria-hidden="true"></span>
+                        <strong th:text="${'체크인 ' + #temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / 체크아웃 ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">체크인 15:00 / 체크아웃 11:00</strong>
                     </div>
-                    <div class="detail-bullet-item">
-                        <span>체크인 시간</span>
-                        <strong th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm')}">15:00</strong>
-                    </div>
-                    <div class="detail-bullet-item">
-                        <span>체크아웃 시간</span>
-                        <strong th:text="${#temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">11:00</strong>
-                    </div>
-                    <div class="detail-bullet-item">
-                        <span>선택된 운영일 수</span>
-                        <strong th:text="${#lists.size(accom.operationDayList)} + '일'">0일</strong>
+                    <div class="detail-bullet-item detail-bullet-item--operation detail-bullet-item--operation-inline">
+                        <span class="detail-bullet-item__icon detail-bullet-item__icon--room" aria-hidden="true"></span>
+                        <strong th:text="${'선택된 운영일 수 ' + #lists.size(accom.operationDayList) + '일'}">선택된 운영일 수 20일</strong>
                     </div>
                 </div>
 
@@ -1375,8 +1346,8 @@
             reviewUpdateUrlTemplate: "/reviews/{reviewId}/update/ajax",
             reviewDeleteUrlTemplate: "/reviews/{reviewId}/delete/ajax",
             reviewImageDeleteUrlTemplate: "/reviews/{reviewId}/images/{reviewImgId}/delete/ajax",
-            loginRequiredMessage: "로그인 후 리뷰를 작성할 수 있습니다.",
-            reviewEligibilityMessage: "체크아웃 이력이 있는 회원만 해당 숙소에 리뷰를 작성할 수 있습니다.",
+            loginRequiredMessage: "리뷰 작성은 회원만 가능합니다.",
+            reviewEligibilityMessage: "해당 숙박 업소 이용 이력이 있는 회원만 리뷰 작성 가능합니다.",
             reviewRatingRequiredMessage: "별점을 선택해 주세요.",
             reviewContentRequiredMessage: "리뷰 내용을 입력해 주세요.",
             reviewRequestFailedMessage: "리뷰 요청을 처리하지 못했습니다.",

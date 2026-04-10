@@ -158,7 +158,6 @@
                     <span class="activity-card__label">서울</span>
                 </div>
                 <div class="activity-card__body">
-                    <h3>서울 도심 인기 즐길거리</h3>
                     <p>
                         전시, 야경 명소, 실내 체험, 문화 공간까지
                         서울에서 가볍게 즐길 수 있는 코스로 모아봤어요.
@@ -175,7 +174,6 @@
                     <span class="activity-card__label">부산</span>
                 </div>
                 <div class="activity-card__body">
-                    <h3>부산 바다 · 감성 여행 코스</h3>
                     <p>
                         해변 산책, 전망 명소, 로컬 체험과 함께
                         부산에서 즐길 수 있는 대표 코스를 확인해보세요.
@@ -192,7 +190,6 @@
                     <span class="activity-card__label">강릉</span>
                 </div>
                 <div class="activity-card__body">
-                    <h3>강릉 바다 · 카페 · 체험</h3>
                     <p>
                         바다 풍경과 함께 즐길 수 있는 카페, 산책, 체험형 여행 코스를 중심으로 구성했어요.
                     </p>
@@ -208,7 +205,6 @@
                     <span class="activity-card__label">제주</span>
                 </div>
                 <div class="activity-card__body">
-                    <h3>제주 자연 · 액티비티 추천</h3>
                     <p>
                         오름, 해변, 드라이브, 야외 체험처럼 제주에서만 즐길 수 있는 여행 포인트를 담았어요.
                     </p>
@@ -224,7 +220,6 @@
                     <span class="activity-card__label">경주</span>
                 </div>
                 <div class="activity-card__body">
-                    <h3>경주 문화유산 · 야경 코스</h3>
                     <p>
                         한옥 감성, 역사 명소, 야경 스팟까지
                         경주에서 즐길 수 있는 대표 여행 코스를 담았어요.
@@ -249,9 +244,11 @@
         </div>
     </div>
 
-    <div class="accom-content-main">
-        <div class="accom-slider" data-accom-slider th:if="${accomList != null and !#lists.isEmpty(accomList)}">
-            <article class="card accom-card" th:each="accom : ${accomList}">
+        <div class="accom-content-main">
+            <div class="accom-slider" data-accom-slider th:if="${accomList != null and !#lists.isEmpty(accomList)}">
+            <article class="card accom-card"
+                     th:each="accom : ${accomList}"
+                     th:attr="data-detail-url=@{/accom/{accomId}(accomId=${accom.id})}">
                     <div class="accom-card__visual">
                         <button class="accom-card__wish"
                                 type="button"
@@ -283,8 +280,6 @@
                                       th:each="i : ${#numbers.sequence(1,gradeNum)}">&#9733;</span>
                             </span>
                         </div>
-                        <h3 class="accom-card__title" th:text="${accom.accomName}">숙소명</h3>
-
                         <div class="accom-card__rating">
                             <span class="accom-card__score" th:text="${accom.avgRating != null ? #numbers.formatDecimal(accom.avgRating, 1, 1) : '0.0'}">0.0</span>
                             <div class="accom-card__rating-copy">

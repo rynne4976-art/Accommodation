@@ -29,7 +29,6 @@
 }
 
 .chatbot-toggle:hover {
-    transform: translateY(-2px) scale(1.03);
 }
 
 .chatbot-toggle__icon,
@@ -53,7 +52,6 @@
     border: 1px solid #d7eef7;
     border-radius: 28px;
     background: #ffffff;
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
     z-index: 1200;
     transition: opacity 0.18s ease, transform 0.18s ease;
 }
@@ -194,7 +192,6 @@
     line-height: 1.6;
     white-space: pre-line;
     word-break: keep-all;
-    box-shadow: 0 6px 16px rgba(148, 163, 184, 0.14);
 }
 
 .chatbot-message--bot .chatbot-message__bubble {
@@ -230,13 +227,11 @@
     text-align: left;
     cursor: pointer;
     color: #0f2030;
-    box-shadow: 0 8px 18px rgba(148, 163, 184, 0.1);
     transition: border-color 0.15s, transform 0.15s;
 }
 
 .chatbot-card-button:hover {
     border-color: #2ea8d6;
-    transform: translateY(-2px);
 }
 
 .chatbot-card-button strong,
@@ -262,7 +257,6 @@
     border-radius: 22px;
     background: #ffffff;
     padding: 20px;
-    box-shadow: 0 8px 18px rgba(148, 163, 184, 0.1);
 }
 
 .chatbot-date-shortcuts {
@@ -446,7 +440,6 @@
 .chatbot-taste-card:hover {
     border-color: #2ea8d6;
     background: #f0faff;
-    transform: translateY(-2px);
 }
 
 .chatbot-taste-card__icon {
@@ -482,17 +475,14 @@
     overflow: hidden;
     background: #fff;
     border: 1.5px solid #dce8f0;
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
     display: flex;
     flex-direction: column;
     text-decoration: none;
     color: inherit;
-    transition: transform 0.18s, box-shadow 0.18s;
+    transition: transform 0.18s;
 }
 
 .chatbot-activity-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
 }
 
 .chatbot-activity-card__img {
@@ -652,18 +642,15 @@
     cursor: pointer;
     border: 2px solid #dce8f0;
     background: #fff;
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
-    transition: border-color 0.18s, box-shadow 0.18s, opacity 0.18s, transform 0.18s;
+    transition: border-color 0.18s, opacity 0.18s, transform 0.18s;
 }
 
 .chatbot-selectable-card:hover {
     border-color: #2ea8d6;
-    transform: translateY(-3px);
 }
 
 .chatbot-selectable-card.is-selected {
     border-color: #2ea8d6;
-    box-shadow: 0 0 0 4px rgba(46, 168, 214, 0.28), 0 12px 28px rgba(15, 23, 42, 0.12);
 }
 
 .chatbot-selectable-card.is-dimmed {
@@ -729,7 +716,6 @@
     justify-content: center;
     font-size: 16px;
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(46, 168, 214, 0.5);
 }
 
 .chatbot-selectable-card.is-selected .chatbot-selectable-card__check {
@@ -782,17 +768,14 @@
     font-weight: 700;
     cursor: pointer;
     transition: opacity 0.15s, transform 0.15s;
-    box-shadow: 0 6px 18px rgba(46, 168, 214, 0.38);
 }
 
 .chatbot-compare-btn:disabled {
     opacity: 0.35;
     cursor: default;
-    box-shadow: none;
 }
 
 .chatbot-compare-btn:not(:disabled):hover {
-    transform: translateY(-2px);
 }
 
 /* ── VS 비교 결과 ── */
@@ -847,7 +830,6 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 4px 14px rgba(46, 168, 214, 0.4);
 }
 
 /* ── 메트릭 비교 행 ── */
