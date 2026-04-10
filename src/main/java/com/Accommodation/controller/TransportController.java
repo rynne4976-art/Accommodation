@@ -6,6 +6,7 @@ import com.Accommodation.entity.Accom;
 import com.Accommodation.service.AccomService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -29,6 +32,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,10 +50,59 @@ public class TransportController {
             "https://overpass.kumi.systems/api/interpreter"
     );
 
+    private static final List<String> SESSION_USER_KEYS = List.of(
+            "loginMember",
+            "member",
+            "loginUser",
+            "user",
+            "sessionUser",
+            "authenticatedUser",
+            "principal",
+            "SPRING_SECURITY_CONTEXT"
+    );
+
+    private static final List<String> ADDRESS_METHOD_NAMES = List.of(
+            "getAddress",
+            "getAddr",
+            "getRoadAddress",
+            "getMemberAddr",
+            "getUserAddress",
+            "getAddress1",
+            "getAddress2"
+    );
+
+    private static final List<String> ADDRESS_FIELD_NAMES = List.of(
+            "address",
+            "addr",
+            "roadAddress",
+            "memberAddr",
+            "userAddress",
+            "address1",
+            "address2"
+    );
+
+    private static final List<String> NESTED_METHOD_NAMES = List.of(
+            "getMember",
+            "getUser",
+            "getPrincipal",
+            "getDetails",
+            "getAccount"
+    );
+
+    private static final List<String> NESTED_FIELD_NAMES = List.of(
+            "member",
+            "user",
+            "principal",
+            "details",
+            "account"
+    );
+
     private final AccomService accomService;
     private final ObjectMapper objectMapper;
+
     @Value("${odsay.api.key:}")
     private String odsayApiKey;
+
     @Value("${odsay.api.web-key:}")
     private String odsayWebKey;
 
@@ -60,14 +113,133 @@ public class TransportController {
     @GetMapping("/transport")
     public String transportPage(
             @RequestParam(value = "accomId", required = false) Long accomId,
+            @RequestParam(value = "myAddress", required = false) String myAddress,
+            HttpSession session,
             Model model
     ) {
         Accom accom = accomId != null ? accomService.getAccomDtl(accomId) : null;
+        String resolvedMyPageAddress = resolveMyPageAddress(myAddress, session);
 
         model.addAttribute("accom", accom);
         model.addAttribute("selectableAccomList", getSelectableAccomList());
         model.addAttribute("odsayWebKey", odsayWebKey);
+        model.addAttribute("myPageAddress", resolvedMyPageAddress);
+
         return "transport/transport";
+    }
+
+    private String resolveMyPageAddress(String requestAddress, HttpSession session) {
+        if (requestAddress != null && !requestAddress.isBlank()) {
+            return requestAddress.trim();
+        }
+
+        if (session == null) {
+            return "";
+        }
+
+        for (String sessionKey : SESSION_USER_KEYS) {
+            Object sessionValue = session.getAttribute(sessionKey);
+            String extracted = extractAddressDeep(sessionValue, new IdentityHashMap<>());
+            if (!extracted.isBlank()) {
+                return extracted;
+            }
+        }
+
+        return "";
+    }
+
+    private String extractAddressDeep(Object target, IdentityHashMap<Object, Boolean> visited) {
+        if (target == null) {
+            return "";
+        }
+
+        if (visited.containsKey(target)) {
+            return "";
+        }
+        visited.put(target, Boolean.TRUE);
+
+        if (target instanceof String str) {
+            return looksLikeAddress(str) ? str.trim() : "";
+        }
+
+        String directAddress = extractAddressFromObject(target);
+        if (!directAddress.isBlank()) {
+            return directAddress;
+        }
+
+        for (String methodName : NESTED_METHOD_NAMES) {
+            try {
+                Method method = target.getClass().getMethod(methodName);
+                Object nested = method.invoke(target);
+                String extracted = extractAddressDeep(nested, visited);
+                if (!extracted.isBlank()) {
+                    return extracted;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        for (String fieldName : NESTED_FIELD_NAMES) {
+            try {
+                Field field = target.getClass().getDeclaredField(fieldName);
+                field.setAccessible(true);
+                Object nested = field.get(target);
+                String extracted = extractAddressDeep(nested, visited);
+                if (!extracted.isBlank()) {
+                    return extracted;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        return "";
+    }
+
+    private String extractAddressFromObject(Object target) {
+        if (target == null) {
+            return "";
+        }
+
+        for (String methodName : ADDRESS_METHOD_NAMES) {
+            try {
+                Method method = target.getClass().getMethod(methodName);
+                Object value = method.invoke(target);
+                if (value instanceof String str && !str.isBlank()) {
+                    return str.trim();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        for (String fieldName : ADDRESS_FIELD_NAMES) {
+            try {
+                Field field = target.getClass().getDeclaredField(fieldName);
+                field.setAccessible(true);
+                Object value = field.get(target);
+                if (value instanceof String str && !str.isBlank()) {
+                    return str.trim();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        return "";
+    }
+
+    private boolean looksLikeAddress(String value) {
+        String text = value == null ? "" : value.trim();
+        if (text.isBlank()) {
+            return false;
+        }
+
+        return text.contains("시")
+                || text.contains("도")
+                || text.contains("구")
+                || text.contains("군")
+                || text.contains("로")
+                || text.contains("길")
+                || text.contains("동")
+                || text.matches(".*\\d{5}.*");
     }
 
     private List<MainAccomDto> getSelectableAccomList() {
