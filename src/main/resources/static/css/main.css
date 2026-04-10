@@ -86,6 +86,7 @@ img { display: block; max-width: 100%; }
 .calendar-nav { width: 34px; height: 34px; border-radius: 999px; color: #111827; font-size: 1.8rem; }
 .calendar-reset { color: #b0b7c3; font-size: 0.95rem; font-weight: 700; }
 .calendar-summary, .calendar-month-title { color: #2a2f36; font-weight: 800; }
+.calendar-footer .popup-confirm-button { margin-left: auto; }
 .calendar-months { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .calendar-month-title { margin: 0 0 8px; text-align: center; font-size: 0.94rem; }
 .calendar-weekdays, .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
@@ -108,8 +109,21 @@ img { display: block; max-width: 100%; }
 .guest-popup { top: calc(100% - 2px); right: 20px; width: 360px; padding: 12px 0; }
 .guest-option { gap: 18px; padding: 18px 22px; }
 .guest-option + .guest-option { border-top: 1px solid #edf0f4; }
+.guest-popup-actions { display: flex; justify-content: flex-end; padding: 0 22px 14px; }
 .guest-copy, .accom-info { display: flex; flex-direction: column; }
 .guest-copy { gap: 6px; }
+.popup-confirm-button {
+    min-width: 88px;
+    min-height: 40px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 12px;
+    background: #111827;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+}
 .guest-copy strong, .guest-counter span { color: #111827; font-weight: 800; }
 .guest-copy span { color: #8b949e; font-size: 0.92rem; line-height: 1.4; }
 .guest-counter { display: flex; align-items: center; gap: 18px; }

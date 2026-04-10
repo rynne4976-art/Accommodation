@@ -8,6 +8,19 @@ if (params.has("logout")) {
 
 const $ = (id) => document.getElementById(id);
 const slider = document.querySelector("[data-accom-slider]");
+const syncInputValue = (input, nextValue) => {
+    if (!input) {
+        return;
+    }
+
+    const normalizedValue = nextValue ?? "";
+    if (input.value === normalizedValue) {
+        return;
+    }
+
+    input.value = normalizedValue;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+};
 
 if ($("dateTrigger")) {
     const ui = {
@@ -20,13 +33,18 @@ if ($("dateTrigger")) {
         calendar: $("calendarPopup"),
         guest: $("guestPopup"),
         summary: $("calendarSummary"),
+        calendarConfirm: $("calendarConfirmBtn"),
+        guestConfirm: $("guestConfirmBtn"),
         leftTitle: $("monthTitleLeft"),
         rightTitle: $("monthTitleRight"),
         leftDays: $("monthDaysLeft"),
         rightDays: $("monthDaysRight"),
         adultCount: $("adultCount"),
         childCount: $("childCount"),
-        roomCount: $("roomCount")
+        roomCount: $("roomCount"),
+        adultInput: $("adultCountInput"),
+        childInput: $("childCountInput"),
+        roomInput: $("roomCountInput")
     };
 
     const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
@@ -57,6 +75,10 @@ if ($("dateTrigger")) {
 
         return new Date(year, month - 1, day);
     };
+    const parseCount = (value, fallback) => {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isNaN(parsed) ? fallback : parsed;
+    };
     const closePopups = () => [ui.calendar, ui.guest].forEach((el) => el.classList.remove("open"));
     const emptyDateText = "날짜를 선택해주세요!";
     const selectingDateText = "체크인 날짜 - 체크아웃 날짜";
@@ -78,12 +100,8 @@ if ($("dateTrigger")) {
         ui.dateLabel.textContent = triggerText;
         ui.summary.textContent = summaryText;
         ui.dateTrigger.classList.toggle("is-placeholder", !hasCompleteRange);
-        if (ui.checkInInput) {
-            ui.checkInInput.value = state.start ? formatIsoDate(state.start) : "";
-        }
-        if (ui.checkOutInput) {
-            ui.checkOutInput.value = state.end ? formatIsoDate(state.end) : "";
-        }
+        syncInputValue(ui.checkInInput, state.start ? formatIsoDate(state.start) : "");
+        syncInputValue(ui.checkOutInput, state.end ? formatIsoDate(state.end) : "");
     }
 
     function renderGuest() {
@@ -92,6 +110,9 @@ if ($("dateTrigger")) {
         ui.roomCount.textContent = state.room;
         ui.guestLabel.textContent = `총 인원 ${state.adult + state.child}, 객실 ${state.room}`;
         ui.guestTrigger.classList.toggle("is-placeholder", state.adult + state.child === 0 && state.room === 1);
+        syncInputValue(ui.adultInput, String(state.adult));
+        syncInputValue(ui.childInput, String(state.child));
+        syncInputValue(ui.roomInput, String(state.room));
     }
 
     function buildMonth(container, title, month) {
@@ -185,6 +206,16 @@ if ($("dateTrigger")) {
         renderCalendar();
     });
 
+    ui.calendarConfirm?.addEventListener("click", () => {
+        if (!state.start || !state.end) {
+            alert("체크인과 체크아웃 날짜를 모두 선택해 주세요.");
+            return;
+        }
+
+        renderDate();
+        ui.calendar.classList.remove("open");
+    });
+
     [["adult", 0], ["child", 0], ["room", 1]].forEach(([key, min]) => {
         $(`${key}MinusBtn`)?.addEventListener("click", () => {
             state[key] = Math.max(min, state[key] - 1);
@@ -196,6 +227,11 @@ if ($("dateTrigger")) {
         });
     });
 
+    ui.guestConfirm?.addEventListener("click", () => {
+        renderGuest();
+        ui.guest.classList.remove("open");
+    });
+
     document.addEventListener("click", (e) => {
         if (!e.target.closest(".booking-shell")) {
             closePopups();
@@ -205,6 +241,9 @@ if ($("dateTrigger")) {
 
     state.start = parseIsoDate(ui.checkInInput?.value);
     state.end = parseIsoDate(ui.checkOutInput?.value);
+    state.adult = Math.max(0, parseCount(ui.adultInput?.value, 0));
+    state.child = Math.max(0, parseCount(ui.childInput?.value, 0));
+    state.room = Math.max(1, parseCount(ui.roomInput?.value, 1));
     if (state.start) {
         state.month = new Date(state.start.getFullYear(), state.start.getMonth(), 1);
     }
