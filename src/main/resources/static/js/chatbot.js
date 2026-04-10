@@ -77,6 +77,15 @@
 
     form.addEventListener('submit', function (event) {
         event.preventDefault();
+
+        // 비교 모드에서 2개 선택 완료 시 전송 버튼으로 비교 실행
+        if (state.mode === 'comparison' && state.step === 'comparison-select') {
+            if (state.comparison.selected.length === 2) {
+                requestCompare(state.comparison.selected[0], state.comparison.selected[1]);
+            }
+            return;
+        }
+
         const value = input.value.trim();
         if (!value) {
             return;
@@ -991,14 +1000,23 @@
         const rGuest = R.guestCount || 0;
         metricsEl.appendChild(metricRow('수용인원', lGuest, rGuest, lGuest + '명', rGuest + '명', 'high'));
 
-        // 체크인/아웃 단순 표시
-        const infoRow = document.createElement('div');
-        infoRow.className = 'chatbot-metric-row';
-        infoRow.innerHTML =
+        // 체크인 단순 표시
+        const checkInRow = document.createElement('div');
+        checkInRow.className = 'chatbot-metric-row';
+        checkInRow.innerHTML =
             '<div class="chatbot-metric-row__left"><span class="chatbot-metric-value">' + escapeHtml(L.checkInTime || '-') + '</span></div>' +
             '<div class="chatbot-metric-row__label">체크인</div>' +
             '<div class="chatbot-metric-row__right"><span class="chatbot-metric-value">' + escapeHtml(R.checkInTime || '-') + '</span></div>';
-        metricsEl.appendChild(infoRow);
+        metricsEl.appendChild(checkInRow);
+
+// 체크아웃 단순 표시 (체크인과 동일한 형식)
+const checkOutRow = document.createElement('div');
+checkOutRow.className = 'chatbot-metric-row';
+checkOutRow.innerHTML =
+    '<div class="chatbot-metric-row__left"><span class="chatbot-metric-value">' + escapeHtml(L.checkOutTime || '-') + '</span></div>' +
+    '<div class="chatbot-metric-row__label">체크아웃</div>' +
+    '<div class="chatbot-metric-row__right"><span class="chatbot-metric-value">' + escapeHtml(R.checkOutTime || '-') + '</span></div>';
+metricsEl.appendChild(checkOutRow);
 
         stage.appendChild(metricsEl);
 
@@ -1251,6 +1269,12 @@
         if (lGuest !== rGuest) {
             const bigger = lGuest >= rGuest ? L : R;
             tips.push({ icon: '👥', text: '인원이 많다면 → ' + bigger.accomName + ' (' + bigger.guestCount + '명 수용)' });
+        }
+        const lCheckOut = L.checkOutTime || '';
+        const rCheckOut = R.checkOutTime || '';
+        if (lCheckOut && rCheckOut && lCheckOut !== rCheckOut && lCheckOut !== '정보 없음' && rCheckOut !== '정보 없음') {
+            const later = lCheckOut > rCheckOut ? L : R;
+            tips.push({ icon: '🛌', text: '느긋한 체크아웃을 원한다면 → ' + later.accomName + ' (체크아웃 ' + (lCheckOut > rCheckOut ? lCheckOut : rCheckOut) + ')' });
         }
         if (!tips.length) {
             tips.push({ icon: '✨', text: '두 숙소 모두 조건이 비슷합니다. 취향에 따라 선택하세요.' });
