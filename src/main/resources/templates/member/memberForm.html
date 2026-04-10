@@ -24,12 +24,12 @@
             <p th:text="${errorMessage}"></p>
         </div>
 
-        <form class="auth-form" th:action="@{/members/new}" th:object="${memberFormDto}" method="post" novalidate>
+        <form class="auth-form" th:action="@{/members/new}" th:object="${memberFormDto}" method="post" novalidate autocomplete="off">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
             <div class="form-group">
                 <label>이름</label>
-                <input type="text" th:field="*{name}" placeholder="이름을 입력하세요" data-validate-field="name">
+                <input type="text" th:field="*{name}" placeholder="이름을 입력하세요" data-validate-field="name" autocomplete="off">
                 <p class="field-error"
                    data-field-error="name"
                    th:text="${#fields.hasErrors('name')} ? ${#fields.errors('name')[0]} : ''"
@@ -38,7 +38,7 @@
 
             <div class="form-group">
                 <label>이메일</label>
-                <input type="email" th:field="*{email}" placeholder="이메일을 입력하세요" data-validate-field="email">
+                <input type="email" th:field="*{email}" placeholder="이메일을 입력하세요" data-validate-field="email" autocomplete="off">
                 <p class="field-error"
                    data-field-error="email"
                    th:text="${#fields.hasErrors('email')} ? ${#fields.errors('email')[0]} : ''"
@@ -47,7 +47,7 @@
 
             <div class="form-group">
                 <label>비밀번호</label>
-                <input type="password" th:field="*{password}" placeholder="8자 이상 16자 이하" data-validate-field="password">
+                <input type="password" th:field="*{password}" placeholder="8자 이상 16자 이하" data-validate-field="password" autocomplete="new-password">
                 <ul class="password-checklist" id="passwordChecklist">
                     <li class="password-checklist__item" data-password-rule="length">8자 이상 16자 이하</li>
                     <li class="password-checklist__item" data-password-rule="letter">영문 포함</li>
@@ -62,7 +62,7 @@
 
             <div class="form-group">
                 <label>비밀번호 확인</label>
-                <input type="password" th:field="*{confirmPassword}" placeholder="비밀번호를 다시 입력하세요" data-validate-field="confirmPassword">
+                <input type="password" th:field="*{confirmPassword}" placeholder="비밀번호를 다시 입력하세요" data-validate-field="confirmPassword" autocomplete="new-password">
                 <p class="field-error"
                    data-field-error="confirmPassword"
                    th:text="${#fields.hasErrors('confirmPassword')} ? ${#fields.errors('confirmPassword')[0]} : ''"
@@ -73,7 +73,7 @@
                 <label>휴대폰 번호</label>
                 <input type="hidden" th:field="*{number}" id="number">
                 <div class="phone-field" data-phone-field data-validate-field-wrapper="number">
-                    <select id="phonePrefix" class="phone-part phone-prefix" aria-label="휴대폰 앞자리">
+                    <select id="phonePrefix" class="phone-part phone-prefix" aria-label="휴대폰 앞자리" autocomplete="off">
                         <option value="010">010</option>
                         <option value="011">011</option>
                         <option value="016">016</option>
@@ -82,9 +82,9 @@
                         <option value="019">019</option>
                     </select>
                     <span class="phone-separator">-</span>
-                    <input type="text" id="phoneMiddle" class="phone-part" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="휴대폰 가운데 4자리">
+                    <input type="text" id="phoneMiddle" class="phone-part" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="휴대폰 가운데 4자리" autocomplete="off">
                     <span class="phone-separator">-</span>
-                    <input type="text" id="phoneLast" class="phone-part" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="휴대폰 마지막 4자리">
+                    <input type="text" id="phoneLast" class="phone-part" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="휴대폰 마지막 4자리" autocomplete="off">
                 </div>
                 <p class="field-error"
                    data-field-error="number"
@@ -95,15 +95,15 @@
             <div class="form-group">
                 <label>주소</label>
                 <div class="address-search-row">
-                    <input type="text" th:field="*{postcode}" placeholder="우편번호" readonly data-validate-field="postcode">
+                    <input type="text" th:field="*{postcode}" placeholder="우편번호" readonly data-validate-field="postcode" autocomplete="off">
                     <button type="button" class="address-search-button" id="addressSearchButton">주소 검색</button>
                 </div>
-                <input type="text" th:field="*{address}" placeholder="기본 주소" readonly data-validate-field="address">
-                <input type="text" th:field="*{detailAddress}" placeholder="상세 주소를 입력하세요">
+                <input type="text" th:field="*{address}" placeholder="기본 주소" readonly data-validate-field="address" autocomplete="off">
+                <input type="text" th:field="*{detailAddress}" placeholder="상세 주소를 입력하세요" autocomplete="off">
                 <p class="field-error"
                    data-field-error="addressGroup"
-                   th:text="${#fields.hasErrors('postcode')} ? ${#fields.errors('postcode')[0]} : (${#fields.hasErrors('address')} ? ${#fields.errors('address')[0]} : '')"
-                   th:classappend="${#fields.hasErrors('postcode') or #fields.hasErrors('address')} ? ' is-visible' : ''"></p>
+                   th:text="${#fields.hasErrors('postcode')} ? ${#fields.errors('postcode')[0]} : (${#fields.hasErrors('address')} ? ${#fields.errors('address')[0]} : (${#fields.hasErrors('detailAddress')} ? ${#fields.errors('detailAddress')[0]} : ''))"
+                   th:classappend="${#fields.hasErrors('postcode') or #fields.hasErrors('address') or #fields.hasErrors('detailAddress')} ? ' is-visible' : ''"></p>
             </div>
 
             <button class="auth-submit" type="submit">회원가입</button>
@@ -268,6 +268,9 @@
             if (!addressInput.value.trim()) {
                 return { message: '주소 검색을 통해 기본 주소를 입력해주세요.', type: 'error' };
             }
+            if (!detailAddressInput.value.trim()) {
+                return showEmpty ? { message: '상세 주소를 입력해주세요.', type: 'error' } : { message: '', type: '' };
+            }
             return { message: '사용할 수 있는 주소 정보입니다.', type: 'success' };
         }
 
@@ -361,7 +364,7 @@
                 validateField(item.fieldName);
             });
             item.input.addEventListener('blur', function () {
-                validateField(item.fieldName);
+                validateField(item.fieldName, { showEmpty: true });
             });
         });
 
@@ -412,12 +415,12 @@
         }
 
         emailInput.addEventListener('blur', function () {
-            checkEmailDuplicate();
+            checkEmailDuplicate({ showEmpty: true });
         });
 
         [prefixInput, middleInput, lastInput].forEach(function (inputEl) {
             inputEl.addEventListener('blur', function () {
-                validateField('number');
+                validateField('number', { showEmpty: true });
             });
         });
 
@@ -464,7 +467,7 @@
         }
 
         detailAddressInput.addEventListener('blur', function () {
-            validateField('addressGroup');
+            validateField('addressGroup', { showEmpty: true });
         });
 
         form.addEventListener('submit', function (event) {

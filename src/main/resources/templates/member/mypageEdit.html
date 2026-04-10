@@ -60,6 +60,7 @@
                 <input type="text" th:field="*{detailAddress}" placeholder="상세 주소를 입력하세요">
                 <p class="field-error" th:if="${#fields.hasErrors('postcode')}" th:errors="*{postcode}"></p>
                 <p class="field-error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></p>
+                <p class="field-error" th:if="${#fields.hasErrors('detailAddress')}" th:errors="*{detailAddress}"></p>
             </div>
 
             <button class="auth-submit" type="submit">수정 완료</button>

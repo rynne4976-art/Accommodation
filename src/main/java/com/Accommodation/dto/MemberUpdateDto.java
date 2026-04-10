@@ -29,6 +29,7 @@ public class MemberUpdateDto {
     @NotBlank(message = "주소 검색을 통해 기본 주소를 입력해주세요.")
     private String address;
 
+    @NotBlank(message = "상세 주소를 입력해주세요.")
     private String detailAddress;
 
     public static MemberUpdateDto from(Member member) {

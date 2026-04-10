@@ -226,6 +226,10 @@ body {
 .search-form button {
     min-width: 108px;
     text-align: center;
+    font-size: 14px;
+    line-height: 1.4;
+    font-family: inherit;
+    cursor: pointer;
 }
 
 .search-form-reset {
@@ -238,6 +242,9 @@ body {
     border: 1px solid #d0d7e2;
     background: #f8fafc;
     color: #475467;
+    font-size: 14px;
+    line-height: 1.4;
+    font-family: inherit;
     font-weight: 700;
     text-decoration: none;
     box-sizing: border-box;
