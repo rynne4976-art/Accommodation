@@ -22,6 +22,12 @@
                        th:value="${accomSearchDto != null and accomSearchDto.checkInDate != null ? #temporals.format(accomSearchDto.checkInDate, 'yyyy-MM-dd') : ''}">
                 <input type="hidden" name="checkOutDate" id="checkOutDateInput"
                        th:value="${accomSearchDto != null and accomSearchDto.checkOutDate != null ? #temporals.format(accomSearchDto.checkOutDate, 'yyyy-MM-dd') : ''}">
+                <input type="hidden" name="adultCount" id="adultCountInput"
+                       th:value="${accomSearchDto != null and accomSearchDto.adultCount != null ? accomSearchDto.adultCount : 0}">
+                <input type="hidden" name="childCount" id="childCountInput"
+                       th:value="${accomSearchDto != null and accomSearchDto.childCount != null ? accomSearchDto.childCount : 0}">
+                <input type="hidden" name="roomCount" id="roomCountInput"
+                       th:value="${accomSearchDto != null and accomSearchDto.roomCount != null ? accomSearchDto.roomCount : 1}">
 
             <label class="booking-field">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -75,6 +81,7 @@
                 <div class="calendar-footer">
                     <button class="calendar-reset" id="calendarResetBtn" type="button">일정 초기화</button>
                     <span class="calendar-summary" id="calendarSummary">날짜를 선택해주세요!</span>
+                    <button class="popup-confirm-button" id="calendarConfirmBtn" type="button">확인</button>
                 </div>
             </div>
 
@@ -114,6 +121,10 @@
                         <button id="roomPlusBtn" type="button">+</button>
                     </div>
                 </div>
+
+                <div class="guest-popup-actions">
+                    <button class="popup-confirm-button" id="guestConfirmBtn" type="button">확인</button>
+                </div>
             </div>
         </div>
     </div>
@@ -122,7 +133,7 @@
 <section class="popular-area">
     <h2>국내 인기 여행지</h2>
     <div class="area-list">
-        <a class="area-card" th:href="@{/searchList(searchQuery='서울')}"><img th:src="@{/images/main/seoul.png}" alt="서울"><span>서울</span></a>
+        <a class="area-card" th:href="@{/searchList(searchQuery='서울')}"><img th:src="@{/images/main/activity-seoul3.png}" alt="서울"><span>서울</span></a>
         <a class="area-card" th:href="@{/searchList(searchQuery='부산')}"><img th:src="@{/images/main/busan.png}" alt="부산"><span>부산</span></a>
         <a class="area-card" th:href="@{/searchList(searchQuery='강릉')}"><img th:src="@{/images/main/gangneung.png}" alt="강릉"><span>강릉</span></a>
         <a class="area-card" th:href="@{/searchList(searchQuery='제주')}"><img th:src="@{/images/main/jeju.png}" alt="제주"><span>제주</span></a>
@@ -143,7 +154,7 @@
         <article class="activity-card">
             <a class="activity-card__link" th:href="@{/activities/서울}">
                 <div class="activity-card__image-wrap">
-                    <img th:src="@{/images/main/seoul.png}" alt="서울 즐길거리">
+                    <img th:src="@{/images/main/activity-seoul2.png}" alt="서울 즐길거리">
                     <span class="activity-card__label">서울</span>
                 </div>
                 <div class="activity-card__body">
@@ -160,7 +171,7 @@
         <article class="activity-card">
             <a class="activity-card__link" th:href="@{/activities/부산}">
                 <div class="activity-card__image-wrap">
-                    <img th:src="@{/images/main/busan.png}" alt="부산 즐길거리">
+                    <img th:src="@{/images/main/activity-busan.png}" alt="부산 즐길거리">
                     <span class="activity-card__label">부산</span>
                 </div>
                 <div class="activity-card__body">
@@ -177,7 +188,7 @@
         <article class="activity-card">
             <a class="activity-card__link" th:href="@{/activities/강릉}">
                 <div class="activity-card__image-wrap">
-                    <img th:src="@{/images/main/gangneung.png}" alt="강릉 즐길거리">
+                    <img th:src="@{/images/main/activity-gangneung.png}" alt="강릉 즐길거리">
                     <span class="activity-card__label">강릉</span>
                 </div>
                 <div class="activity-card__body">
@@ -193,7 +204,7 @@
         <article class="activity-card">
             <a class="activity-card__link" th:href="@{/activities/제주}">
                 <div class="activity-card__image-wrap">
-                    <img th:src="@{/images/main/jeju.png}" alt="제주 즐길거리">
+                    <img th:src="@{/images/main/activity-jeju.png}" alt="제주 즐길거리">
                     <span class="activity-card__label">제주</span>
                 </div>
                 <div class="activity-card__body">
@@ -209,7 +220,7 @@
         <article class="activity-card">
             <a class="activity-card__link" th:href="@{/activities/경주}">
                 <div class="activity-card__image-wrap">
-                    <img th:src="@{/images/main/gyeongju.png}" alt="경주 즐길거리">
+                    <img th:src="@{/images/main/activity-gyeongju.png}" alt="경주 즐길거리">
                     <span class="activity-card__label">경주</span>
                 </div>
                 <div class="activity-card__body">

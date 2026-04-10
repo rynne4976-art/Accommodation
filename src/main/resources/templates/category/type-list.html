@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>searchList</title>
+    <title th:text="${pageTitle != null ? pageTitle : '숙소 목록'}">숙소 목록</title>
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/main.css}">
     <link rel="stylesheet" th:href="@{/css/type-list.css}">

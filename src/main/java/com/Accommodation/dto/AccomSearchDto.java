@@ -22,6 +22,9 @@ public class AccomSearchDto {
     private Integer minPrice;
     private Integer maxPrice;
     private Double minRating;
+    private Integer adultCount;
+    private Integer childCount;
+    private Integer roomCount;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate checkInDate;

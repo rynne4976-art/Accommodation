@@ -48,7 +48,6 @@ public class MainController {
                          @RequestParam(value = "page") Optional<Integer> page,
                          Model model) {
         return renderTypePage(
-                "category/hotel",
                 "/main/hotels",
                 AccomType.HOTEL,
                 "호텔",
@@ -64,7 +63,6 @@ public class MainController {
                           @RequestParam(value = "page") Optional<Integer> page,
                           Model model) {
         return renderTypePage(
-                "category/resort",
                 "/main/resorts",
                 AccomType.RESORT,
                 "리조트",
@@ -80,7 +78,6 @@ public class MainController {
                            @RequestParam(value = "page") Optional<Integer> page,
                            Model model) {
         return renderTypePage(
-                "category/pension",
                 "/main/pensions",
                 AccomType.PENSION,
                 "펜션",
@@ -96,7 +93,6 @@ public class MainController {
                          @RequestParam(value = "page") Optional<Integer> page,
                          Model model) {
         return renderTypePage(
-                "category/motel",
                 "/main/motels",
                 AccomType.MOTEL,
                 "모텔",
@@ -112,7 +108,6 @@ public class MainController {
                               @RequestParam(value = "page") Optional<Integer> page,
                               Model model) {
         return renderTypePage(
-                "category/guesthouse",
                 "/main/guesthouses",
                 AccomType.GUESTHOUSE,
                 "게스트하우스",
@@ -123,8 +118,7 @@ public class MainController {
         );
     }
 
-    private String renderTypePage(String viewName,
-                                  String currentPath,
+    private String renderTypePage(String currentPath,
                                   AccomType accomType,
                                   String pageTitle,
                                   String pageDescription,
@@ -148,7 +142,7 @@ public class MainController {
         model.addAttribute("emptyMessage", pageTitle + " 유형에 등록된 숙소가 없습니다.");
         model.addAttribute("currentPath", currentPath);
 
-        return viewName;
+        return "category/type-list";
     }
 
     @GetMapping("/searchList")
@@ -175,7 +169,7 @@ public class MainController {
         model.addAttribute("emptyMessage", "검색 조건에 맞는 숙소가 없습니다.");
         model.addAttribute("currentPath", "/searchList");
 
-        return "category/searchList";
+        return "category/type-list";
     }
 
     @GetMapping("/recent-viewed")

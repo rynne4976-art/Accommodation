@@ -331,6 +331,29 @@
     margin-top: 28px;
 }
 
+.guest-popup-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+
+.popup-confirm-button {
+    min-width: 88px;
+    min-height: 40px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 12px;
+    background: #111827;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.calendar-footer .popup-confirm-button {
+    margin-left: auto;
+}
+
 .type-action-box {
     display: flex;
     align-items: center;
