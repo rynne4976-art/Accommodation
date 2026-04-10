@@ -1,7 +1,7 @@
 package com.Accommodation.controller;
 
-import com.Accommodation.dto.RegionActivityPageDto;
 import com.Accommodation.dto.RegionActivityItemDto;
+import com.Accommodation.dto.RegionActivityPageDto;
 import com.Accommodation.service.RegionActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -17,7 +17,7 @@ import java.util.List;
 public class RegionActivityController {
 
     private final RegionActivityService regionActivityService;
-    private static final int PAGE_SIZE = 5;
+    private static final int PAGE_SIZE = 15;
 
     @GetMapping("/activities/{region}")
     public String regionActivities(@PathVariable("region") String region,
@@ -31,7 +31,9 @@ public class RegionActivityController {
         int currentPage = totalPages == 0 ? 1 : Math.max(1, Math.min(page, totalPages));
         int startIndex = totalItems == 0 ? 0 : (currentPage - 1) * PAGE_SIZE;
         int endIndex = totalItems == 0 ? 0 : Math.min(startIndex + PAGE_SIZE, totalItems);
-        List<RegionActivityItemDto> pagedItems = totalItems == 0 ? List.of() : allItems.subList(startIndex, endIndex);
+
+        List<RegionActivityItemDto> pagedItems =
+                totalItems == 0 ? List.of() : allItems.subList(startIndex, endIndex);
 
         model.addAttribute("activityPage", pageDto);
         model.addAttribute("activityList", pagedItems);

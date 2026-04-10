@@ -95,19 +95,30 @@
                 지역 행사 · 축제 · 즐길거리
             </h2>
             <p class="activity-list-section__sub">
-                지역별 행사, 축제, 대표 관광 정보를 세로 리스트 형태로 확인할 수 있습니다.
+                지역별 행사, 축제, 대표 관광 정보를 카드 형태로 확인할 수 있습니다.
             </p>
         </div>
 
-        <div class="activity-list-vertical"
+        <div class="activity-card-grid"
              th:if="${activityList != null and !#lists.isEmpty(activityList)}">
             <article class="activity-row-card" th:each="item : ${activityList}">
-                <div class="activity-row-card__media"
-                     th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}">
-                    <img th:src="${item.imageUrl}"
-                         alt="즐길거리 이미지"
-                         onerror="this.style.display='none'">
-                </div>
+                <a class="activity-row-card__media-link"
+                   th:href="${item.externalUrl != null and !#strings.isEmpty(item.externalUrl) ? item.externalUrl : item.detailUrl}"
+                   target="_blank"
+                   rel="noopener noreferrer">
+
+                    <div class="activity-row-card__media"
+                         th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}">
+                        <img th:src="${item.imageUrl}"
+                             alt="즐길거리 이미지"
+                             onerror="this.style.display='none'">
+                    </div>
+
+                    <div class="activity-row-card__media activity-row-card__media--placeholder"
+                         th:if="${item.imageUrl == null or #strings.isEmpty(item.imageUrl)}">
+                        <span th:text="${item.title}">즐길거리</span>
+                    </div>
+                </a>
 
                 <div class="activity-row-card__body">
                     <div class="activity-row-card__meta">
@@ -131,14 +142,6 @@
                     </p>
 
                     <div class="activity-row-card__actions">
-                        <a class="activity-row-card__button"
-                           th:if="${item.externalUrl != null and !#strings.isEmpty(item.externalUrl)}"
-                           th:href="${item.externalUrl}"
-                           target="_blank"
-                           rel="noopener noreferrer">
-                            행사/축제 링크 보기
-                        </a>
-
                         <a class="activity-row-card__button activity-row-card__button--ghost"
                            th:href="@{/searchList(searchQuery=${activityPage.regionName})}">
                             이 지역 숙소 보기
