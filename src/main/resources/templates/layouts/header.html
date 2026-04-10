@@ -139,6 +139,7 @@
             const badge = document.getElementById('notificationBadge');
             const panel = document.getElementById('notificationPanel');
             const list = document.getElementById('notificationList');
+            const logoutForm = document.querySelector('.logout-form');
 
             if (!button || !badge || !panel || !list || typeof EventSource === 'undefined') {
                 return;
@@ -146,6 +147,12 @@
 
             const eventSource = new EventSource('/notifications/stream');
             let notifications = [];
+
+            function closeEventSource() {
+                if (eventSource.readyState !== EventSource.CLOSED) {
+                    eventSource.close();
+                }
+            }
 
             function escapeHtml(value) {
                 return String(value)
@@ -226,8 +233,15 @@
             });
 
             eventSource.onerror = function () {
-                eventSource.close();
+                closeEventSource();
             };
+
+            if (logoutForm) {
+                logoutForm.addEventListener('submit', closeEventSource);
+            }
+
+            window.addEventListener('beforeunload', closeEventSource);
+            window.addEventListener('pagehide', closeEventSource);
 
             loadNotifications();
         })();
