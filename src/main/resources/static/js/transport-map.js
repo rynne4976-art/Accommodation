@@ -4,13 +4,13 @@ let accomLng = null;
 let accomMarker = null;
 let startMarker = null;
 let routeLine = null;
-let currentLocationMarker = null;
-let currentAccuracyCircle = null;
 let transportMarkers = [];
 let selectedRouteMode = "car";
 let nearbyTransportState = { bus: [], subway: [] };
 let lastRouteContext = null;
 let lastRouteMetrics = null;
+const geocodeCache = new Map();
+const nearbyTransportCache = new Map();
 
 const DEFAULT_MAP_CENTER = [37.5665, 126.9780];
 const DEFAULT_MAP_ZOOM = 12;
@@ -30,24 +30,36 @@ document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
   bindRouteModeButtons();
+  bindDestinationSelect();
   initMap();
 
-  const address = getElement("accomLocation")?.value?.trim() || "";
-  const accomName = getElement("accomName")?.value?.trim() || "";
-  const accomImage = getElement("accomImage")?.value?.trim() || "";
+  const select = getElement("destinationSelect");
+  const selectedOption = select?.options?.[select.selectedIndex];
+
+  const selectedAddress = selectedOption?.dataset?.location?.trim() || "";
+  const selectedName = selectedOption?.dataset?.name?.trim() || "";
+  const selectedImage = selectedOption?.dataset?.image?.trim() || "";
+
+  const hiddenAddress = getElement("accomLocation")?.value?.trim() || "";
+  const hiddenName = getElement("accomName")?.value?.trim() || "";
+  const hiddenImage = getElement("accomImage")?.value?.trim() || "";
+
+  const address = selectedAddress || hiddenAddress;
+  const accomName = selectedName || hiddenName || address;
+  const accomImage = selectedImage || hiddenImage;
 
   if (!address) {
-    setStatus("도착지를 선택해 주세요.");
     setDistanceInfo("상단 도착지 드롭다운에서 숙소를 선택하면 교통 정보가 표시됩니다.");
     renderTransportGroups([], []);
+    updateDestinationSummary("숙소를 선택해 주세요.");
+    refreshMapSize();
     return;
   }
 
   try {
-    await applyAccommodationDestination(accomName || address, address, accomImage);
+    await applyAccommodationDestination(accomName, address, accomImage);
   } catch (error) {
     console.error("교통 페이지 초기화 실패", error);
-    setStatus("도착지 정보를 불러오지 못했습니다.");
     setDistanceInfo("다시 시도해 주세요.");
     renderTransportGroups([], []);
   }
@@ -61,10 +73,24 @@ function initMap() {
   map = L.map("map", { zoomControl: false }).setView(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM);
 
   L.control.zoom({ position: "bottomright" }).addTo(map);
+
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors"
   }).addTo(map);
+
+  refreshMapSize();
+  window.addEventListener("resize", refreshMapSize);
+}
+
+function refreshMapSize() {
+  if (!map) {
+    return;
+  }
+
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 100);
 }
 
 function bindRouteModeButtons() {
@@ -84,6 +110,17 @@ function bindRouteModeButtons() {
   syncRouteModeButtons();
 }
 
+function bindDestinationSelect() {
+  const select = getElement("destinationSelect");
+  if (!select) {
+    return;
+  }
+
+  select.addEventListener("change", () => {
+    applySelectedDestination();
+  });
+}
+
 function syncRouteModeButtons() {
   document.querySelectorAll(".route-mode[data-mode]").forEach(button => {
     button.classList.toggle("route-mode--active", button.dataset.mode === selectedRouteMode);
@@ -91,6 +128,11 @@ function syncRouteModeButtons() {
 }
 
 async function geocodeAddress(address) {
+  const cacheKey = address.trim();
+  if (geocodeCache.has(cacheKey)) {
+    return geocodeCache.get(cacheKey);
+  }
+
   const response = await fetch(`/api/transport/geocode?address=${encodeURIComponent(address)}`, {
     headers: { Accept: "application/json" }
   });
@@ -100,10 +142,13 @@ async function geocodeAddress(address) {
     throw new Error(data.message || "주소 좌표를 찾지 못했습니다.");
   }
 
-  return {
+  const geocode = {
     lat: Number(data.lat),
     lng: Number(data.lng)
   };
+
+  geocodeCache.set(cacheKey, geocode);
+  return geocode;
 }
 
 async function applyAccommodationDestination(name, address, imageUrl = "") {
@@ -112,23 +157,56 @@ async function applyAccommodationDestination(name, address, imageUrl = "") {
     return;
   }
 
-  setStatus("도착지 위치를 확인하는 중입니다.");
-  const geocode = await geocodeAddress(address);
+  const trimmedAddress = address.trim();
+  const trimmedName = (name || address).trim();
+  const trimmedImageUrl = (imageUrl || "").trim();
+
+  const currentAddress = getElement("accomLocation")?.value?.trim() || "";
+
+  if (getElement("accomLocation")) {
+    getElement("accomLocation").value = trimmedAddress;
+  }
+  if (getElement("accomName")) {
+    getElement("accomName").value = trimmedName;
+  }
+  if (getElement("accomImage")) {
+    getElement("accomImage").value = trimmedImageUrl;
+  }
+
+  const select = getElement("destinationSelect");
+  if (select) {
+    Array.from(select.options).forEach(option => {
+      const optionAddress = option.dataset.location?.trim() || "";
+      option.selected = optionAddress === trimmedAddress;
+    });
+  }
+
+  syncAccommodationUi(trimmedName, trimmedAddress, trimmedImageUrl);
+  updateDestinationSummary(trimmedName);
+
+  if (trimmedAddress === currentAddress && accomLat != null && accomLng != null) {
+    refreshMapSize();
+    return;
+  }
+
+  lastRouteContext = null;
+  lastRouteMetrics = null;
+  clearRouteLine();
+  updateRouteSummary("미설정", "-", "-");
+  setModeTimeLabel("carTimeLabel", null, "자동차");
+  setModeTimeLabel("walkTimeLabel", null, "도보");
+  setModeTimeLabel("transitTimeLabel", null, "대중교통");
+
+  const geocode = await geocodeAddress(trimmedAddress);
   accomLat = geocode.lat;
   accomLng = geocode.lng;
 
-  getElement("accomLocation").value = address;
-  getElement("accomName").value = name || address;
-  getElement("accomImage").value = imageUrl || "";
-
-  syncAccommodationUi(name || address, address, imageUrl || "");
   updateAccommodationMarker();
-  clearRouteLine();
   map.flyTo([accomLat, accomLng], 15, { duration: 0.5 });
+  refreshMapSize();
 
-  setStatus("주변 교통 정보를 불러오는 중입니다.");
   await loadNearbyTransport();
-  setStatus("지도가 준비되었습니다.");
+  setDistanceInfo(`선택한 숙소 기준으로 주변 교통 정보를 표시합니다.`);
 }
 
 function applySelectedDestination() {
@@ -156,16 +234,12 @@ function applySelectedDestination() {
 function syncAccommodationUi(name, address, imageUrl) {
   const stayCard = getElement("stayCard");
   const stayTitle = getElement("stayTitle");
-  const destinationSummaryCard = getElement("destinationSummaryCard");
   const accomAddress = getElement("accomAddress");
   const stayImage = getElement("stayImage");
   const stayIcon = getElement("stayIcon");
 
   if (stayCard) {
     stayCard.classList.remove("is-hidden");
-  }
-  if (destinationSummaryCard) {
-    destinationSummaryCard.innerText = name;
   }
   if (stayTitle) {
     stayTitle.innerText = name;
@@ -179,6 +253,7 @@ function syncAccommodationUi(name, address, imageUrl) {
       stayImage.classList.remove("is-hidden");
     } else {
       stayImage.classList.add("is-hidden");
+      stayImage.removeAttribute("src");
     }
   }
   if (stayIcon) {
@@ -197,24 +272,34 @@ function resetAccommodationSelection() {
     accomMarker = null;
   }
 
+  if (startMarker) {
+    map.removeLayer(startMarker);
+    startMarker = null;
+  }
+
   clearTransportMarkers();
   clearRouteLine();
   renderTransportGroups([], []);
   updateRouteSummary("미설정", "-", "-");
+  updateDestinationSummary("숙소를 선택해 주세요.");
   setModeTimeLabel("carTimeLabel", null, "자동차");
   setModeTimeLabel("walkTimeLabel", null, "도보");
   setModeTimeLabel("transitTimeLabel", null, "대중교통");
 
-  getElement("accomLocation").value = "";
-  getElement("accomName").value = "";
-  getElement("accomImage").value = "";
+  if (getElement("accomLocation")) getElement("accomLocation").value = "";
+  if (getElement("accomName")) getElement("accomName").value = "";
+  if (getElement("accomImage")) getElement("accomImage").value = "";
 
   const stayCard = getElement("stayCard");
   const stayImage = getElement("stayImage");
   const stayIcon = getElement("stayIcon");
   const stayTitle = getElement("stayTitle");
-  const destinationSummaryCard = getElement("destinationSummaryCard");
   const accomAddress = getElement("accomAddress");
+  const select = getElement("destinationSelect");
+
+  if (select) {
+    select.selectedIndex = 0;
+  }
 
   if (stayCard) {
     stayCard.classList.add("is-hidden");
@@ -229,16 +314,13 @@ function resetAccommodationSelection() {
   if (stayTitle) {
     stayTitle.innerText = "숙소를 선택해 주세요";
   }
-  if (destinationSummaryCard) {
-    destinationSummaryCard.innerText = "도착지를 선택해 주세요";
-  }
   if (accomAddress) {
     accomAddress.innerText = "상단 도착지 드롭다운에서 숙소를 선택해 주세요.";
   }
 
-  setStatus("도착지를 선택해 주세요.");
   setDistanceInfo("상단 도착지 드롭다운에서 숙소를 선택하면 교통 정보가 표시됩니다.");
   map.flyTo(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, { duration: 0.5 });
+  refreshMapSize();
 }
 
 function updateAccommodationMarker() {
@@ -251,12 +333,27 @@ function updateAccommodationMarker() {
   }
 
   accomMarker = L.marker([accomLat, accomLng]).addTo(map);
-  accomMarker.bindPopup("숙소 위치").openPopup();
+  accomMarker.bindPopup("숙소 위치");
 }
 
 async function loadNearbyTransport() {
   if (accomLat == null || accomLng == null) {
     renderTransportGroups([], []);
+    return;
+  }
+
+  const cacheKey = `${accomLat.toFixed(5)},${accomLng.toFixed(5)}`;
+  if (nearbyTransportCache.has(cacheKey)) {
+    const cached = nearbyTransportCache.get(cacheKey);
+    nearbyTransportState = { bus: cached.bus, subway: cached.subway };
+    drawTransportMarkers(cached.items);
+    renderTransportGroups(cached.bus, cached.subway);
+    setDistanceInfo(
+        cached.items.length
+            ? `주변 교통 ${cached.items.length}곳을 지도에 표시했습니다.`
+            : "선택한 숙소 주변의 교통 정보를 찾지 못했습니다."
+    );
+    refreshMapSize();
     return;
   }
 
@@ -273,16 +370,24 @@ async function loadNearbyTransport() {
   const busStops = items.filter(item => item.type === "bus");
   const subwayStations = items.filter(item => item.type === "subway");
 
+  nearbyTransportCache.set(cacheKey, {
+    items,
+    bus: busStops,
+    subway: subwayStations
+  });
+
   nearbyTransportState = { bus: busStops, subway: subwayStations };
   drawTransportMarkers(items);
   renderTransportGroups(busStops, subwayStations);
 
   if (!items.length) {
     setDistanceInfo("선택한 숙소 주변의 교통 정보를 찾지 못했습니다.");
+    refreshMapSize();
     return;
   }
 
   setDistanceInfo(`주변 교통 ${items.length}곳을 지도에 표시했습니다.`);
+  refreshMapSize();
 }
 
 function drawTransportMarkers(items) {
@@ -300,8 +405,8 @@ function drawTransportMarkers(items) {
 
     const typeLabel = isBus ? "버스 정류장" : "지하철역";
     marker.bindTooltip(
-      `${escapeHtml(item.name)}<br>${typeLabel} / 도보 ${Number(item.walkMinutes)}분`,
-      { direction: "top", offset: [0, -8] }
+        `${escapeHtml(item.name)}<br>${typeLabel} / 도보 ${Number(item.walkMinutes)}분`,
+        { direction: "top", offset: [0, -8] }
     );
 
     marker.on("click", () => activateTransportItem(item.type, item.name));
@@ -315,6 +420,7 @@ function renderTransportGroups(busStops, subwayStations) {
 
   const busCountBadge = getElement("busCountBadge");
   const subwayCountBadge = getElement("subwayCountBadge");
+
   if (busCountBadge) {
     busCountBadge.innerText = String(busStops.length);
   }
@@ -376,6 +482,7 @@ function activateTransportItem(type, name) {
     duration: 0.6
   });
   markerEntry.marker.openTooltip();
+  refreshMapSize();
 }
 
 function clearTransportMarkers() {
@@ -384,7 +491,7 @@ function clearTransportMarkers() {
 }
 
 async function searchRoute() {
-  const start = getElement("startLocation").value.trim();
+  const start = getElement("startLocation")?.value?.trim() || "";
 
   if (!start) {
     alert("출발지를 먼저 입력해 주세요.");
@@ -397,59 +504,47 @@ async function searchRoute() {
   }
 
   try {
-    setStatus("출발지를 찾는 중입니다.");
     const location = await geocodeAddress(start);
-    setStartMarker(location.lat, location.lng, "출발 위치");
+    setStartMarker(location.lat, location.lng, start);
     updateRouteSummary(start, "-", "-");
+    map.flyTo([location.lat, location.lng], Math.max(map.getZoom(), 14), { duration: 0.6 });
+    refreshMapSize();
     await calculateAndRenderRoutes({ lat: location.lat, lng: location.lng, label: start });
   } catch (error) {
     console.error("길찾기 실패", error);
-    setStatus("출발지를 찾지 못했습니다.");
     alert("출발지를 찾을 수 없습니다.");
   }
 }
 
-function useMyLocation() {
+async function useMyAddress() {
   if (accomLat == null || accomLng == null) {
     alert("도착 숙소를 먼저 선택해 주세요.");
     return;
   }
 
-  if (!navigator.geolocation) {
-    alert("브라우저가 위치 기능을 지원하지 않습니다.");
+  const myAddress = getElement("myPageAddress")?.value?.trim() || "";
+
+  if (!myAddress) {
+    alert("마이페이지에 저장된 주소가 없습니다.");
     return;
   }
 
-  setStatus("현재 위치를 확인하는 중입니다.");
+  const startInput = getElement("startLocation");
+  if (startInput) {
+    startInput.value = myAddress;
+  }
 
-  navigator.geolocation.getCurrentPosition(
-    async position => {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-      const accuracy = position.coords.accuracy || 0;
-
-      drawCurrentLocation(lat, lng, accuracy);
-      setStartMarker(lat, lng, "내 위치");
-      map.flyTo([lat, lng], Math.max(map.getZoom(), 16), { duration: 0.6 });
-
-      try {
-        await calculateAndRenderRoutes({ lat, lng, label: "내 위치" });
-      } catch (error) {
-        console.error("현재 위치 경로 계산 실패", error);
-        setStatus("현재 위치는 찾았지만 경로 계산에 실패했습니다.");
-      }
-    },
-    error => {
-      console.error("현재 위치 확인 실패", error);
-      setStatus("현재 위치를 확인하지 못했습니다.");
-      alert("위치 권한을 허용한 뒤 다시 시도해 주세요.");
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0
-    }
-  );
+  try {
+    const location = await geocodeAddress(myAddress);
+    setStartMarker(location.lat, location.lng, "내 주소");
+    updateRouteSummary(myAddress, "-", "-");
+    map.flyTo([location.lat, location.lng], Math.max(map.getZoom(), 14), { duration: 0.6 });
+    refreshMapSize();
+    await calculateAndRenderRoutes({ lat: location.lat, lng: location.lng, label: myAddress });
+  } catch (error) {
+    console.error("내 주소 경로 계산 실패", error);
+    alert("마이페이지 주소로 경로를 찾을 수 없습니다.");
+  }
 }
 
 async function calculateAndRenderRoutes(startContext) {
@@ -490,8 +585,8 @@ async function fetchTransitRoute(startLat, startLng) {
   }
 
   const response = await fetch(
-    `/api/transport/transit-route?sx=${startLng}&sy=${startLat}&ex=${accomLng}&ey=${accomLat}`,
-    { headers: { Accept: "application/json" } }
+      `/api/transport/transit-route?sx=${startLng}&sy=${startLat}&ex=${accomLng}&ey=${accomLat}`,
+      { headers: { Accept: "application/json" } }
   );
   const data = await response.json();
   return response.ok ? data : null;
@@ -499,13 +594,13 @@ async function fetchTransitRoute(startLat, startLng) {
 
 async function fetchTransitRouteFromOdsay(startLat, startLng, webKey) {
   const url =
-    "https://api.odsay.com/v1/api/searchPubTransPathT"
-    + `?apiKey=${encodeURIComponent(webKey)}`
-    + `&SX=${startLng}`
-    + `&SY=${startLat}`
-    + `&EX=${accomLng}`
-    + `&EY=${accomLat}`
-    + "&lang=0";
+      "https://api.odsay.com/v1/api/searchPubTransPathT"
+      + `?apiKey=${encodeURIComponent(webKey)}`
+      + `&SX=${startLng}`
+      + `&SY=${startLat}`
+      + `&EX=${accomLng}`
+      + `&EY=${accomLat}`
+      + "&lang=0";
 
   const response = await fetch(url, { headers: { Accept: "application/json" } });
   const data = await response.json();
@@ -635,9 +730,11 @@ function renderSelectedMode() {
   }
 
   updateRouteSummary(
-    lastRouteMetrics.startLabel,
-    `${selectedMetrics.distanceKm.toFixed(2)}km`,
-    selectedMetrics.minutes == null ? `${MODE_META[selectedRouteMode].label} 정보 없음` : `${MODE_META[selectedRouteMode].label} 약 ${selectedMetrics.minutes}분`
+      lastRouteMetrics.startLabel,
+      `${selectedMetrics.distanceKm.toFixed(2)}km`,
+      selectedMetrics.minutes == null
+          ? `${MODE_META[selectedRouteMode].label} 정보 없음`
+          : `${MODE_META[selectedRouteMode].label} 약 ${selectedMetrics.minutes}분`
   );
 
   if (selectedMetrics.minutes == null) {
@@ -654,7 +751,6 @@ function renderSelectedMode() {
   }
 
   drawSelectedRouteLine(selectedMetrics.geometry, selectedRouteMode);
-  setStatus(`${MODE_META[selectedRouteMode].label} 기준 경로 안내가 준비되었습니다.`);
 }
 
 function drawSelectedRouteLine(geometry, mode) {
@@ -675,6 +771,7 @@ function drawSelectedRouteLine(geometry, mode) {
   }).addTo(map);
 
   map.fitBounds(routeLine.getBounds(), { padding: [28, 28] });
+  refreshMapSize();
 }
 
 function clearRouteLine() {
@@ -684,52 +781,37 @@ function clearRouteLine() {
   }
 }
 
-function drawCurrentLocation(lat, lng, accuracy) {
-  if (currentLocationMarker) {
-    map.removeLayer(currentLocationMarker);
-  }
-  if (currentAccuracyCircle) {
-    map.removeLayer(currentAccuracyCircle);
-  }
-
-  currentLocationMarker = L.marker([lat, lng], {
-    icon: L.divIcon({
-      html: "&#128205;",
-      className: "current-location-marker",
-      iconSize: [22, 22]
-    })
-  }).addTo(map);
-
-  currentLocationMarker.bindPopup("현재 위치").openPopup();
-
-  if (accuracy > 0) {
-    currentAccuracyCircle = L.circle([lat, lng], {
-      radius: accuracy,
-      color: "#0f766e",
-      fillColor: "#14b8a6",
-      fillOpacity: 0.08,
-      weight: 1
-    }).addTo(map);
-  }
-}
-
 function setStartMarker(lat, lng, label) {
   if (startMarker) {
     map.removeLayer(startMarker);
   }
 
   startMarker = L.marker([lat, lng]).addTo(map);
-  startMarker.bindPopup(label).openPopup();
+  startMarker.bindPopup(label);
 }
 
 function updateRouteSummary(startText, distanceText, durationText) {
-  getElement("startSummary").innerText = startText || "미설정";
-  getElement("distanceSummary").innerText = distanceText;
-  getElement("durationSummary").innerText = durationText;
+  const startSummary = getElement("startSummary");
+  const distanceSummary = getElement("distanceSummary");
+  const durationSummary = getElement("durationSummary");
+
+  if (startSummary) startSummary.innerText = startText || "미설정";
+  if (distanceSummary) distanceSummary.innerText = distanceText;
+  if (durationSummary) durationSummary.innerText = durationText;
+}
+
+function updateDestinationSummary(text) {
+  const destinationSummaryCard = getElement("destinationSummaryCard");
+  if (destinationSummaryCard) {
+    destinationSummaryCard.innerText = text || "숙소를 선택해 주세요.";
+  }
 }
 
 function setPresetStart(place) {
-  getElement("startLocation").value = place;
+  const startInput = getElement("startLocation");
+  if (startInput) {
+    startInput.value = place;
+  }
   searchRoute();
 }
 
@@ -742,13 +824,7 @@ function focusAccommodation() {
   if (accomMarker) {
     accomMarker.openPopup();
   }
-}
-
-function setStatus(text) {
-  const statusText = getElement("statusText");
-  if (statusText) {
-    statusText.innerText = text;
-  }
+  refreshMapSize();
 }
 
 function setDistanceInfo(text) {
@@ -760,9 +836,9 @@ function setDistanceInfo(text) {
 
 function escapeHtml(value) {
   return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll("\"", "&quot;")
-    .replaceAll("'", "&#39;");
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#39;");
 }
