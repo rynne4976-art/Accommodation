@@ -290,6 +290,45 @@
     text-decoration: none;
 }
 
+.activity-row-card__media-shell {
+    position: relative;
+}
+
+.activity-row-card__wish {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 3;
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #98a2b3;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.activity-row-card__wish svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.activity-row-card__wish:hover {
+    transform: translateY(-1px);
+    color: #7b3ff2;
+    box-shadow: 0 14px 26px rgba(15, 23, 42, 0.18);
+}
+
+.activity-row-card__wish.is-active {
+    color: #7b3ff2;
+}
+
 .activity-row-card__media {
     width: 100%;
     height: 220px;

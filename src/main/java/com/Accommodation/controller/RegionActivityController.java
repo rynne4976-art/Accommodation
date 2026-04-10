@@ -2,6 +2,7 @@ package com.Accommodation.controller;
 
 import com.Accommodation.dto.RegionActivityItemDto;
 import com.Accommodation.dto.RegionActivityPageDto;
+import com.Accommodation.service.ActivityWishService;
 import com.Accommodation.service.RegionActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -17,12 +18,14 @@ import java.util.List;
 public class RegionActivityController {
 
     private final RegionActivityService regionActivityService;
+    private final ActivityWishService activityWishService;
     private static final int PAGE_SIZE = 15;
 
     @GetMapping("/activities/{region}")
     public String regionActivities(@PathVariable("region") String region,
                                    @RequestParam(name = "page", defaultValue = "1") int page,
-                                   Model model) {
+                                   Model model,
+                                   java.security.Principal principal) {
         RegionActivityPageDto pageDto = regionActivityService.getRegionActivityPage(region);
         List<RegionActivityItemDto> allItems = pageDto.getItems();
 
@@ -34,6 +37,9 @@ public class RegionActivityController {
 
         List<RegionActivityItemDto> pagedItems =
                 totalItems == 0 ? List.of() : allItems.subList(startIndex, endIndex);
+        if (principal != null) {
+            activityWishService.applyWishState(pagedItems, principal.getName());
+        }
 
         model.addAttribute("activityPage", pageDto);
         model.addAttribute("activityList", pagedItems);

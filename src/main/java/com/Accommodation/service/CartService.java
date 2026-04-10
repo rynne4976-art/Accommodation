@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 장바구니(예약 대기) 서비스.
@@ -208,10 +210,27 @@ public class CartService {
     /**
      * 장바구니의 모든 항목을 순서대로 예약 확정한다.
      */
-    public List<Long> confirmAllCartItems(String email) {
-        List<CartItem> cartItems = cartItemRepository.findByMemberEmailOrderByRegTimeDesc(email);
+    public List<Long> confirmSelectedCartItems(String email, List<Long> selectedCartItemIds) {
+        if (selectedCartItemIds == null || selectedCartItemIds.isEmpty()) {
+            throw new IllegalStateException("선택한 장바구니 항목이 없습니다.");
+        }
+
+        Set<Long> selectedIdSet = selectedCartItemIds.stream()
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
+        if (selectedIdSet.isEmpty()) {
+            throw new IllegalStateException("선택한 장바구니 항목이 없습니다.");
+        }
+
+        List<CartItem> cartItems = cartItemRepository.findByMemberEmailOrderByRegTimeDesc(email).stream()
+                .filter(cartItem -> selectedIdSet.contains(cartItem.getId()))
+                .toList();
         if (cartItems.isEmpty()) {
-            throw new IllegalStateException("장바구니가 비어 있습니다.");
+            throw new IllegalStateException("선택한 장바구니 항목을 찾을 수 없습니다.");
+        }
+
+        if (cartItems.size() != selectedIdSet.size()) {
+            throw new IllegalStateException("선택한 장바구니 항목 중 처리할 수 없는 항목이 있습니다.");
         }
 
         List<Long> orderIds = new ArrayList<>();

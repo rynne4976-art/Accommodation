@@ -1,6 +1,7 @@
 (function () {
     const configEl = document.getElementById('categoryBookingConfig');
     const modal = document.getElementById('categoryBookingModal');
+    const cartNotice = document.getElementById('categoryCartNotice');
 
     if (!configEl || !modal) {
         return;
@@ -65,6 +66,8 @@
         totalPrice: document.getElementById('modalTotalPrice'),
         cartBtn: document.getElementById('modalCartBtn'),
         orderBtn: document.getElementById('modalOrderBtn'),
+        cartStayBtn: document.getElementById('categoryCartStayBtn'),
+        cartGoBtn: document.getElementById('categoryCartGoBtn'),
         calendarGrid: document.getElementById('modalCalendarGrid'),
         calendarMonthLabel: document.getElementById('modalCalendarMonthLabel'),
         prevMonthBtn: document.getElementById('modalPrevMonthBtn'),
@@ -789,8 +792,8 @@
             });
 
             if (response.ok) {
-                alert('장바구니에 담았습니다. 장바구니에서 예약을 확정해 주세요.');
-                window.location.href = '/cart';
+                closeModal();
+                openCartNotice();
                 return;
             }
 
@@ -945,6 +948,27 @@
         document.body.style.overflow = '';
     }
 
+    function openCartNotice() {
+        if (!cartNotice) {
+            return;
+        }
+
+        cartNotice.classList.add('is-open');
+        cartNotice.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        elements.cartStayBtn?.focus();
+    }
+
+    function closeCartNotice() {
+        if (!cartNotice) {
+            return;
+        }
+
+        cartNotice.classList.remove('is-open');
+        cartNotice.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
     document.querySelectorAll('.js-open-booking').forEach((button) => {
         button.addEventListener('click', function () {
             if (!isAuthenticated) {
@@ -964,6 +988,9 @@
         if (event.key === 'Escape' && modal.classList.contains('is-open')) {
             closeModal();
         }
+        if (event.key === 'Escape' && cartNotice?.classList.contains('is-open')) {
+            closeCartNotice();
+        }
     });
 
     elements.prevMonthBtn?.addEventListener('click', () => moveMonth(-1));
@@ -973,8 +1000,13 @@
     elements.roomCount?.addEventListener('input', onGuestChange);
     elements.cartBtn?.addEventListener('click', submitCart);
     elements.orderBtn?.addEventListener('click', submitOrder);
+    elements.cartStayBtn?.addEventListener('click', closeCartNotice);
+    elements.cartGoBtn?.addEventListener('click', () => {
+        window.location.href = '/cart';
+    });
     checkInDateInput?.addEventListener('change', updateStockLabels);
     checkOutDateInput?.addEventListener('change', updateStockLabels);
+    cartNotice?.querySelector('.category-cart-notice__backdrop')?.addEventListener('click', closeCartNotice);
 
     updateStockLabels();
 })();
