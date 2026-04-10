@@ -4,7 +4,6 @@
     border-radius: 28px;
     padding: 34px;
     background: linear-gradient(135deg, #0f5fd0 0%, #163a7d 100%);
-    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.14);
 }
 
 .activity-hero__overlay {
@@ -57,14 +56,12 @@
     color: #fff;
     text-decoration: none;
     font-weight: 800;
-    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
-    transition: transform .22s ease, box-shadow .22s ease, background .22s ease, border-color .22s ease;
+    transition: transform .22s ease, background .22s ease, border-color .22s ease;
 }
 
 .activity-hero__button:hover {
     background: rgba(255, 255, 255, 0.2);
     border-color: rgba(255, 255, 255, 0.34);
-    box-shadow: 0 18px 32px rgba(15, 23, 42, 0.18);
 }
 
 .activity-hero__button--ghost {
@@ -92,7 +89,6 @@
     color: #344054;
     text-decoration: none;
     font-weight: 700;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
 }
 
 .activity-region-nav a.is-active {
@@ -172,12 +168,11 @@
     border-radius: 999px;
     background: #ffffff;
     color: #0f5fd0;
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
     cursor: pointer;
     font-size: 1.8rem;
     line-height: 1;
     transform: translateY(-50%);
-    transition: box-shadow .2s ease, opacity .2s ease;
+    transition: opacity .2s ease;
 }
 
 .activity-featured-slider__control--prev {
@@ -189,7 +184,6 @@
 }
 
 .activity-featured-slider__control:hover {
-    box-shadow: 0 20px 36px rgba(15, 23, 42, 0.18);
 }
 
 .activity-featured-slider__control:disabled {
@@ -282,7 +276,6 @@
 
 .activity-row-card:hover {
     border-color: #d8d3ff;
-    transform: translateY(-4px);
 }
 
 .activity-row-card__media-link {
@@ -305,12 +298,11 @@
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.94);
     color: #98a2b3;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: transform .2s ease, color .2s ease, box-shadow .2s ease;
+    transition: transform .2s ease, color .2s ease;
 }
 
 .activity-row-card__wish svg {
@@ -320,9 +312,7 @@
 }
 
 .activity-row-card__wish:hover {
-    transform: translateY(-1px);
     color: #7b3ff2;
-    box-shadow: 0 14px 26px rgba(15, 23, 42, 0.18);
 }
 
 .activity-row-card__wish.is-active {
@@ -357,7 +347,6 @@
 }
 
 .activity-row-card__media-link:hover img {
-    transform: scale(1.04);
 }
 
 .activity-row-card__body {
@@ -487,7 +476,6 @@
     color: #344054;
     text-decoration: none;
     font-weight: 700;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
 }
 
 .type-pager a:hover {

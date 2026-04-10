@@ -63,7 +63,6 @@
     border-bottom: 0;
     border-radius: 18px 18px 0 0;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 255, 0.9));
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 
 .wish-page__tab {
@@ -177,7 +176,6 @@
     border-radius: 999px;
     background: #ffffff;
     color: #7b3ff2;
-    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.16);
     cursor: pointer;
     font-size: 1.7rem;
     line-height: 1;
@@ -285,13 +283,10 @@
     color: #fff;
     font-weight: 700;
     text-decoration: none;
-    box-shadow: 0 14px 30px rgba(123, 63, 242, 0.22);
-    transition: transform .2s ease, box-shadow .2s ease;
+    transition: transform .2s ease;
 }
 
 .wish-list__more:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 18px 34px rgba(123, 63, 242, 0.28);
 }
 
 .activity-wish-list {

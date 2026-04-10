@@ -1,5 +1,6 @@
 package com.Accommodation.controller;
 
+import com.Accommodation.config.AuthenticatedMember;
 import com.Accommodation.dto.AccomFormDto;
 import com.Accommodation.dto.AccomSearchDto;
 import com.Accommodation.dto.ReviewFormDto;
@@ -9,6 +10,9 @@ import com.Accommodation.service.AccomService;
 import com.Accommodation.service.OrderService;
 import com.Accommodation.service.ReviewService;
 import com.Accommodation.validation.AccomValidator;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -26,12 +29,18 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
 public class AccomController {
+
+    private static final String RECENT_VIEWED_COOKIE_NAME = "recentViewedAccoms";
+    private static final int RECENT_VIEWED_LIMIT = 8;
+    private static final String RECENT_VIEWED_COOKIE_DELIMITER = "-";
 
     private final AccomService accomService;
     private final OrderService orderService;
@@ -167,7 +176,7 @@ public class AccomController {
     public String accomManage(AccomSearchDto accomSearchDto,
                               @RequestParam(value = "page", defaultValue = "0") int page,
                               Model model) {
-        PageRequest pageRequest = PageRequest.of(page, 5);
+        PageRequest pageRequest = PageRequest.of(page, 10);
         Page<Accom> accomPage = accomService.getAdminAccomPage(accomSearchDto, pageRequest);
 
         model.addAttribute("accomPage", accomPage);
@@ -179,9 +188,12 @@ public class AccomController {
 
     @GetMapping("/accom/{accomId}")
     public String accomDtl(@PathVariable("accomId") Long accomId,
-                           @AuthenticationPrincipal User user,
+                           @AuthenticationPrincipal AuthenticatedMember user,
+                           HttpServletRequest request,
+                           HttpServletResponse response,
                            Model model) {
         Accom accom = accomService.getAccomDtl(accomId);
+        saveRecentViewedAccom(accomId, request, response);
 
         ReviewFormDto reviewFormDto = new ReviewFormDto();
         reviewFormDto.setAccomId(accomId);
@@ -215,6 +227,44 @@ public class AccomController {
 
         return "accom/accomDtl";
     }
+
+    private void saveRecentViewedAccom(Long accomId, HttpServletRequest request, HttpServletResponse response) {
+        if (accomId == null) {
+            return;
+        }
+
+        List<String> orderedIds = new ArrayList<>();
+        orderedIds.add(String.valueOf(accomId));
+
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (!RECENT_VIEWED_COOKIE_NAME.equals(cookie.getName())) {
+                    continue;
+                }
+
+                String value = cookie.getValue();
+                if (value == null || value.isBlank()) {
+                    continue;
+                }
+
+                for (String rawId : value.split("[,-]")) {
+                    String trimmed = rawId.trim();
+                    if (!trimmed.isEmpty() && !Objects.equals(trimmed, String.valueOf(accomId))) {
+                        orderedIds.add(trimmed);
+                    }
+                }
+            }
+        }
+
+        String cookieValue = String.join(RECENT_VIEWED_COOKIE_DELIMITER, orderedIds.stream().limit(RECENT_VIEWED_LIMIT).toList());
+
+        Cookie cookie = new Cookie(RECENT_VIEWED_COOKIE_NAME, cookieValue);
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60 * 24 * 30);
+        response.addCookie(cookie);
+    }
+
     @GetMapping("/admin/accom/delete/{accomId}")
     public String deleteAccom(@PathVariable("accomId") Long accomId,
                               @RequestParam(value = "returnPage", defaultValue = "0") int returnPage,

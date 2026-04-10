@@ -1,5 +1,6 @@
 package com.Accommodation.controller;
 
+import com.Accommodation.config.AuthenticatedMember;
 import com.Accommodation.dto.ReviewFormDto;
 import com.Accommodation.entity.Review;
 import com.Accommodation.service.AccomService;
@@ -10,7 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -44,7 +44,7 @@ public class ReviewController {
     @PostMapping("/reviews/new")
     public String saveReview(@Valid @ModelAttribute ReviewFormDto reviewFormDto,
                              BindingResult bindingResult,
-                             @AuthenticationPrincipal User user,
+                             @AuthenticationPrincipal AuthenticatedMember user,
                              RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
@@ -53,7 +53,7 @@ public class ReviewController {
         }
 
         if (user == null) {
-            redirectAttributes.addFlashAttribute("message", "로그인 후 리뷰를 작성할 수 있습니다.");
+            redirectAttributes.addFlashAttribute("message", "리뷰 작성은 회원만 가능합니다.");
             return "redirect:/accom/" + reviewFormDto.getAccomId() + "#review-info";
         }
 
@@ -71,7 +71,7 @@ public class ReviewController {
     @ResponseBody
     public Map<String, Object> saveReviewAjax(@Valid @ModelAttribute ReviewFormDto reviewFormDto,
                                               BindingResult bindingResult,
-                                              @AuthenticationPrincipal User user) {
+                                              @AuthenticationPrincipal AuthenticatedMember user) {
 
         Map<String, Object> result = new HashMap<>();
 
@@ -83,7 +83,7 @@ public class ReviewController {
 
         if (user == null) {
             result.put("success", false);
-            result.put("message", "로그인 후 리뷰를 작성할 수 있습니다.");
+            result.put("message", "리뷰 작성은 회원만 가능합니다.");
             return result;
         }
 
@@ -103,7 +103,7 @@ public class ReviewController {
     @PostMapping("/reviews/{reviewId}/update")
     public String updateReview(@PathVariable("reviewId") Long reviewId,
                                @ModelAttribute ReviewFormDto reviewFormDto,
-                               @AuthenticationPrincipal User user,
+                               @AuthenticationPrincipal AuthenticatedMember user,
                                RedirectAttributes redirectAttributes) {
 
         if (user == null) {
@@ -126,7 +126,7 @@ public class ReviewController {
     public Map<String, Object> updateReviewAjax(@PathVariable("reviewId") Long reviewId,
                                                 @Valid @ModelAttribute ReviewFormDto reviewFormDto,
                                                 BindingResult bindingResult,
-                                                @AuthenticationPrincipal User user) {
+                                                @AuthenticationPrincipal AuthenticatedMember user) {
 
         Map<String, Object> result = new HashMap<>();
 
@@ -158,7 +158,7 @@ public class ReviewController {
     @PostMapping("/reviews/{reviewId}/delete")
     public String deleteReview(@PathVariable("reviewId") Long reviewId,
                                @RequestParam("accomId") Long accomId,
-                               @AuthenticationPrincipal User user,
+                               @AuthenticationPrincipal AuthenticatedMember user,
                                RedirectAttributes redirectAttributes) {
 
         if (user == null) {
@@ -180,7 +180,7 @@ public class ReviewController {
     @ResponseBody
     public Map<String, Object> deleteReviewAjax(@PathVariable("reviewId") Long reviewId,
                                                 @RequestParam("accomId") Long accomId,
-                                                @AuthenticationPrincipal User user) {
+                                                @AuthenticationPrincipal AuthenticatedMember user) {
 
         Map<String, Object> result = new HashMap<>();
 
@@ -208,7 +208,7 @@ public class ReviewController {
     public Map<String, Object> deleteReviewImageAjax(@PathVariable("reviewId") Long reviewId,
                                                      @PathVariable("reviewImgId") Long reviewImgId,
                                                      @RequestParam("accomId") Long accomId,
-                                                     @AuthenticationPrincipal User user) {
+                                                     @AuthenticationPrincipal AuthenticatedMember user) {
 
         Map<String, Object> result = new HashMap<>();
 

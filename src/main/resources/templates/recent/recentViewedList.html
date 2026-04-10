@@ -18,7 +18,6 @@
                 <h2>최근 본 상품</h2>
                 <p class="accom-section__sub">최근 확인한 숙소를 한 곳에서 다시 볼 수 있습니다.</p>
             </div>
-            <div class="recent-viewed-summary" th:text="${recentViewedCount} + '개 상품'">0개 상품</div>
         </div>
 
         <div class="recent-viewed-grid" th:if="${recentViewedList != null and !#lists.isEmpty(recentViewedList)}">
@@ -58,9 +57,8 @@
                                          accom.accomType == T(com.Accommodation.constant.AccomType).RESORT ? '리조트' :
                                          accom.accomType == T(com.Accommodation.constant.AccomType).GUESTHOUSE ? '게스트하우스' : '숙소'}">숙소</span>
                         <span class="accom-card__grade-stars" aria-label="숙소 등급">
-                            <span class="star"
-                                  th:each="i : ${#numbers.sequence(1,5)}"
-                                  th:classappend="${i <= gradeNum} ? ' filled' : ''">&#9733;</span>
+                            <span class="star filled"
+                                  th:each="i : ${#numbers.sequence(1, gradeNum)}">&#9733;</span>
                         </span>
                     </div>
                     <h3 class="accom-card__title" th:text="${accom.accomName}">숙소명</h3>

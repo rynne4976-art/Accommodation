@@ -18,7 +18,6 @@
     background: rgba(255, 255, 255, 0.94);
     border: 1px solid #e7ecf3;
     border-radius: 18px;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
     backdrop-filter: blur(12px);
     overflow-x: auto;
     scrollbar-width: none;
@@ -68,7 +67,6 @@
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.28);
     backdrop-filter: blur(6px);
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
     color: #526071;
     font-size: 1.55rem;
     font-weight: 700;
@@ -90,7 +88,6 @@
 .accom-detail-floating-top-button:focus-visible {
     color: #1f4acc;
     border-color: #1f4acc;
-    transform: translateY(-2px);
 }
 
 .accom-detail-floating-top-button:active {
@@ -110,9 +107,9 @@
 
 .accom-detail-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
+    grid-template-columns: minmax(0, 0.92fr) minmax(380px, 1.08fr);
     gap: 28px;
-    align-items: start;
+    align-items: stretch;
 }
 
 .accom-detail-gallery,
@@ -120,11 +117,12 @@
 .accom-detail-info-card {
     background: #fff;
     border-radius: 24px;
-    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
 }
 
 .accom-detail-gallery {
     padding: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
 .accom-detail-main-visual {
@@ -134,13 +132,13 @@
 
 .accom-detail-main-image {
     width: 100%;
-    height: 460px;
+    height: 340px;
     display: block;
     object-fit: cover;
 }
 
 .accom-detail-empty-image {
-    min-height: 460px;
+    min-height: 340px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -159,15 +157,17 @@
 
 .accom-detail-thumb {
     width: 100%;
-    height: 92px;
+    height: 72px;
     object-fit: cover;
     border-radius: 14px;
     border: 1px solid #e5e7eb;
 }
 
 .accom-detail-summary {
-    padding: 28px 30px 30px;
+    padding: 24px 28px 22px;
     background: #fff;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ── 예약 섹션 레이아웃 ── */
@@ -204,7 +204,11 @@
 }
 
 .accom-detail-label {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    max-width: 100%;
     margin-bottom: 14px;
     padding: 7px 12px;
     border-radius: 999px;
@@ -213,6 +217,8 @@
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.04em;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .accom-detail-label.subtle {
@@ -228,49 +234,115 @@
 }
 
 .accom-detail-description {
-    margin: 0;
+    margin: 0 0 18px;
     color: #667085;
     line-height: 1.8;
     font-size: 15px;
 }
 
 .accom-detail-highlight {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-    margin-top: 24px;
-    padding: 20px;
-    border-radius: 18px;
-    border: 1px solid #e7ecf3;
-    background: #fff;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 28px;
+    margin-top: 18px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
 
-.accom-detail-highlight > div {
+.accom-detail-highlight__main {
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 16px;
 }
 
-.highlight-label {
-    display: block;
-    color: #64748b;
-    font-size: 13px;
-    font-weight: 600;
+.accom-detail-highlight__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.accom-detail-highlight strong {
-    color: #111827;
-    font-size: 15px;
-    font-weight: 800;
-    line-height: 1.45;
+.accom-detail-highlight__item--side {
+    justify-content: flex-end;
+}
+
+.accom-detail-highlight__icon {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 18px 18px;
+}
+
+.accom-detail-highlight__icon--star {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f4a100'%3E%3Cpath d='m12 2.8 2.57 5.21 5.75.84-4.16 4.05.98 5.72L12 15.9 6.86 18.62l.98-5.72L3.68 8.85l5.75-.84L12 2.8Z'/%3E%3C/svg%3E");
+}
+
+.accom-detail-highlight__icon--pin {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 21s-5.5-5.47-5.5-10A5.5 5.5 0 1 1 17.5 11c0 4.53-5.5 10-5.5 10Z'/%3E%3Ccircle cx='12' cy='11' r='2.1'/%3E%3C/svg%3E");
+}
+
+.accom-detail-highlight__icon--clock {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Cpath d='M12 7.5v4.9l3.1 1.8'/%3E%3C/svg%3E");
+}
+
+.accom-detail-highlight__icon--room {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 8h14v8H5z'/%3E%3Cpath d='M8 11h8'/%3E%3Cpath d='M5 16h14'/%3E%3C/svg%3E");
+}
+
+.accom-detail-highlight__text {
+    color: #334155;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.55;
     word-break: keep-all;
 }
 
-.accom-detail-actions {
+.accom-detail-highlight__side {
+    flex: 0 0 240px;
     display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 26px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    text-align: right;
+}
+
+.accom-detail-highlight__review {
+    margin: 0;
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.accom-detail-highlight__price-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.accom-detail-highlight__price-label {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.accom-detail-highlight__price {
+    color: #0f172a;
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
 }
 
 .detail-action {
@@ -354,7 +426,6 @@
     border: 1px solid #e7ecf3;
     border-radius: 20px;
     background: #fff;
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
 }
 
 .section-copy {
@@ -399,6 +470,75 @@
     word-break: keep-all;
 }
 
+.detail-section-card--operation {
+    padding: 0;
+    border: 1px solid #e7ecf3;
+    border-radius: 20px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.detail-section-card--operation .detail-section-header {
+    margin-bottom: 0;
+    padding: 24px 24px 0;
+}
+
+.detail-bullet-grid--operation {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 0;
+    padding: 18px 24px 0;
+}
+
+.detail-bullet-item--operation {
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    min-height: 0;
+}
+
+.detail-bullet-item--operation span {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.detail-bullet-item--operation strong {
+    color: #111827;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.4;
+}
+
+.detail-bullet-item--operation-inline {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+.detail-bullet-item__icon {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 18px 18px;
+}
+
+.detail-bullet-item__icon--calendar {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5.5' width='16' height='14' rx='2'/%3E%3Cpath d='M8 3.8v3.4M16 3.8v3.4M4 9.5h16'/%3E%3C/svg%3E");
+}
+
+.detail-bullet-item__icon--clock {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Cpath d='M12 7.5v4.9l3.1 1.8'/%3E%3C/svg%3E");
+}
+
+.detail-bullet-item__icon--room {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 8h14v8H5z'/%3E%3Cpath d='M8 11h8'/%3E%3Cpath d='M5 16h14'/%3E%3C/svg%3E");
+}
+
 .detail-rule-list {
     margin: 0;
     padding-left: 20px;
@@ -420,6 +560,8 @@
 
 .operation-day-wrap {
     margin-top: 18px;
+    padding: 0 24px 24px;
+    border-top: 1px solid #edf0f4;
 }
 
 .operation-calendar-header {
@@ -427,7 +569,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
+    padding-top: 20px;
 }
 
 .operation-day-title {
@@ -451,26 +594,26 @@
     height: 12px;
     border-radius: 50%;
     background: #1f4acc;
-    box-shadow: 0 0 0 4px rgba(31, 74, 204, 0.12);
 }
 
 .operation-calendar-wrap {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
 }
 
 .operation-calendar-card {
-    padding: 20px;
-    border: 1px solid #e4ebf5;
+    padding: 16px;
+    border: 1px solid #edf0f4;
     border-radius: 20px;
-    background: #fbfdff;
+    background: #fff;
 }
 
 .operation-calendar-month {
-    margin: 0 0 14px;
-    color: #172033;
-    font-size: 18px;
+    margin: 0 0 10px;
+    color: #2a2f36;
+    text-align: center;
+    font-size: 17px;
     font-weight: 800;
 }
 
@@ -478,52 +621,83 @@
 .operation-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 8px;
+    gap: 3px;
 }
 
 .operation-calendar-weekdays {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .operation-calendar-weekdays span {
     text-align: center;
-    color: #667085;
-    font-size: 12px;
+    color: #9ca3af;
+    font-size: 14px;
     font-weight: 700;
+}
+
+.operation-calendar-weekdays span.is-saturday {
+    color: #2563eb;
+}
+
+.operation-calendar-weekdays span.is-sunday {
+    color: #ef4444;
 }
 
 .operation-calendar-cell {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 42px;
-    border-radius: 12px;
+    aspect-ratio: 1 / 1;
+    min-height: 36px;
+    border-radius: 10px;
     background: #fff;
-    color: #172033;
-    font-size: 14px;
-    font-weight: 600;
-    border: 1px solid #e7edf4;
+    color: #2d3748;
+    font-size: 16px;
+    font-weight: 700;
+    border: 0;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
 }
 
 .operation-calendar-cell.is-empty {
-    background: transparent;
-    border-color: transparent;
+    visibility: hidden;
 }
 
 .operation-calendar-cell.is-outside-range {
-    color: #c0c8d4;
-    background: #f8fafc;
+    opacity: 0.3;
+    background: #fff;
 }
 
 .operation-calendar-cell.is-in-range {
-    background: #f8fbff;
-    color: #6b7280;
+    background: #fff;
+    color: #2d3748;
 }
 
 .operation-calendar-cell.is-active {
-    background: #1f4acc;
-    color: #fff;
-    border-color: #1f4acc;
+    background: rgba(31, 74, 204, 0.14);
+    color: #1f4acc;
+    font-weight: 800;
+    min-height: 36px;
+    width: 100%;
+    margin: 0;
+    font-size: 16px;
+}
+
+.operation-calendar-cell.is-saturday {
+    color: #2563eb;
+}
+
+.operation-calendar-cell.is-sunday,
+.operation-calendar-cell.is-holiday {
+    color: #ef4444;
+}
+
+.operation-calendar-cell.is-active.is-saturday,
+.operation-calendar-cell.is-active.is-sunday,
+.operation-calendar-cell.is-active.is-holiday {
+    color: #1f4acc;
+    font-size: 16px;
 }
 
 .location-section-card {
@@ -663,7 +837,6 @@
     border-radius: 999px;
     background: #fff;
     color: #111827;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
     font-size: 18px;
     font-weight: 800;
     cursor: pointer;
@@ -838,7 +1011,6 @@ body.modal-open {
     padding: 28px;
     border-radius: 24px;
     background: #fff;
-    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
     max-height: calc(100vh - 112px);
     overflow-y: auto;
 }
@@ -1073,7 +1245,6 @@ body.modal-open {
     border: 1px solid #e4e7ec;
     border-radius: 24px;
     background: #fff;
-    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
     box-sizing: border-box;
     overflow: hidden;
 }
@@ -1184,7 +1355,6 @@ body.modal-open {
     border-radius: 999px;
     background: #fff;
     color: #111827;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
     font-size: 16px;
     font-weight: 800;
     cursor: pointer;
@@ -1258,7 +1428,6 @@ body.modal-open {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
 }
 
 .review-image-viewer-nav[data-review-image-modal-prev] {
@@ -1285,7 +1454,6 @@ body.modal-open {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
 }
 
 .review-image-viewer-dialog .review-modal-close::before,
@@ -1313,6 +1481,21 @@ body.modal-open {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .accom-detail-highlight {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .accom-detail-highlight__side {
+        flex-basis: auto;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .accom-detail-highlight__item--side {
+        justify-content: flex-start;
+    }
+
     .review-section-card {
         flex-direction: column;
         align-items: flex-start;
@@ -1330,6 +1513,7 @@ body.modal-open {
 @media (max-width: 960px) {
     .accom-detail-hero {
         grid-template-columns: 1fr;
+        align-items: start;
     }
 
     .accom-detail-main-image,
@@ -1374,10 +1558,21 @@ body.modal-open {
         font-size: 24px;
     }
 
-    .accom-detail-highlight,
     .detail-bullet-grid,
     .option-grid {
         grid-template-columns: 1fr;
+    }
+
+    .accom-detail-highlight__text {
+        font-size: 15px;
+    }
+
+    .accom-detail-highlight__review {
+        font-size: 14px;
+    }
+
+    .accom-detail-highlight__price {
+        font-size: 32px;
     }
 
     .detail-section-card {

@@ -66,7 +66,6 @@
     background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,250,255,0.98));
     border: 1px solid #ebeff6;
     border-radius: 24px;
-    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
 }
 
 .cart-empty__icon {
@@ -125,7 +124,6 @@
     border: 1px solid #ebeff6;
     border-radius: 18px;
     background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,250,255,0.98));
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
 }
 
 .cart-list__toolbar {
@@ -198,14 +196,11 @@
     border-radius: 24px;
     padding: 20px;
     margin-bottom: 16px;
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
-    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .cart-item:hover {
-    transform: translateY(-2px);
     border-color: #ddd7ff;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.10);
 }
 
 .cart-item--disabled {
@@ -214,9 +209,7 @@
 }
 
 .cart-item--disabled:hover {
-    transform: none;
     border-color: #f3d2d2;
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
 }
 
 .cart-item__img-wrap {
@@ -316,12 +309,11 @@
     border-radius: 12px;
     background: #fff;
     cursor: pointer;
-    transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+    transition: border-color 0.15s, background-color 0.15s;
 }
 
 .cart-item__selector:hover {
     border-color: #7b3ff2;
-    box-shadow: 0 8px 16px rgba(123, 63, 242, 0.12);
 }
 
 .cart-item__selector--disabled {
@@ -519,19 +511,15 @@
     border: none;
     background: linear-gradient(135deg, #111827, #1f2937);
     color: #fff;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
-    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    transition: transform 0.15s, background 0.15s;
 }
 
 .cart-item__confirm-btn:hover {
-    transform: translateY(-1px);
     background: linear-gradient(135deg, #0f172a, #111827);
-    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.22);
 }
 
 .cart-item__confirm-btn:disabled {
     background: #d1d5db;
-    box-shadow: none;
     cursor: not-allowed;
 }
 
@@ -552,7 +540,6 @@
     border-radius: 24px;
     background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,251,255,0.98));
     padding: 24px 20px;
-    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
     position: sticky;
     top: 80px;
 }
@@ -604,7 +591,6 @@
 .cart-summary__button:not(:disabled) {
     background: linear-gradient(135deg, #7b3ff2, #9258ff);
     cursor: pointer;
-    box-shadow: 0 14px 28px rgba(123, 63, 242, 0.22);
 }
 
 .cart-summary__button:not(:disabled):hover {

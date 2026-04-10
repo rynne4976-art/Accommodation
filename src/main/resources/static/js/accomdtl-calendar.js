@@ -47,6 +47,11 @@
         dayLabels.forEach(function (label) {
             const item = document.createElement('span');
             item.textContent = label;
+            if (label === '토') {
+                item.classList.add('is-saturday');
+            } else if (label === '일') {
+                item.classList.add('is-sunday');
+            }
             weekdayRow.appendChild(item);
         });
         calendarCard.appendChild(weekdayRow);
@@ -73,6 +78,12 @@
 
             cell.className = 'operation-calendar-cell';
             cell.textContent = String(day);
+
+            if (date.getDay() === 6) {
+                cell.classList.add('is-saturday');
+            } else if (date.getDay() === 0) {
+                cell.classList.add('is-sunday');
+            }
 
             if (!inRange) {
                 cell.classList.add('is-outside-range');

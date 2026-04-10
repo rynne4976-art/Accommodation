@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class MainController {
 
     private static final String RECENT_VIEWED_COOKIE_DELIMITER_PATTERN = "[,-]";
+    private static final int RECENT_VIEWED_LIMIT = 8;
 
     private final AccomService accomService;
 
@@ -199,7 +200,7 @@ public class MainController {
                     }
                 })
                 .filter(id -> id != null)
-                .limit(20)
+                .limit(RECENT_VIEWED_LIMIT)
                 .collect(Collectors.toList());
     }
 }

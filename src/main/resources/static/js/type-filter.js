@@ -1,22 +1,29 @@
-document.querySelectorAll(".type-filter-form").forEach((form) => {
-    form.addEventListener("change", (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLInputElement) || target.type !== "radio") {
-            return;
-        }
+(() => {
+    const syncSharedFields = () => {
+        document.querySelectorAll("[data-shared-field]").forEach((field) => {
+            if (!(field instanceof HTMLInputElement)) {
+                return;
+            }
 
+            document.querySelectorAll(`[data-shared-field="${field.dataset.sharedField}"]`).forEach((peer) => {
+                if (peer instanceof HTMLInputElement && peer !== field) {
+                    peer.value = field.value;
+                }
+            });
+        });
+    };
+
+    const updateFilterChipState = (form) => {
         form.querySelectorAll(".type-filter-chip").forEach((chip) => {
             chip.classList.toggle("is-selected", Boolean(chip.querySelector("input:checked")));
         });
+    };
 
-        if (target.name !== "priceRange") {
-            return;
-        }
-
+    const applyPriceRange = (form, selectedValue) => {
         let minPrice = "";
         let maxPrice = "";
 
-        switch (target.value) {
+        switch (selectedValue) {
             case "under-50000":
                 maxPrice = "50000";
                 break;
@@ -49,5 +56,75 @@ document.querySelectorAll(".type-filter-form").forEach((form) => {
         if (maxInput) {
             maxInput.value = maxPrice;
         }
+    };
+
+    const buildQueryString = (form) => {
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+
+        formData.forEach((value, key) => {
+            const normalized = typeof value === "string" ? value.trim() : value;
+            if (normalized !== "") {
+                params.set(key, normalized);
+            }
+        });
+
+        return params.toString();
+    };
+
+    const replaceResults = async (form) => {
+        const queryString = buildQueryString(form);
+        const requestUrl = `${form.action}${queryString ? `?${queryString}` : ""}`;
+        const response = await fetch(requestUrl, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("TYPE_FILTER_REQUEST_FAILED");
+        }
+
+        const html = await response.text();
+        const parsed = new DOMParser().parseFromString(html, "text/html");
+        const nextResults = parsed.getElementById("typeListResults");
+        const currentResults = document.getElementById("typeListResults");
+
+        if (!nextResults || !currentResults) {
+            throw new Error("TYPE_FILTER_RESULTS_MISSING");
+        }
+
+        currentResults.innerHTML = nextResults.innerHTML;
+        window.history.replaceState({}, "", requestUrl);
+        document.dispatchEvent(new CustomEvent("typeList:updated"));
+    };
+
+    document.querySelectorAll(".type-filter-form").forEach((form) => {
+        form.addEventListener("change", async (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement) || target.type !== "radio") {
+                return;
+            }
+
+            updateFilterChipState(form);
+
+            if (target.name === "priceRange") {
+                applyPriceRange(form, target.value);
+            }
+
+            syncSharedFields();
+
+            try {
+                await replaceResults(form);
+            } catch (_) {
+                form.requestSubmit();
+            }
+        });
     });
-});
+
+    document.querySelectorAll(".booking-bar").forEach((form) => {
+        form.addEventListener("submit", () => {
+            syncSharedFields();
+        });
+    });
+})();

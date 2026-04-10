@@ -34,7 +34,6 @@
     };
 
     const bookingMetaCache = {};
-    const stockLabels = Array.from(document.querySelectorAll('[data-stock-label="true"]'));
     const isAuthenticated = String(configEl.dataset.isAuthenticated) === 'true';
     const loginUrl = configEl.dataset.loginUrl || '/members/login';
     const csrfHeader = configEl.dataset.csrfHeader;
@@ -224,6 +223,7 @@
     }
 
     async function updateStockLabels() {
+        const stockLabels = Array.from(document.querySelectorAll('[data-stock-label="true"]'));
         if (!stockLabels.length) {
             return;
         }
@@ -969,15 +969,18 @@
         document.body.style.overflow = '';
     }
 
-    document.querySelectorAll('.js-open-booking').forEach((button) => {
-        button.addEventListener('click', function () {
-            if (!isAuthenticated) {
-                redirectToLogin();
-                return;
-            }
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('.js-open-booking');
+        if (!button) {
+            return;
+        }
 
-            openModal(this);
-        });
+        if (!isAuthenticated) {
+            redirectToLogin();
+            return;
+        }
+
+        openModal(button);
     });
 
     document.querySelectorAll('.js-booking-close').forEach((button) => {
@@ -1006,6 +1009,7 @@
     });
     checkInDateInput?.addEventListener('change', updateStockLabels);
     checkOutDateInput?.addEventListener('change', updateStockLabels);
+    document.addEventListener('typeList:updated', updateStockLabels);
     cartNotice?.querySelector('.category-cart-notice__backdrop')?.addEventListener('click', closeCartNotice);
 
     updateStockLabels();

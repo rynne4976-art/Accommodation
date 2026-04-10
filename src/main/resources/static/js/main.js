@@ -262,3 +262,19 @@ if (slider) {
         slider.scrollBy({ left: amount(), behavior: "smooth" });
     });
 }
+
+document.addEventListener("click", (event) => {
+    const card = event.target.closest(".accom-card[data-detail-url]");
+    if (!card) {
+        return;
+    }
+
+    if (event.target.closest("a, button, input, textarea, select, label")) {
+        return;
+    }
+
+    const detailUrl = card.dataset.detailUrl;
+    if (detailUrl) {
+        window.location.href = detailUrl;
+    }
+});
