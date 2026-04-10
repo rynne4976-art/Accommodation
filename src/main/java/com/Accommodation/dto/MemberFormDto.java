@@ -73,6 +73,7 @@ public class MemberFormDto {
     /**
      * 상세 주소
      */
+    @NotBlank(message = "상세 주소를 입력해주세요.")
     private String detailAddress;
 
     public String getFullAddress() {
