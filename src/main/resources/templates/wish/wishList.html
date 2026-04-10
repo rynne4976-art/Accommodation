@@ -7,6 +7,7 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>찜 목록</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
     <link rel="stylesheet" th:href="@{/css/wish.css}">
 </head>
 
@@ -18,10 +19,9 @@
                     찜한 숙소
                     <span class="wish-page__count-wrap">
                         <span class="wish-page__heart" aria-hidden="true">♥</span>
-                        <span class="wish-page__count" data-wish-count th:text="${wishCount}">0</span>
                     </span>
                 </h1>
-                <p class="wish-page__subtitle">마음에 저장한 숙소를 비교해보세요.</p>
+                <p class="wish-page__subtitle">마음에 든 숙소를 메인 카드와 같은 형식으로 비교해보세요.</p>
                 <div class="wish-page__tabs">
                     <a class="wish-page__tab"
                        th:classappend="${selectedSort == 'priceDesc'} ? ' is-active' : ''"
@@ -43,7 +43,7 @@
                         </svg>
                     </div>
                     <h2>아직 찜한 숙소가 없습니다.</h2>
-                    <p>마음에 드는 숙소를 찜해두고 한곳에서 비교해보세요.</p>
+                    <p>마음에 드는 숙소를 찜해두고 이곳에서 비교해보세요.</p>
                     <a th:href="@{/main}" class="wish-empty__action">숙소 보러 가기</a>
                 </div>
 
@@ -54,7 +54,7 @@
                         <div class="accom-card__visual">
                             <button class="accom-card__wish is-active"
                                     type="button"
-                                    aria-label="wish"
+                                    aria-label="찜"
                                     aria-pressed="true"
                                     th:attr="data-accom-id=${wish.accomId}"
                                     data-wish-button>
@@ -68,27 +68,18 @@
                                  th:alt="${wish.accomName}">
                             <div class="accom-card__image-placeholder"
                                  th:unless="${wish.imgUrl != null and !#strings.isEmpty(wish.imgUrl)}">
-                                <span th:text="${wish.grade}">GRADE</span>
+                                <span th:text="${wish.grade != null ? wish.grade.num : 'GRADE'}">GRADE</span>
                             </div>
                         </div>
 
                         <div class="card-body accom-info">
                             <div class="accom-card__badge-row"
-                                 th:with="gradeNum=${wish.grade == T(com.Accommodation.constant.AccomGrade).ONE ? 1 :
-                                                    wish.grade == T(com.Accommodation.constant.AccomGrade).TWO ? 2 :
-                                                    wish.grade == T(com.Accommodation.constant.AccomGrade).THREE ? 3 :
-                                                    wish.grade == T(com.Accommodation.constant.AccomGrade).FOUR ? 4 :
-                                                    wish.grade == T(com.Accommodation.constant.AccomGrade).FIVE ? 5 : 0}">
+                                 th:with="gradeNum=${wish.grade != null ? wish.grade.num : 0}">
                                 <span class="accom-card__kind"
-                                      th:text="${wish.accomType == T(com.Accommodation.constant.AccomType).HOTEL ? '호텔' :
-                                                 wish.accomType == T(com.Accommodation.constant.AccomType).MOTEL ? '모텔' :
-                                                 wish.accomType == T(com.Accommodation.constant.AccomType).PENSION ? '펜션' :
-                                                 wish.accomType == T(com.Accommodation.constant.AccomType).RESORT ? '리조트' :
-                                                 wish.accomType == T(com.Accommodation.constant.AccomType).GUESTHOUSE ? '게스트하우스' : '숙소'}">숙소</span>
+                                      th:text="${wish.accomType != null ? wish.accomType.label : '숙소'}">숙소</span>
                                 <span class="accom-card__grade-stars" aria-label="숙소 등급">
-                                    <span class="star"
-                                          th:each="i : ${#numbers.sequence(1,5)}"
-                                          th:classappend="${i <= gradeNum} ? ' filled' : ''">&#9733;</span>
+                                    <span class="star filled"
+                                          th:each="i : ${#numbers.sequence(1, gradeNum)}">&#9733;</span>
                                 </span>
                             </div>
                             <h3 class="accom-card__title" th:text="${wish.accomName}">숙소명</h3>
@@ -97,7 +88,9 @@
                                 <span class="accom-card__score"
                                       th:text="${wish.avgRating != null ? #numbers.formatDecimal(wish.avgRating, 1, 1) : '0.0'}">0.0</span>
                                 <div class="accom-card__rating-copy">
-                                    <span th:text="${wish.reviewCount != null ? #numbers.formatInteger(wish.reviewCount, 1, 'COMMA') + '개 후기' : '후기 0개'}">후기 0개</span>
+                                    <a class="accom-card__review-link"
+                                       th:href="@{/reviews/accom/{id}(id=${wish.accomId})}"
+                                       th:text="${wish.reviewCount != null ? #numbers.formatInteger(wish.reviewCount, 1, 'COMMA') + '개 후기' : '후기 0개'}">후기 0개</a>
                                 </div>
                             </div>
 
