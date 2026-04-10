@@ -147,6 +147,17 @@ public class AccomService {
         return recentViewedList;
     }
 
+    @Transactional(readOnly = true)
+    public List<MainAccomDto> getTransportSelectableAccomList() {
+        return accomRepository.findAll().stream()
+                .filter(accom -> accom != null && accom.getId() != null)
+                .filter(accom -> !Boolean.TRUE.equals(accom.getDeleted()))
+                .sorted(Comparator.comparing(Accom::getId).reversed())
+                .map(accom -> accomRepository.findWithOperationInfoById(accom.getId()).orElse(accom))
+                .map(this::toMainAccomDto)
+                .toList();
+    }
+
     public Long updateAccom(Long accomId,
                             AccomFormDto accomFormDto,
                             List<MultipartFile> accomImgFileList) throws Exception {
