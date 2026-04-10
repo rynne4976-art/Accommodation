@@ -1,5 +1,6 @@
 package com.Accommodation.service;
 
+import com.Accommodation.dto.ChatbotActivityItemDto;
 import com.Accommodation.dto.RegionActivityItemDto;
 import com.Accommodation.dto.RegionActivityPageDto;
 import com.Accommodation.dto.RegionFeaturedCardDto;
@@ -21,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -571,5 +573,108 @@ public class RegionActivityService {
             RegionActivityPageDto pageDto,
             long cachedAt
     ) {
+    }
+
+    // ── 챗봇용 즐길거리 추천 ───────────────────────────────────────────────
+
+    private static final Map<String, List<String>> KEYWORD_TERMS = Map.of(
+            "자연/힐링",    List.of("자연", "힐링", "공원", "산", "바다", "숲", "폭포", "해변", "해수욕", "호수", "계곡"),
+            "문화/역사",    List.of("문화", "역사", "박물관", "미술관", "유적", "궁", "성", "사찰", "전시", "고궁"),
+            "액티브/레포츠", List.of("레포츠", "스포츠", "체험", "서핑", "카약", "클라이밍", "스키", "수상", "낚시"),
+            "축제/행사",    List.of("축제", "행사", "이벤트", "페스티벌", "공연", "콘서트", "마켓", "불꽃"),
+            "야경/감성",    List.of("야경", "감성", "뷰", "전망", "타워", "다리", "포토", "일출", "일몰"),
+            "음식/체험",    List.of("음식", "맛", "시장", "먹거리", "체험", "공방", "만들기", "전통", "음식점")
+    );
+
+    private static final Map<String, String> KEYWORD_CATEGORY = Map.of(
+            "자연/힐링",    "관광지",
+            "문화/역사",    "문화시설",
+            "액티브/레포츠", "레포츠",
+            "축제/행사",    "행사/축제",
+            "야경/감성",    "관광지",
+            "음식/체험",    "관광지"
+    );
+
+    public List<ChatbotActivityItemDto> getChatbotActivities(String keyword, String region) {
+        String safeRegion = (region == null || region.isBlank()) ? "서울" : region;
+        String safeKeyword = (keyword == null) ? "" : keyword;
+
+        RegionActivityPageDto page = getRegionActivityPage(safeRegion);
+        List<RegionActivityItemDto> items = page.getItems();
+
+        List<String> terms = KEYWORD_TERMS.getOrDefault(safeKeyword, List.of());
+        String preferredCategory = KEYWORD_CATEGORY.getOrDefault(safeKeyword, "");
+
+        LocalDate today = LocalDate.now();
+
+        List<ChatbotActivityItemDto> festivals = new ArrayList<>();
+        List<ChatbotActivityItemDto> others = new ArrayList<>();
+
+        for (RegionActivityItemDto item : items) {
+            boolean isFestival = "행사/축제".equals(item.getCategory())
+                    && item.getPeriod() != null && !item.getPeriod().isBlank();
+            boolean ongoing = isFestival && isCurrentlyOngoing(item.getPeriod(), today);
+            int score = scoreItem(item, terms, preferredCategory);
+
+            ChatbotActivityItemDto dto = new ChatbotActivityItemDto(
+                    item.getTitle(),
+                    item.getImageUrl(),
+                    item.getAddress(),
+                    item.getPeriod(),
+                    item.getCategory(),
+                    item.getExternalUrl() != null ? item.getExternalUrl() : item.getDetailUrl(),
+                    ongoing,
+                    score
+            );
+
+            if (isFestival) {
+                festivals.add(dto);
+            } else {
+                others.add(dto);
+            }
+        }
+
+        festivals.sort(Comparator.comparingInt(ChatbotActivityItemDto::getScore).reversed());
+        others.sort(Comparator.comparingInt(ChatbotActivityItemDto::getScore).reversed());
+
+        return Stream.concat(
+                festivals.stream().limit(3),
+                others.stream().limit(6)
+        ).limit(9).toList();
+    }
+
+    private int scoreItem(RegionActivityItemDto item, List<String> terms, String preferredCategory) {
+        int score = 0;
+        String title = item.getTitle() == null ? "" : item.getTitle().toLowerCase();
+        String address = item.getAddress() == null ? "" : item.getAddress().toLowerCase();
+        String category = item.getCategory() == null ? "" : item.getCategory();
+
+        if (!preferredCategory.isBlank() && preferredCategory.equals(category)) {
+            score += 10;
+        }
+        for (String term : terms) {
+            String t = term.toLowerCase();
+            if (title.contains(t)) score += 5;
+            if (address.contains(t)) score += 1;
+        }
+        if (item.getPeriod() != null && !item.getPeriod().isBlank()) {
+            score += 3;
+        }
+        return score;
+    }
+
+    private boolean isCurrentlyOngoing(String period, LocalDate today) {
+        if (period == null || period.isBlank()) return false;
+        try {
+            // "2026.04.01 ~ 2026.04.30" 형식 파싱
+            String[] parts = period.split("~");
+            if (parts.length < 2) return false;
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+            LocalDate start = LocalDate.parse(parts[0].trim(), fmt);
+            LocalDate end = LocalDate.parse(parts[1].trim(), fmt);
+            return !today.isBefore(start) && !today.isAfter(end);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
