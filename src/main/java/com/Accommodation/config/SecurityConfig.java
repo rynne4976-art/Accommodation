@@ -50,6 +50,7 @@ public class SecurityConfig {
                                 "/activities/**",
                                 "/recent-viewed",
                                 "/reviews/accom/**",
+                                "/api/chatbot/**",
                                 "/orders/accom/*/availability",
                                 "/orders/accom/*/monthly-availability",
                                 "/error",

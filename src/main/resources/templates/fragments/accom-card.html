@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="content(accomId, accomName, accomTypeLabel, gradeNum, accomDetail, imgUrl, pricePerNight, location, avgRating, reviewCount, wishActive)">
+    <div class="accom-card__visual">
+        <button class="accom-card__wish"
+                type="button"
+                aria-label="찜"
+                th:classappend="${wishActive} ? ' is-active' : ''"
+                th:attr="data-accom-id=${accomId},aria-pressed=${wishActive}"
+                data-wish-button>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 20.5 4.8 13.8a4.9 4.9 0 0 1 6.9-6.9L12 7.2l.3-.3a4.9 4.9 0 0 1 6.9 6.9Z"/>
+            </svg>
+        </button>
+        <img class="accom-card__image"
+             th:if="${imgUrl != null and !#strings.isEmpty(imgUrl)}"
+             th:src="${imgUrl}"
+             th:alt="${accomName}">
+        <div class="accom-card__image-placeholder"
+             th:unless="${imgUrl != null and !#strings.isEmpty(imgUrl)}">
+            <span th:text="${gradeNum != null ? gradeNum : 'GRADE'}">GRADE</span>
+        </div>
+    </div>
+
+    <div class="card-body accom-info">
+        <div class="accom-card__badge-row">
+            <span class="accom-card__kind"
+                  th:text="${accomTypeLabel != null ? accomTypeLabel : '숙소'}">숙소</span>
+            <span class="accom-card__grade-stars" aria-label="숙소 등급">
+                <span class="star filled"
+                      th:each="i : ${#numbers.sequence(1, gradeNum != null ? gradeNum : 0)}">&#9733;</span>
+            </span>
+        </div>
+        <h3 class="accom-card__title" th:text="${accomName}">숙소명</h3>
+
+        <div class="accom-card__rating">
+            <span class="accom-card__score"
+                  th:text="${avgRating != null ? #numbers.formatDecimal(avgRating, 1, 1) : '0.0'}">0.0</span>
+            <div class="accom-card__rating-copy">
+                <a class="accom-card__review-link"
+                   th:href="@{/reviews/accom/{id}(id=${accomId})}"
+                   th:text="${reviewCount != null ? #numbers.formatInteger(reviewCount, 1, 'COMMA') + '개 후기' : '후기 0개'}">후기 0개</a>
+            </div>
+        </div>
+
+        <div class="accom-card__meta">
+            <div class="accom-card__location">
+                <span th:text="${location}">위치</span>
+            </div>
+            <div class="accom-card__desc">
+                <span th:text="${accomDetail}">상세설명</span>
+            </div>
+        </div>
+
+        <div class="card-bottom accom-card__bottom">
+            <div class="accom-card__price-wrap">
+                <span class="accom-card__price-label">1박 기준</span>
+                <strong class="price"
+                        th:text="${#numbers.formatInteger(pricePerNight, 3, 'COMMA')} + '원'">0원</strong>
+            </div>
+            <a class="reserve-btn" th:href="@{/accom/{accomId}(accomId=${accomId})}">상세설명</a>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

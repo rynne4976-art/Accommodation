@@ -5,6 +5,18 @@
     z-index: 1200;
 }
 
+.chatbot-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.48);
+    z-index: 1199;
+    transition: opacity 0.18s ease;
+}
+
+.chatbot-backdrop.is-hidden {
+    display: none;
+}
+
 .chatbot-toggle {
     width: 116px;
     height: 116px;
@@ -28,28 +40,27 @@
 }
 
 .chatbot-window {
-    position: absolute;
-    right: 0;
-    bottom: 134px;
-    width: 480px;
-    max-width: calc(100vw - 32px);
-    height: 740px;
-    max-height: min(740px, calc(100vh - 150px));
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(980px, calc(100vw - 24px));
+    height: min(88vh, 880px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     border: 1px solid #d7eef7;
     border-radius: 28px;
     background: #ffffff;
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
-    transform-origin: bottom right;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+    z-index: 1200;
     transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
 .chatbot-window.is-hidden {
     opacity: 0;
     pointer-events: none;
-    transform: translateY(12px) scale(0.96);
+    transform: translate(-50%, -50%) scale(0.96);
 }
 
 .chatbot-window__header {
@@ -138,11 +149,26 @@
     color: #ffffff;
 }
 
-.chatbot-window__messages {
+.chatbot-window__body {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
-    padding: 18px 24px 12px;
     background: linear-gradient(180deg, #eefaff 0%, #f8fcff 100%);
+}
+
+.chatbot-window__body::-webkit-scrollbar {
+    width: 10px;
+}
+
+.chatbot-window__body::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(46, 168, 214, 0.28);
+}
+
+.chatbot-window__messages {
+    overflow: visible;
+    padding: 18px 24px 12px;
+    background: transparent;
 }
 
 .chatbot-message {
@@ -179,13 +205,27 @@
 
 .chatbot-stage {
     padding: 0 24px 18px;
-    background: #f8fcff;
+    background: transparent;
 }
 
 .chatbot-card-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+}
+
+.chatbot-accom-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    padding: 0 24px 18px;
+}
+
+.chatbot-accom-grid .card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
 }
 
 .chatbot-card-button {
@@ -319,7 +359,7 @@
     flex-wrap: wrap;
     gap: 10px;
     padding: 0 24px 18px;
-    background: #f8fcff;
+    background: transparent;
 }
 
 .chatbot-window__form {
@@ -361,6 +401,346 @@
     fill: currentColor;
 }
 
+/* ── 숙소 선택 그리드 ── */
+.chatbot-selectable-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    padding: 0 24px 18px;
+}
+
+.chatbot-selectable-card {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid #e6ebf5;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+    transition: border-color 0.18s, box-shadow 0.18s, opacity 0.18s, transform 0.18s;
+}
+
+.chatbot-selectable-card:hover {
+    border-color: #2ea8d6;
+    transform: translateY(-3px);
+}
+
+.chatbot-selectable-card.is-selected {
+    border-color: #2ea8d6;
+    box-shadow: 0 0 0 3px rgba(46, 168, 214, 0.28), 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.chatbot-selectable-card.is-dimmed {
+    opacity: 0.38;
+    pointer-events: none;
+}
+
+.chatbot-selectable-card__img {
+    width: 100%;
+    height: 110px;
+    object-fit: cover;
+    display: block;
+}
+
+.chatbot-selectable-card__placeholder {
+    width: 100%;
+    height: 110px;
+    background: linear-gradient(135deg, #e7f7fc, #d0f0fb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #2ea8d6;
+}
+
+.chatbot-selectable-card__body {
+    padding: 10px 12px 12px;
+}
+
+.chatbot-selectable-card__name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a2b40;
+    margin: 0 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chatbot-selectable-card__meta {
+    font-size: 11px;
+    color: #6c8392;
+}
+
+.chatbot-selectable-card__price {
+    font-size: 12px;
+    font-weight: 700;
+    color: #2ea8d6;
+    margin-top: 4px;
+}
+
+.chatbot-selectable-card__check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #2ea8d6;
+    color: #fff;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(46, 168, 214, 0.5);
+}
+
+.chatbot-selectable-card.is-selected .chatbot-selectable-card__check {
+    display: flex;
+}
+
+.chatbot-selectable-card__source {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.chatbot-selectable-card__source--wish {
+    background: #fff0f4;
+    color: #e11d48;
+}
+
+.chatbot-selectable-card__source--recent {
+    background: #eff9ff;
+    color: #0284c7;
+}
+
+/* 선택 카운터 + 비교 버튼 */
+.chatbot-compare-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px 14px;
+    gap: 12px;
+}
+
+.chatbot-compare-counter {
+    font-size: 14px;
+    font-weight: 700;
+    color: #2ea8d6;
+}
+
+.chatbot-compare-btn {
+    border: 0;
+    border-radius: 999px;
+    background: #2ea8d6;
+    color: #fff;
+    padding: 12px 28px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    box-shadow: 0 6px 18px rgba(46, 168, 214, 0.38);
+}
+
+.chatbot-compare-btn:disabled {
+    opacity: 0.38;
+    cursor: default;
+    box-shadow: none;
+}
+
+.chatbot-compare-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+}
+
+/* ── VS 비교 결과 ── */
+.chatbot-vs-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px 20px;
+}
+
+.chatbot-vs-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.chatbot-vs-side img,
+.chatbot-vs-side__placeholder {
+    width: 100%;
+    height: 90px;
+    border-radius: 14px;
+    object-fit: cover;
+}
+
+.chatbot-vs-side__placeholder {
+    background: linear-gradient(135deg, #e7f7fc, #d0f0fb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+
+.chatbot-vs-side__name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a2b40;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.chatbot-vs-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2ea8d6, #67d5f5);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(46, 168, 214, 0.4);
+}
+
+/* 메트릭 비교 행 */
+.chatbot-metrics {
+    padding: 0 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chatbot-metric-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    align-items: center;
+    gap: 8px;
+    background: #f8fcff;
+    border-radius: 14px;
+    padding: 10px 14px;
+    border: 1px solid #e5f3f9;
+}
+
+.chatbot-metric-row__label {
+    grid-column: 2;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #6c8392;
+    order: 2;
+}
+
+.chatbot-metric-row__left {
+    text-align: right;
+    order: 1;
+}
+
+.chatbot-metric-row__right {
+    text-align: left;
+    order: 3;
+}
+
+.chatbot-metric-value {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #223046;
+    transition: color 0.15s;
+}
+
+.chatbot-metric-value.is-winner {
+    color: #059669;
+}
+
+.chatbot-metric-bar-wrap {
+    height: 4px;
+    border-radius: 999px;
+    background: #e5f3f9;
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+.chatbot-metric-bar {
+    height: 100%;
+    border-radius: 999px;
+    background: #d1d5db;
+    transition: width 0.5s ease;
+}
+
+.chatbot-metric-bar.is-winner {
+    background: #059669;
+}
+
+/* 추천 섹션 */
+.chatbot-recommendation-tips {
+    margin: 0 24px 16px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #f0fdf9, #e8f7fd);
+    border: 1px solid #a7f3d0;
+    padding: 14px 16px;
+}
+
+.chatbot-recommendation-tips__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #047857;
+    margin: 0 0 10px;
+}
+
+.chatbot-recommendation-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: #1a2b40;
+    line-height: 1.4;
+}
+
+.chatbot-recommendation-tip__icon {
+    flex-shrink: 0;
+    font-size: 14px;
+}
+
+/* 비교 결과 CTA */
+.chatbot-vs-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 24px 18px;
+}
+
+.chatbot-vs-action-btn {
+    border: 1.5px solid #2ea8d6;
+    border-radius: 14px;
+    background: #fff;
+    color: #2ea8d6;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s, color 0.15s;
+    text-decoration: none;
+    display: block;
+}
+
+.chatbot-vs-action-btn:hover {
+    background: #2ea8d6;
+    color: #fff;
+}
+
 @media (max-width: 768px) {
     .chatbot-widget {
         right: 16px;
@@ -373,15 +753,35 @@
     }
 
     .chatbot-window {
-        width: min(440px, calc(100vw - 16px));
-        bottom: 108px;
-        height: min(660px, calc(100vh - 120px));
-        max-height: calc(100vh - 120px);
+        width: calc(100vw - 16px);
+        height: calc(100vh - 80px);
     }
 
     .chatbot-card-grid,
     .chatbot-date-fields,
     .chatbot-summary {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .chatbot-accom-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .chatbot-selectable-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .chatbot-vs-header {
+        grid-template-columns: 1fr 36px 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .chatbot-accom-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .chatbot-selectable-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
