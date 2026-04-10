@@ -1,7 +1,7 @@
 # Accommodation
 
 > Spring Boot 기반 숙소 예약 및 탐색 웹 애플리케이션  
-> 숙소 검색, 상세 조회, 장바구니, 주문, 찜, 리뷰, 관리자 기능과 외부 API 연동을 포함한 통합 서비스입니다.
+> 숙소 검색, 상세 조회, 장바구니, 예약, 찜, 리뷰, 관리자 기능과 외부 API 연동을 포함한 통합 서비스입니다.
 
 ---
 
@@ -16,21 +16,24 @@
 7. [주요 URL 흐름](#7-주요-url-흐름)
 8. [테스트 및 빌드](#8-테스트-및-빌드)
 9. [역할 분담](#9-역할-분담)
-10. [주의 사항](#10-주의-사항)
+10. [대표 사용자 계정](#10-대표-사용자-계정)
+11. [주의 사항](#11-주의-사항)
 
 ---
 
 ## 1. 프로젝트 소개
 
-| 항목 | 내용 |
-|------|------|
-| 프로젝트명 | Accommodation |
-| 유형 | 숙소 예약 및 탐색 플랫폼 |
-| 백엔드 | Spring Boot + Spring MVC + JPA |
-| 프론트엔드 | Thymeleaf, CSS, JavaScript |
-| 데이터베이스 | MySQL |
-| 배포 산출물 | WAR |
-| 핵심 목표 | 숙소 탐색부터 예약, 리뷰, 찜, 관리자 운영까지 하나의 서비스 흐름으로 제공 |
+| 항목 | 내용                                          |
+|------|---------------------------------------------|
+| 프로젝트명 | Accommodation                               |
+| 유형 | 숙소 예약 및 탐색 플랫폼                              |
+| 기간 | 2026.03.26 ~ 2026.04.15                     |
+| 인원 | 4명                                          |
+| 백엔드 | Spring Boot + Spring MVC + JPA              |
+| 프론트엔드 | Thymeleaf, CSS, JavaScript                  |
+| 데이터베이스 | MySQL                                       |
+| 배포 산출물 | WAR                                         |
+| 핵심 목표 | 숙소 검색부터 예약, 리뷰, 찜, 관리자 운영까지 하나의 서비스 흐름으로 제공 |
 
 ### 사용자 관점 핵심 기능
 
@@ -38,8 +41,8 @@
 
 - 숙소 메인/카테고리/검색 페이지 조회
 - 숙소 상세 페이지 확인 및 최근 본 숙소 조회
-- 회원가입, 로그인, 소셜 로그인, 마이페이지 사용
-- 장바구니 추가, 주문/예약 진행, 주문 내역 조회
+- 회원가입, 로그인, 소셜 로그인, 마이페이지 이용
+- 장바구니 담기, 주문/예약 진행, 주문 내역 조회
 - 찜 목록 관리 및 리뷰 작성
 
 **관리자**
@@ -78,24 +81,18 @@
 
 ### 환경 변수
 
-`src/main/resources/application.properties` 기준으로 아래 값이 필요합니다.
+실행 전 아래 설정이 필요합니다.
 
-```env
-DB_URL=
-DB_USERNAME=
-DB_PASSWORD=
-JWT_SECRET=
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-KAKAO_CLIENT_ID=
-KAKAO_CLIENT_SECRET=
-cloud.aws.credentials.access-key=
-cloud.aws.credentials.secret-key=
-tour.api.service-key=
-odsay.api.key=
-odsay.api.web-key=
-naver.map.client.id=
-```
+- `DB_URL`: MySQL 접속 URL
+- `DB_USERNAME`: DB 계정
+- `DB_PASSWORD`: DB 비밀번호
+- `JWT_SECRET`: JWT 서명 키
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: Google 로그인 연동용
+- `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`: Kakao 로그인 연동용
+- `cloud.aws.credentials.access-key`, `cloud.aws.credentials.secret-key`: AWS S3 연동용
+- `tour.api.service-key`: Tour API 연동용
+- `odsay.api.key`, `odsay.api.web-key`: 교통 API 연동용
+- `naver.map.client.id`: 지도 연동용
 
 선택 설정:
 
@@ -174,7 +171,7 @@ Accommodation/
 ### 회원 기능
 
 - 회원가입 및 로그인
-- Google, Kakao OAuth2 로그인
+- Google, Kakao 소셜 로그인
 - 마이페이지 정보 수정 및 비밀번호 변경
 - 최근 본 숙소 조회
 
@@ -182,7 +179,7 @@ Accommodation/
 
 - 숙소 찜 등록 및 찜 목록 관리
 - 리뷰 작성 및 리뷰 조회
-- 알림 확인
+- 주문 취소 알림 확인
 
 ### 부가 기능
 
@@ -200,28 +197,42 @@ Accommodation/
 
 ## 6. 데이터베이스 구조
 
-현재 JPA 엔티티 기준으로 정리한 핵심 테이블 관계입니다.
+README에서는 가독성을 위해 핵심 관계를 도메인별로 나눠 표시했습니다. 전체 ERD 원본은 [docs/erd.dbml](C:\tpro\Accommodation\docs\erd.dbml)에서 확인할 수 있습니다.
+
+### 회원 활동 축
 
 ```mermaid
 erDiagram
-    MEMBER ||--o{ ORDERS : places
     MEMBER ||--o{ REVIEW : writes
     MEMBER ||--o{ WISH : saves
     MEMBER ||--o{ CART_ITEM : owns
     MEMBER ||--o{ NOTIFICATION : receives
 
+    ACCOM ||--o{ REVIEW : reviewed
+    ACCOM ||--o{ WISH : wished
+    ACCOM ||--o{ CART_ITEM : added
+
+    REVIEW ||--o{ REVIEW_IMG : has
+```
+
+### 예약 축
+
+```mermaid
+erDiagram
+    MEMBER ||--o{ ORDERS : places
+    ORDERS ||--o{ ORDER_ITEM : contains
+    ACCOM ||--o{ ORDER_ITEM : booked
+    ORDER_ITEM ||--o{ ORDER_STAY_DATE : expands
+    ACCOM ||--o{ ORDER_STAY_DATE : reserved
+```
+
+### 숙소 메타 축
+
+```mermaid
+erDiagram
     ACCOM ||--o{ ACCOM_IMG : has
     ACCOM ||--|| ACCOM_OPERATION_POLICY : has
-    ACCOM ||--o{ ACCOM_OPERATION_DAY : has
-    ACCOM ||--o{ ORDER_ITEM : booked_in
-    ACCOM ||--o{ ORDER_STAY_DATE : reserved_for
-    ACCOM ||--o{ REVIEW : reviewed_by
-    ACCOM ||--o{ WISH : wished_in
-    ACCOM ||--o{ CART_ITEM : added_to
-
-    ORDERS ||--o{ ORDER_ITEM : contains
-    ORDER_ITEM ||--o{ ORDER_STAY_DATE : expands_to
-    REVIEW ||--o{ REVIEW_IMG : has
+    ACCOM ||--o{ ACCOM_OPERATION_DAY : operates
 ```
 
 ### 관계 요약
@@ -240,7 +251,7 @@ erDiagram
 | `Member` → `CartItem`, `Accom` → `CartItem` | 각각 1:N, 장바구니 기능 |
 | `Member` → `Notification` | 1:N, 사용자 알림 |
 
-실제 ERD 문서화 원본은 [docs/erd.dbml](C:\tpro\Accommodation\docs\erd.dbml)입니다. `dbdiagram.io`에 붙여 넣으면 시각화할 수 있습니다.
+실제 ERD 문서화 원본은 [docs/erd.dbml](C:\tpro\Accommodation\docs\erd.dbml)이며, `dbdiagram.io`에 붙여 넣으면 전체 관계도를 시각화할 수 있습니다.
 
 ---
 
@@ -248,23 +259,14 @@ erDiagram
 
 | Method | URL | 설명                     |
 |--------|-----|------------------------|
-| `GET` | `/`, `/main` | 메인 페이지                 |
-| `GET` | `/main/hotels` | 호텔 카테고리 페이지            |
-| `GET` | `/main/resorts` | 리조트 카테고리 페이지           |
-| `GET` | `/main/pensions` | 펜션 카테고리 페이지            |
-| `GET` | `/main/motels` | 모텔 카테고리 페이지            |
-| `GET` | `/main/guesthouses` | 게스트하우스 카테고리 페이지        |
-| `GET` | `/searchList` | 검색 결과 페이지              |
-| `GET` | `/accom/**` | 숙소 상세 관련 페이지           |
-| `GET` | `/recent-viewed` | 최근 본 숙소 페이지            |
-| `GET` | `/transport` | 교통 정보 페이지              |
-| `GET` | `/activities/{region}` | 지역별 즐길거리 페이지           |
-| `GET`, `POST` | `/members/**` | 회원가입, 로그인, 마이페이지 관련 기능 |
-| `GET`, `POST` | `/orders/**` | 주문 및 예약 관련 기능          |
-| `GET`, `POST` | `/reviews/**` | 리뷰 기능                  |
-| `GET`, `POST` | `/wish/**` | 찜 기능                   |
-| `GET`, `POST` | `/cart/**` | 장바구니 기능                |
-| `GET`, `POST` | `/admin/**` | 관리자 기능                 |
+| `GET` | `/`, `/main` | 메인 페이지 |
+| `GET` | `/main/**`, `/searchList` | 카테고리 및 검색 페이지 |
+| `GET` | `/accom/**`, `/recent-viewed` | 숙소 상세 및 최근 본 숙소 |
+| `GET` | `/transport`, `/activities/{region}` | 교통 및 즐길거리 페이지 |
+| `GET`, `POST` | `/members/**` | 회원가입, 로그인, 마이페이지 |
+| `GET`, `POST` | `/orders/**`, `/cart/**` | 주문, 예약, 장바구니 |
+| `GET`, `POST` | `/reviews/**`, `/wish/**` | 리뷰 및 찜 기능 |
+| `GET`, `POST` | `/admin/**` | 관리자 기능 |
 
 ---
 
@@ -282,7 +284,7 @@ Windows:
 .\gradlew.bat test
 ```
 
-현재 로컬에서 `.\gradlew.bat test` 기준 테스트는 통과했습니다. 테스트 프로필은 H2를 사용합니다.
+로컬 환경에서 `.\gradlew.bat test` 기준 테스트가 통과했습니다. 테스트 프로필은 H2를 사용합니다.
 
 ### 빌드
 
@@ -301,16 +303,52 @@ GitHub Actions workflow는 `main`, `develop` 브랜치의 `push` 및 `pull_reque
 
 ## 9. 역할 분담
 
-| 이름 | 역할 | 담당 영역 |
-|------|------|----------|
-| 작성 예정 | 작성 예정 | 작성 예정 |
-| 작성 예정 | 작성 예정 | 작성 예정 |
-| 작성 예정 | 작성 예정 | 작성 예정 |
-| 작성 예정 | 작성 예정 | 작성 예정 |
+<table>
+  <tr>
+    <th width="90">이름</th>
+    <th width="80">역할</th>
+    <th width="420">담당</th>
+  </tr>
+  <tr>
+    <td>이영호</td>
+    <td>조장</td>
+    <td>
+      회원가입·로그인·마이페이지, 소셜 로그인 및 보안 설정<br>
+      주문 취소 알림(SSE), README·ERD 작성
+    </td>
+  </tr>
+  <tr>
+    <td>김용민</td>
+    <td>부조장</td>
+    <td>작성 예정</td>
+  </tr>
+  <tr>
+    <td>서세민</td>
+    <td>조원</td>
+    <td>주문 로직 구현 및 AI 챗봇 기능</td>
+  </tr>
+  <tr>
+    <td>진주원</td>
+    <td>조원</td>
+    <td>
+      찜 페이지 연동, 메인·교통 페이지 레이아웃<br>
+      길찾기 기능 구현
+    </td>
+  </tr>
+</table>
 
 ---
 
-## 10. 주의 사항
+## 10. 대표 사용자 계정
 
-- 저장소 루트의 `application-local.properties`에 실제 비밀값이 있다면 Git 추적에서 제외하고 별도 비밀 관리 방식으로 옮기는 편이 안전합니다.
-- OAuth2, 지도, 교통, 관광 API 키가 없으면 일부 기능은 비활성화되거나 정상 동작하지 않을 수 있습니다.
+| 구분 | 계정              | 비밀번호       | 비고 |
+|------|-----------------|------------|------|
+| 관리자 | admin@accom.com | Admin1234! | 관리자 기능 확인용 |
+| 일반 회원 | user@test.com   | User1234!  | 사용자 기능 확인용 |
+
+---
+
+## 11. 주의 사항
+
+- 로컬 설정 파일에는 DB, OAuth2, AWS, 외부 API 관련 민감 정보가 포함될 수 있으므로 별도 비밀 관리가 필요합니다.
+- OAuth2, 지도, 교통, 관광 API 설정이 없으면 일부 기능은 제한되거나 정상 동작하지 않을 수 있습니다.
