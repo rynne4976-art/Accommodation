@@ -17,7 +17,9 @@
     <p>Tel : 02-123-4567</p>
   </div>
 
-  <div th:replace="~{layouts/chatbot :: chatbot}"></div>
-  <script th:src="@{/js/chatbot.js}"></script>
+  <th:block th:if="${#authorization.expression('isAuthenticated()')}">
+    <div th:replace="~{layouts/chatbot :: chatbot}"></div>
+    <script th:src="@{/js/chatbot.js}"></script>
+  </th:block>
 
 </footer>
