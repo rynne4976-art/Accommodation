@@ -245,6 +245,10 @@ public class OrderService {
     private List<OrderHistDto> toOrderHistDtoList(List<Order> orders) {
         List<OrderHistDto> result = new ArrayList<>();
         for (Order order : orders) {
+            if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
+                continue;
+            }
+
             OrderHistDto dto = new OrderHistDto(order);
             for (OrderItem item : order.getOrderItems()) {
                 String imgUrl = item.getAccom().getAccomImgList().stream()
@@ -381,6 +385,7 @@ public class OrderService {
      * 날짜·운영 정책·만실 여부를 검증한다.
      * 만실 카운트는 CONFIRMED 상태만 기준으로 한다.
      */
+    @Transactional(readOnly = true, noRollbackFor = Exception.class)
     public void validateBooking(Accom accom,
                                 LocalDate checkInDate,
                                 LocalDate checkOutDate,

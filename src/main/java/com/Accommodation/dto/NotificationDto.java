@@ -15,9 +15,13 @@ public class NotificationDto {
     private final LocalDateTime createdAt;
 
     public NotificationDto(Notification notification) {
+        this(notification, notification.getTargetUrl());
+    }
+
+    public NotificationDto(Notification notification, String targetUrl) {
         this.id = notification.getId();
         this.message = notification.getMessage();
-        this.targetUrl = notification.getTargetUrl();
+        this.targetUrl = targetUrl;
         this.read = notification.isRead();
         this.createdAt = notification.getRegTime();
     }

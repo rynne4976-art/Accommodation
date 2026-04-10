@@ -16,12 +16,15 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
 public class NotificationService {
 
     private static final long DEFAULT_TIMEOUT = 60L * 60L * 1000L;
+    private static final Pattern ORDER_ID_PATTERN = Pattern.compile("예약 #(\\d+)");
 
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
     private final NotificationRepository notificationRepository;
@@ -85,7 +88,7 @@ public class NotificationService {
     public List<NotificationDto> getRecentNotifications(String email) {
         return notificationRepository.findByMemberEmailOrderByRegTimeDesc(email, PageRequest.of(0, 10))
                 .stream()
-                .map(NotificationDto::new)
+                .map(notification -> new NotificationDto(notification, normalizeTargetUrl(notification)))
                 .toList();
     }
 
@@ -111,7 +114,7 @@ public class NotificationService {
         }
 
         notification.setRead(true);
-        return notification.getTargetUrl();
+        return normalizeTargetUrl(notification);
     }
 
     /**
@@ -135,5 +138,35 @@ public class NotificationService {
         notification.setTargetUrl("/cart");
         notification.setRead(false);
         notificationRepository.save(notification);
+    }
+
+    private String normalizeTargetUrl(Notification notification) {
+        if (!"/orders".equals(notification.getTargetUrl())) {
+            return notification.getTargetUrl();
+        }
+
+        Long orderId = extractOrderId(notification.getMessage());
+        if (orderId == null) {
+            return notification.getTargetUrl();
+        }
+
+        return "/orders/" + orderId;
+    }
+
+    private Long extractOrderId(String message) {
+        if (message == null || message.isBlank()) {
+            return null;
+        }
+
+        Matcher matcher = ORDER_ID_PATTERN.matcher(message);
+        if (!matcher.find()) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(matcher.group(1));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

@@ -29,11 +29,14 @@ public class CartController {
         int totalPrice = cartItems.stream()
                 .mapToInt(CartListItemDto::getTotalPrice)
                 .sum();
+        boolean hasUnreservableItem = cartItems.stream()
+                .anyMatch(item -> !item.isReservable());
 
         model.addAttribute("compactHeader", true);
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("cartCount", cartItems.size());
         model.addAttribute("cartTotalPrice", totalPrice);
+        model.addAttribute("hasUnreservableItem", hasUnreservableItem);
         model.addAttribute("unavailableCartAccomId",
                 unavailableCartItem != null ? unavailableCartItem.getAccomId() : null);
         model.addAttribute("unavailableCartAccomName",

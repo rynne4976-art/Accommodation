@@ -210,6 +210,8 @@
         const operationStartDate = /*[[${operationStartDate}]]*/ null;
         const operationEndDate   = /*[[${operationEndDate}]]*/ null;
         const checkInTimeValue   = /*[[${checkInTime != null ? #temporals.format(checkInTime, 'HH:mm') : ''}]]*/ '';
+        const cartItemId = /*[[${cartItemId}]]*/ null;
+        const urlParams = new URLSearchParams(window.location.search);
 
         // ── 숙소 유형별 인원 규칙 ──────────────────────────────────────────
         const isSmallType        = accomTypeStr === 'MOTEL' || accomTypeStr === 'GUESTHOUSE';
@@ -245,6 +247,7 @@
                 `<span><strong>${surchargeFromPerson}인 이상</strong>부터 성인 1인당 1박 요금의 <strong>10%</strong>, 아동 1인당 <strong>5%</strong> 추가 요금이 부과됩니다.</span>`;
 
             initCalendarMonth();
+            applyCartEditContext();
             renderCalendar();          // 잔여 객실 fetch 전 1차 렌더
             updateSummary();
             fetchMonthlyRooms(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
@@ -721,8 +724,10 @@
                     alert(`예약 가능한 객실 수를 초과했습니다. 잔여 객실은 ${remainingRooms}실입니다.`);
                     return;
                 }
-                const response = await fetch('/cart', {
-                    method: 'POST',
+                const targetUrl = cartItemId ? `/cart/${cartItemId}` : '/cart';
+                const method = cartItemId ? 'PUT' : 'POST';
+                const response = await fetch(targetUrl, {
+                    method: method,
                     headers: headers,
                     body: JSON.stringify({
                         accomId:      accomId,
@@ -735,11 +740,11 @@
                 });
 
                 if (response.ok) {
-                    alert('장바구니에 담았습니다. 장바구니에서 예약을 확정해 주세요.');
+                    alert(cartItemId ? '장바구니 항목을 수정했습니다.' : '장바구니에 담았습니다. 장바구니에서 예약을 확정해 주세요.');
                     window.location.href = '/cart';
                 } else {
                     const message = await response.text();
-                    alert('담기 실패: ' + message);
+                    alert((cartItemId ? '수정 실패: ' : '담기 실패: ') + message);
                 }
             } catch (error) {
                 alert('오류가 발생했습니다: ' + error.message);

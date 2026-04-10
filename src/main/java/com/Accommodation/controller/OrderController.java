@@ -8,6 +8,7 @@ import com.Accommodation.entity.AccomOperationPolicy;
 import com.Accommodation.service.AccomService;
 import com.Accommodation.service.MemberService;
 import com.Accommodation.service.OrderService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +20,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.time.LocalDate;
@@ -227,8 +229,15 @@ public class OrderController {
     @GetMapping("/orders/{orderId}")
     public String orderDetail(@PathVariable Long orderId,
                               Model model,
-                              Principal principal) {
-        model.addAttribute("order", orderService.getOrderDetail(orderId, principal.getName()));
+                              Principal principal,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            model.addAttribute("order", orderService.getOrderDetail(orderId, principal.getName()));
+        } catch (EntityNotFoundException | IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("orderErrorMessage", "요청한 예약 정보를 찾을 수 없습니다.");
+            return "redirect:/orders";
+        }
+
         return "order/orderDetail";
     }
 }
