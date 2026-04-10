@@ -40,7 +40,8 @@
         step: 'category',
         booking: emptyBooking(),
         curation: emptyCuration(),
-        comparison: emptyComparison()
+        comparison: emptyComparison(),
+        activity: emptyActivity()
     };
 
     toggle.addEventListener('click', function () {
@@ -93,6 +94,7 @@
         state.booking = emptyBooking();
         state.curation = emptyCuration();
         state.comparison = emptyComparison();
+        state.activity = emptyActivity();
         clearMessages();
         renderFlow();
         pushMessage('bot', '무엇을 도와드릴까요? 예약 검색과 조건 기반 맞춤 숙소 추천을 지원합니다.');
@@ -130,6 +132,14 @@
                 ['comparison-result', '2 비교 결과']
             ], state.step);
         }
+
+        if (state.mode === 'activity') {
+            flow.innerHTML = buildFlow([
+                ['activity-taste', '1 취향 선택'],
+                ['activity-region', '2 지역 선택'],
+                ['activity-result', '3 추천 결과']
+            ], state.step);
+        }
     }
 
     function buildFlow(steps, activeStep) {
@@ -147,7 +157,8 @@
         stage.appendChild(buildCardGrid([
             { title: '예약하기', subtitle: '날짜·지역·유형 기반 검색' },
             { title: '맞춤 추천', subtitle: '지역·날짜·가격대로 숙소 추천' },
-            { title: '숙소 비교', subtitle: '찜·최근 숙소 2개 나란히 비교' }
+            { title: '숙소 비교', subtitle: '찜·최근 숙소 2개 나란히 비교' },
+            { title: '즐길거리 탐색', subtitle: '취향별 행사·축제·관광지 추천' }
         ], function (item) {
             pushMessage('user', item.title);
             selectMode(item.title);
@@ -185,6 +196,16 @@
             renderFlow();
             pushMessage('bot', '찜 목록과 최근 본 숙소에서 비교할 숙소 2개를 골라주세요.');
             fetchSelectableAccoms();
+            return;
+        }
+
+        if (label === '즐길거리 탐색') {
+            state.mode = 'activity';
+            state.step = 'activity-taste';
+            state.activity = emptyActivity();
+            renderFlow();
+            pushMessage('bot', '어떤 취향의 즐길거리를 찾고 계신가요?');
+            renderActivityTasteStage();
         }
     }
 
@@ -199,7 +220,7 @@
             return;
         }
 
-        if (state.mode === 'comparison') {
+        if (state.mode === 'comparison' || state.mode === 'activity') {
             return;
         }
 
@@ -724,32 +745,38 @@
         return { selected: [] };
     }
 
+    function emptyActivity() {
+        return { keyword: '', keywordLabel: '', region: '' };
+    }
+
     // ── 숙소 비교 ──────────────────────────────────────
 
     async function fetchSelectableAccoms() {
-        clearStage();
-        clearQuickActions();
-        input.placeholder = '아래 숙소 중 2개를 선택해주세요.';
-
-        const loading = document.createElement('div');
-        loading.className = 'chatbot-summary';
-        loading.style.padding = '16px 24px';
-        loading.textContent = '목록을 불러오는 중...';
-        stage.appendChild(loading);
-
+        // ... (기존 로딩 로직)
         try {
             const res = await fetch('/api/chatbot/selectable-accoms', {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
             if (!res.ok) throw new Error('failed');
+
             const data = await res.json();
             clearStage();
-            if (!data.length) {
-                pushMessage('bot', '찜 목록과 최근 본 숙소가 없습니다. 먼저 숙소를 둘러보세요.');
-                setQuickActions(['처음으로'], function () { resetChat(); });
+
+            // 수정된 체크 로직: 데이터가 없거나, 배열이 비어있을 경우
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                pushMessage('bot', '현재 비교 가능한 숙소(찜 목록 또는 최근 본 숙소)가 없습니다. 먼저 숙소를 둘러보시겠어요?');
+                setQuickActions(['처음으로', '숙소 검색하러 가기'], function (v) {
+                    if (v === '처음으로') {
+                        resetChat();
+                    } else {
+                        window.location.href = '/searchList'; // 검색 페이지로 유도
+                    }
+                });
                 return;
-            }
-            renderSelectableGrid(data);
+        }
+
+        renderSelectableGrid(data);
+
         } catch (e) {
             clearStage();
             pushMessage('bot', '목록을 불러오지 못했습니다. 다시 시도해주세요.');
@@ -911,9 +938,25 @@
         const metricsEl = document.createElement('div');
         metricsEl.className = 'chatbot-metrics';
 
-        function metricRow(label, lVal, rVal, lDisplay, rDisplay, lWins) {
+        function metricRow(label, lVal, rVal, lDisplay, rDisplay, compareType) {
+            // compareType: 'low' (낮을수록 좋음: 가격), 'high' (높을수록 좋음: 평점, 등급 등)
+            let lWins = false;
+            let rWins = false;
+
+            if (lVal === rVal) {
+                lWins = true;
+                rWins = true;
+            } else if (compareType === 'low') {
+                lWins = lVal < rVal;
+                rWins = rVal < lVal;
+            } else {
+                lWins = lVal > rVal;
+                rWins = rVal > lVal;
+            }
+
             const lPct = lVal > 0 || rVal > 0 ? Math.round(lVal / (lVal + rVal) * 100) : 50;
             const rPct = 100 - lPct;
+
             const row = document.createElement('div');
             row.className = 'chatbot-metric-row';
             row.innerHTML =
@@ -923,30 +966,30 @@
                 '</div>' +
                 '<div class="chatbot-metric-row__label">' + escapeHtml(label) + '</div>' +
                 '<div class="chatbot-metric-row__right">' +
-                    '<span class="chatbot-metric-value' + (!lWins ? ' is-winner' : '') + '">' + escapeHtml(rDisplay) + '</span>' +
-                    '<div class="chatbot-metric-bar-wrap"><div class="chatbot-metric-bar' + (!lWins ? ' is-winner' : '') + '" style="width:' + rPct + '%"></div></div>' +
+                    '<span class="chatbot-metric-value' + (rWins ? ' is-winner' : '') + '">' + escapeHtml(rDisplay) + '</span>' +
+                    '<div class="chatbot-metric-bar-wrap"><div class="chatbot-metric-bar' + (rWins ? ' is-winner' : '') + '" style="width:' + rPct + '%"></div></div>' +
                 '</div>';
             return row;
         }
 
+        // 호출 부분 수정
         const lPrice = L.pricePerNight || 0;
         const rPrice = R.pricePerNight || 0;
-        metricsEl.appendChild(metricRow('가격', lPrice, rPrice, formatPrice(L.pricePerNight), formatPrice(R.pricePerNight), lPrice <= rPrice));
+        metricsEl.appendChild(metricRow('가격', lPrice, rPrice, formatPrice(L.pricePerNight), formatPrice(R.pricePerNight), 'low'));
 
         const lRating = (L.avgRating || 0) * 10;
         const rRating = (R.avgRating || 0) * 10;
-        metricsEl.appendChild(metricRow('평점', lRating, rRating, '★ ' + formatRating(L.avgRating), '★ ' + formatRating(R.avgRating), lRating >= rRating));
+        metricsEl.appendChild(metricRow('평점', lRating, rRating, '★ ' + formatRating(L.avgRating), '★ ' + formatRating(R.avgRating), 'high'));
 
         const lGrade = L.grade || 0;
         const rGrade = R.grade || 0;
         metricsEl.appendChild(metricRow('등급', lGrade, rGrade,
             Array.from({ length: lGrade }, function () { return '★'; }).join('') || '-',
-            Array.from({ length: rGrade }, function () { return '★'; }).join('') || '-',
-            lGrade >= rGrade));
+            Array.from({ length: rGrade }, function () { return '★'; }).join('') || '-', 'high'));
 
         const lGuest = L.guestCount || 0;
         const rGuest = R.guestCount || 0;
-        metricsEl.appendChild(metricRow('수용인원', lGuest, rGuest, lGuest + '명', rGuest + '명', lGuest >= rGuest));
+        metricsEl.appendChild(metricRow('수용인원', lGuest, rGuest, lGuest + '명', rGuest + '명', 'high'));
 
         // 체크인/아웃 단순 표시
         const infoRow = document.createElement('div');
@@ -992,6 +1035,200 @@
                 resetChat();
             }
         });
+    }
+
+    // ── 즐길거리 탐색 ─────────────────────────────────────────────────────
+
+    var TASTE_OPTIONS = [
+        { keyword: '자연/힐링',    label: '자연/힐링',    icon: '🌿', desc: '공원·바다·산·힐링' },
+        { keyword: '문화/역사',    label: '문화/역사',    icon: '🏛️', desc: '박물관·유적·미술관' },
+        { keyword: '액티브/레포츠', label: '액티브/레포츠', icon: '🏄', desc: '서핑·클라이밍·체험' },
+        { keyword: '축제/행사',    label: '축제/행사',    icon: '🎉', desc: '축제·이벤트·공연' },
+        { keyword: '야경/감성',    label: '야경/감성',    icon: '🌃', desc: '야경·뷰포인트·감성' },
+        { keyword: '음식/체험',    label: '음식/체험',    icon: '🍜', desc: '맛집·시장·공방' }
+    ];
+
+    var ACTIVITY_REGIONS = ['서울', '부산', '제주', '강릉', '경주'];
+
+    function renderActivityTasteStage() {
+        clearStage();
+        clearQuickActions();
+        input.placeholder = '취향을 선택해주세요.';
+
+        const grid = document.createElement('div');
+        grid.className = 'chatbot-taste-grid';
+
+        TASTE_OPTIONS.forEach(function (taste) {
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'chatbot-taste-card';
+            card.innerHTML =
+                '<span class="chatbot-taste-card__icon">' + taste.icon + '</span>' +
+                '<span class="chatbot-taste-card__label">' + escapeHtml(taste.label) + '</span>' +
+                '<span class="chatbot-taste-card__desc">' + escapeHtml(taste.desc) + '</span>';
+            card.addEventListener('click', function () {
+                state.activity.keyword = taste.keyword;
+                state.activity.keywordLabel = taste.label;
+                pushMessage('user', taste.icon + ' ' + taste.label);
+                state.step = 'activity-region';
+                renderFlow();
+                pushMessage('bot', '어느 지역에서 즐기실 건가요?');
+                renderActivityRegionStage();
+            });
+            grid.appendChild(card);
+        });
+
+        stage.appendChild(grid);
+    }
+
+    function renderActivityRegionStage() {
+        clearStage();
+        clearQuickActions();
+        input.placeholder = '지역을 선택해주세요.';
+
+        stage.appendChild(buildCardGrid(
+            ACTIVITY_REGIONS.map(function (r) { return { title: r, subtitle: r + ' 지역 탐색' }; }),
+            function (item) {
+                state.activity.region = item.title;
+                pushMessage('user', item.title);
+                state.step = 'activity-result';
+                renderFlow();
+                pushMessage('bot', item.title + '의 ' + state.activity.keywordLabel + ' 즐길거리를 찾고 있습니다...');
+                fetchActivityResults();
+            }
+        ));
+    }
+
+    async function fetchActivityResults() {
+        clearStage();
+        clearQuickActions();
+
+        try {
+            var url = '/api/chatbot/activities'
+                + '?keyword=' + encodeURIComponent(state.activity.keyword)
+                + '&region=' + encodeURIComponent(state.activity.region);
+
+            var res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            if (!res.ok) throw new Error('failed');
+            var data = await res.json();
+
+            if (!data.length) {
+                pushMessage('bot', '조건에 맞는 즐길거리를 찾지 못했습니다. 다른 조건을 선택해보세요.');
+                setQuickActions(['취향 다시 선택', '처음으로'], function (v) {
+                    if (v === '취향 다시 선택') {
+                        state.activity = emptyActivity();
+                        state.step = 'activity-taste';
+                        renderFlow();
+                        pushMessage('bot', '어떤 취향의 즐길거리를 찾고 계신가요?');
+                        renderActivityTasteStage();
+                    } else {
+                        resetChat();
+                    }
+                });
+                return;
+            }
+
+            renderActivityResults(data);
+        } catch (e) {
+            pushMessage('bot', '즐길거리 정보를 불러오지 못했습니다. 다시 시도해주세요.');
+            setQuickActions(['다시 시도', '처음으로'], function (v) {
+                if (v === '다시 시도') { fetchActivityResults(); } else { resetChat(); }
+            });
+        }
+    }
+
+    function renderActivityResults(items) {
+        var festivals = items.filter(function (i) { return i.period && i.period.trim(); });
+        var others = items.filter(function (i) { return !i.period || !i.period.trim(); });
+
+        // 진행 중인 행사 섹션
+        if (festivals.length) {
+            var festHeader = document.createElement('div');
+            festHeader.className = 'chatbot-activity-section-header';
+            festHeader.innerHTML =
+                '<span class="chatbot-activity-section-header__icon">🎉</span>' +
+                '<span class="chatbot-activity-section-header__title">현재 진행 중인 행사·축제</span>';
+            stage.appendChild(festHeader);
+
+            var festGrid = document.createElement('div');
+            festGrid.className = 'chatbot-activity-grid';
+            festivals.forEach(function (item) { festGrid.appendChild(buildActivityCard(item)); });
+            stage.appendChild(festGrid);
+        }
+
+        // 추천 즐길거리 섹션
+        if (others.length) {
+            var tasteIcon = TASTE_OPTIONS.find(function (t) { return t.keyword === state.activity.keyword; });
+            var icon = tasteIcon ? tasteIcon.icon : '✨';
+
+            var otherHeader = document.createElement('div');
+            otherHeader.className = 'chatbot-activity-section-header';
+            otherHeader.style.marginTop = festivals.length ? '10px' : '0';
+            otherHeader.innerHTML =
+                '<span class="chatbot-activity-section-header__icon">' + icon + '</span>' +
+                '<span class="chatbot-activity-section-header__title">' + escapeHtml(state.activity.keywordLabel) + ' 추천 즐길거리</span>';
+            stage.appendChild(otherHeader);
+
+            var otherGrid = document.createElement('div');
+            otherGrid.className = 'chatbot-activity-grid';
+            others.forEach(function (item) { otherGrid.appendChild(buildActivityCard(item)); });
+            stage.appendChild(otherGrid);
+        }
+
+        setQuickActions([
+            '다른 취향 탐색',
+            state.activity.region + ' 숙소 보기',
+            '처음으로'
+        ], function (v) {
+            if (v === '다른 취향 탐색') {
+                state.activity = emptyActivity();
+                state.step = 'activity-taste';
+                renderFlow();
+                pushMessage('bot', '어떤 취향의 즐길거리를 찾고 계신가요?');
+                renderActivityTasteStage();
+            } else if (v === state.activity.region + ' 숙소 보기') {
+                window.location.href = '/searchList?searchQuery=' + encodeURIComponent(state.activity.region);
+            } else {
+                resetChat();
+            }
+        });
+    }
+
+    function buildActivityCard(item) {
+        var a = document.createElement('a');
+        a.href = item.linkUrl || '#';
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.className = 'chatbot-activity-card';
+
+        var categoryBadgeClass = 'chatbot-activity-card__badge ';
+        if (item.category === '행사/축제') categoryBadgeClass += 'chatbot-activity-card__badge--festival';
+        else if (item.category === '문화시설') categoryBadgeClass += 'chatbot-activity-card__badge--culture';
+        else if (item.category === '레포츠') categoryBadgeClass += 'chatbot-activity-card__badge--sports';
+        else categoryBadgeClass += 'chatbot-activity-card__badge--spot';
+
+        var imgHtml = item.imageUrl
+            ? '<img class="chatbot-activity-card__img" src="' + escapeHtml(item.imageUrl) + '" alt="' + escapeHtml(item.title) + '" loading="lazy">'
+            : '<div class="chatbot-activity-card__placeholder">🗺️</div>';
+
+        var badgesHtml = '<div class="chatbot-activity-card__badges">'
+            + '<span class="' + categoryBadgeClass + '">' + escapeHtml(item.category || '즐길거리') + '</span>'
+            + (item.ongoing ? '<span class="chatbot-activity-card__badge chatbot-activity-card__badge--ongoing">● 진행중</span>' : '')
+            + '</div>';
+
+        var periodHtml = item.period
+            ? '<span class="chatbot-activity-card__period">📅 ' + escapeHtml(item.period) + '</span>'
+            : '';
+
+        a.innerHTML = imgHtml + badgesHtml
+            + '<div class="chatbot-activity-card__body">'
+            + '<p class="chatbot-activity-card__title">' + escapeHtml(item.title) + '</p>'
+            + periodHtml
+            + '<p class="chatbot-activity-card__address">📍 ' + escapeHtml(item.address || '') + '</p>'
+            + '<span class="chatbot-activity-card__link">자세히 보기 →</span>'
+            + '</div>';
+
+        return a;
     }
 
     function buildTips(L, R) {

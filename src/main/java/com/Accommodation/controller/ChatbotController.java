@@ -1,9 +1,11 @@
 package com.Accommodation.controller;
 
+import com.Accommodation.dto.ChatbotActivityItemDto;
 import com.Accommodation.dto.ChatbotComparisonResponseDto;
 import com.Accommodation.dto.ChatbotRecommendationResponseDto;
 import com.Accommodation.dto.ChatbotSelectableAccomDto;
 import com.Accommodation.service.AccomService;
+import com.Accommodation.service.RegionActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +22,7 @@ import java.util.List;
 public class ChatbotController {
 
     private final AccomService accomService;
+    private final RegionActivityService regionActivityService;
 
     @GetMapping("/recommendations")
     public ChatbotRecommendationResponseDto recommendations(@RequestParam("query") String query) {
@@ -39,5 +42,12 @@ public class ChatbotController {
             @RequestParam("leftId") Long leftId,
             @RequestParam("rightId") Long rightId) {
         return accomService.compareChatbotAccoms(leftId, rightId);
+    }
+
+    @GetMapping("/activities")
+    public List<ChatbotActivityItemDto> activities(
+            @RequestParam(value = "keyword", defaultValue = "") String keyword,
+            @RequestParam(value = "region", defaultValue = "서울") String region) {
+        return regionActivityService.getChatbotActivities(keyword, region);
     }
 }
