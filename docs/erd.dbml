@@ -1,0 +1,203 @@
+Project Accommodation {
+  database_type: "MySQL"
+  Note: "JPA entity 기준 핵심 스키마 정리"
+}
+
+Table member {
+  member_id bigint [pk, increment]
+  name varchar(50) [not null]
+  email varchar(100) [not null, unique]
+  password varchar [not null]
+  social_provider varchar(30)
+  social_provider_id varchar(100)
+  number varchar(50) [not null]
+  address varchar(255) [not null]
+  role varchar [not null]
+  reg_time datetime
+  update_time datetime
+}
+
+Table accom {
+  id bigint [pk, increment]
+  accom_name varchar
+  price_per_night int
+  accom_detail text
+  accom_type varchar
+  grade varchar
+  location varchar
+  room_count int [not null]
+  guest_count int [not null]
+  avg_rating double [not null]
+  review_count int [not null]
+  status varchar
+  deleted boolean [not null]
+  deleted_at datetime
+  reg_time datetime
+  update_time datetime
+}
+
+Table accom_img {
+  accom_img_id bigint [pk, increment]
+  accom_id bigint [not null]
+  img_name varchar
+  ori_img_name varchar
+  img_url varchar
+  repimg_yn varchar
+}
+
+Table accom_operation_policy {
+  accom_operation_policy_id bigint [pk, increment]
+  accom_id bigint [not null, unique]
+  operation_start_date date [not null]
+  operation_end_date date [not null]
+  check_in_time time [not null]
+  check_out_time time [not null]
+}
+
+Table accom_operation_day {
+  accom_operation_day_id bigint [pk, increment]
+  accom_id bigint [not null]
+  operation_date date [not null]
+
+  Indexes {
+    (accom_id, operation_date) [unique]
+  }
+}
+
+Table orders {
+  order_id bigint [pk, increment]
+  member_id bigint [not null]
+  order_date datetime [not null]
+  order_status varchar [not null]
+  reg_time datetime
+  update_time datetime
+  create_by varchar
+  modified_by varchar
+}
+
+Table order_item {
+  order_item_id bigint [pk, increment]
+  order_id bigint [not null]
+  accom_id bigint [not null]
+  count int
+  order_price int
+  surcharge_per_night int
+  check_in_date date
+  check_out_date date
+  booking_status varchar
+  guest_count int
+  adult_count int
+  child_count int
+  room_count int
+  reg_time datetime
+  update_time datetime
+  create_by varchar
+  modified_by varchar
+}
+
+Table order_stay_date {
+  order_stay_date_id bigint [pk, increment]
+  order_item_id bigint [not null]
+  accom_id bigint [not null]
+  stay_date date [not null]
+  reg_time datetime
+  update_time datetime
+  create_by varchar
+  modified_by varchar
+
+  Indexes {
+    (order_item_id, stay_date) [unique]
+  }
+}
+
+Table review {
+  review_id bigint [pk, increment]
+  member_id bigint [not null]
+  accom_id bigint [not null]
+  rating int [not null]
+  content varchar(1000) [not null]
+  reg_time datetime
+  update_time datetime
+  create_by varchar
+  modified_by varchar
+
+  Indexes {
+    (member_id, accom_id) [unique]
+  }
+}
+
+Table review_img {
+  review_img_id bigint [pk, increment]
+  review_id bigint [not null]
+  img_name varchar
+  ori_img_name varchar
+  img_url varchar
+  reg_time datetime
+  update_time datetime
+  create_by varchar
+  modified_by varchar
+}
+
+Table wish {
+  wish_id bigint [pk, increment]
+  member_id bigint [not null]
+  accom_id bigint [not null]
+  wish_emotion varchar(30) [not null]
+  reg_time datetime
+  update_time datetime
+
+  Indexes {
+    (member_id, accom_id) [unique]
+  }
+}
+
+Table cart_item {
+  cart_item_id bigint [pk, increment]
+  member_id bigint [not null]
+  accom_id bigint [not null]
+  check_in_date date [not null]
+  check_out_date date [not null]
+  adult_count int [not null]
+  child_count int [not null]
+  room_count int [not null]
+  reg_time datetime
+  update_time datetime
+}
+
+Table notification {
+  notification_id bigint [pk, increment]
+  member_id bigint [not null]
+  message varchar(255) [not null]
+  target_url varchar(255) [not null]
+  is_read boolean [not null]
+  reg_time datetime
+  update_time datetime
+}
+
+Table carlist {
+  carno bigint [pk]
+  carname varchar
+  carcompany varchar
+  carprice int
+  carusepeople int
+  carinfo varchar
+  carimg varchar
+  carcategory varchar
+}
+
+Ref: accom_img.accom_id > accom.id
+Ref: accom_operation_policy.accom_id - accom.id
+Ref: accom_operation_day.accom_id > accom.id
+Ref: orders.member_id > member.member_id
+Ref: order_item.order_id > orders.order_id
+Ref: order_item.accom_id > accom.id
+Ref: order_stay_date.order_item_id > order_item.order_item_id
+Ref: order_stay_date.accom_id > accom.id
+Ref: review.member_id > member.member_id
+Ref: review.accom_id > accom.id
+Ref: review_img.review_id > review.review_id
+Ref: wish.member_id > member.member_id
+Ref: wish.accom_id > accom.id
+Ref: cart_item.member_id > member.member_id
+Ref: cart_item.accom_id > accom.id
+Ref: notification.member_id > member.member_id
