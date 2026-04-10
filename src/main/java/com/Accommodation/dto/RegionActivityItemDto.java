@@ -13,6 +13,7 @@ import lombok.Setter;
 @Builder
 public class RegionActivityItemDto {
 
+    private String activityKey;     // 활동 고유 식별 키
     private String title;           // 행사/축제/즐길거리 제목
     private String imageUrl;        // 대표 이미지
     private String address;         // 주소
@@ -22,4 +23,5 @@ public class RegionActivityItemDto {
     private String category;        // 행사 / 축제 / 관광지 등
     private String tel;             // 전화번호
     private String regionName;      // 지역명
+    private boolean wished;         // 찜 여부
 }

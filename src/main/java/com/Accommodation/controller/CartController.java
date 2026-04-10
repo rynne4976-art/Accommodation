@@ -2,6 +2,7 @@ package com.Accommodation.controller;
 
 import com.Accommodation.dto.CartItemDto;
 import com.Accommodation.dto.CartListItemDto;
+import com.Accommodation.dto.CartSelectionRequest;
 import com.Accommodation.service.CartService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -113,11 +114,15 @@ public class CartController {
         return new ResponseEntity<>(orderId, HttpStatus.OK);
     }
 
-    @PostMapping("/cart/confirm-all")
+    @PostMapping("/cart/confirm-selected")
     @ResponseBody
-    public ResponseEntity<?> confirmAllCartItems(Principal principal) {
+    public ResponseEntity<?> confirmSelectedCartItems(@RequestBody CartSelectionRequest request,
+                                                      Principal principal) {
         try {
-            List<Long> orderIds = cartService.confirmAllCartItems(principal.getName());
+            List<Long> orderIds = cartService.confirmSelectedCartItems(
+                    principal.getName(),
+                    request != null ? request.getCartItemIds() : null
+            );
             return new ResponseEntity<>(orderIds, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);

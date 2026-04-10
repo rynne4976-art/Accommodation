@@ -5,6 +5,8 @@
       layout:decorate="~{layouts/layouts}">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <link rel="stylesheet" th:href="@{/css/activity.css}">
 </head>
 
@@ -102,23 +104,45 @@
         <div class="activity-card-grid"
              th:if="${activityList != null and !#lists.isEmpty(activityList)}">
             <article class="activity-row-card" th:each="item : ${activityList}">
-                <a class="activity-row-card__media-link"
-                   th:href="${item.externalUrl != null and !#strings.isEmpty(item.externalUrl) ? item.externalUrl : item.detailUrl}"
-                   target="_blank"
-                   rel="noopener noreferrer">
+                <div class="activity-row-card__media-shell">
+                    <button class="activity-row-card__wish"
+                            type="button"
+                            aria-label="찜"
+                            th:classappend="${item.wished ? ' is-active' : ''}"
+                            th:attr="data-activity-key=${item.activityKey},
+                                     data-title=${item.title},
+                                     data-image-url=${item.imageUrl},
+                                     data-address=${item.address},
+                                     data-period=${item.period},
+                                     data-detail-url=${item.detailUrl},
+                                     data-external-url=${item.externalUrl},
+                                     data-category=${item.category},
+                                     data-tel=${item.tel},
+                                     data-region-name=${item.regionName},
+                                     aria-pressed=${item.wished}"
+                            data-activity-wish-button>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 20.5 4.8 13.8a4.9 4.9 0 0 1 6.9-6.9L12 7.2l.3-.3a4.9 4.9 0 0 1 6.9 6.9Z"/>
+                        </svg>
+                    </button>
+                    <a class="activity-row-card__media-link"
+                       th:href="${item.externalUrl != null and !#strings.isEmpty(item.externalUrl) ? item.externalUrl : item.detailUrl}"
+                       target="_blank"
+                       rel="noopener noreferrer">
 
-                    <div class="activity-row-card__media"
-                         th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}">
-                        <img th:src="${item.imageUrl}"
-                             alt="즐길거리 이미지"
-                             onerror="this.style.display='none'">
-                    </div>
+                        <div class="activity-row-card__media"
+                             th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}">
+                            <img th:src="${item.imageUrl}"
+                                 alt="즐길거리 이미지"
+                                 onerror="this.style.display='none'">
+                        </div>
 
-                    <div class="activity-row-card__media activity-row-card__media--placeholder"
-                         th:if="${item.imageUrl == null or #strings.isEmpty(item.imageUrl)}">
-                        <span th:text="${item.title}">즐길거리</span>
-                    </div>
-                </a>
+                        <div class="activity-row-card__media activity-row-card__media--placeholder"
+                             th:if="${item.imageUrl == null or #strings.isEmpty(item.imageUrl)}">
+                            <span th:text="${item.title}">즐길거리</span>
+                        </div>
+                    </a>
+                </div>
 
                 <div class="activity-row-card__body">
                     <div class="activity-row-card__meta">
@@ -190,6 +214,7 @@
     </section>
 
     <script th:src="@{/js/activity-featured-slider.js}"></script>
+    <script th:src="@{/js/activity-wish.js}"></script>
 </th:block>
 
 </html>

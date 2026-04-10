@@ -5,6 +5,7 @@ import com.Accommodation.dto.RegionActivityItemDto;
 import com.Accommodation.dto.RegionActivityPageDto;
 import com.Accommodation.dto.RegionFeaturedCardDto;
 import com.Accommodation.dto.RegionFeaturedSectionDto;
+import com.Accommodation.util.ActivityWishKeyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -234,6 +235,12 @@ public class RegionActivityService {
                 );
 
                 result.add(RegionActivityItemDto.builder()
+                        .activityKey(ActivityWishKeyUtils.generateKey(
+                                regionName, title, address,
+                                buildVisitKoreaSearchUrl(title, regionName),
+                                buildVisitKoreaSearchUrl(title, regionName),
+                                "행사/축제"
+                        ))
                         .title(title)
                         .imageUrl(imageUrl)
                         .address(address)
@@ -317,6 +324,12 @@ public class RegionActivityService {
                     );
 
                     result.add(RegionActivityItemDto.builder()
+                            .activityKey(ActivityWishKeyUtils.generateKey(
+                                    regionName, title, address,
+                                    buildVisitKoreaSearchUrl(title, regionName),
+                                    buildVisitKoreaSearchUrl(title, regionName),
+                                    resolveCategory(contentTypeId)
+                            ))
                             .title(title)
                             .imageUrl(imageUrl)
                             .address(address)

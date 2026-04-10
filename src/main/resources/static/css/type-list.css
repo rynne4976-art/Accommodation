@@ -582,6 +582,71 @@
     display: block;
 }
 
+.category-cart-notice {
+    position: fixed;
+    inset: 0;
+    z-index: 10010;
+    display: none;
+}
+
+.category-cart-notice.is-open {
+    display: block;
+}
+
+.category-cart-notice__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.42);
+}
+
+.category-cart-notice__dialog {
+    position: relative;
+    width: min(420px, calc(100% - 32px));
+    margin: 20vh auto 0;
+    padding: 26px 24px 22px;
+    border-radius: 22px;
+    background: #ffffff;
+    box-shadow: 0 28px 54px rgba(15, 23, 42, 0.22);
+    text-align: center;
+}
+
+.category-cart-notice__title {
+    margin: 0;
+    color: #111827;
+    font-size: 1.3rem;
+    font-weight: 900;
+}
+
+.category-cart-notice__message {
+    margin: 10px 0 0;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.category-cart-notice__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.category-cart-notice__button {
+    min-height: 48px;
+    border: 0;
+    border-radius: 14px;
+    background: #111827;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.category-cart-notice__button--ghost {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #111827;
+}
+
 .category-booking-modal__backdrop {
     position: absolute;
     inset: 0;

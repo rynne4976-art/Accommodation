@@ -8,6 +8,7 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>찜 목록</title>
     <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/activity.css}">
     <link rel="stylesheet" th:href="@{/css/wish.css}">
 </head>
 
@@ -16,12 +17,12 @@
         <div class="wish-page__inner">
             <header class="wish-page__header" data-wish-header>
                 <h1 class="wish-page__title">
-                    찜한 숙소
+                    찜한 목록
                     <span class="wish-page__count-wrap">
                         <span class="wish-page__heart" aria-hidden="true">♥</span>
                     </span>
                 </h1>
-                <p class="wish-page__subtitle">마음에 든 숙소를 메인 카드와 같은 형식으로 비교해보세요.</p>
+                <p class="wish-page__subtitle">찜한 숙소와 즐길거리를 한 곳에서 다시 확인할 수 있습니다.</p>
                 <div class="wish-page__tabs">
                     <a class="wish-page__tab"
                        th:classappend="${selectedSort == 'priceDesc'} ? ' is-active' : ''"
@@ -36,7 +37,7 @@
             </header>
 
             <div class="wish-page__content">
-                <div class="wish-empty" data-wish-empty th:hidden="${wishCount > 0}">
+                <div class="wish-empty" data-wish-empty th:hidden="${totalWishCount > 0}">
                     <div class="wish-empty__icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24">
                             <path d="M12 20s-6.5-4.1-8.5-8C2 9.1 3.8 6 7.3 6c2 0 3.1 1.1 4.7 3 1.6-1.9 2.7-3 4.7-3C20.2 6 22 9.1 20.5 12c-2 3.9-8.5 8-8.5 8z"></path>
@@ -47,79 +48,192 @@
                     <a th:href="@{/main}" class="wish-empty__action">숙소 보러 가기</a>
                 </div>
 
-                <div class="wish-list" data-wish-content th:hidden="${wishCount == 0}">
-                    <article class="card accom-card"
-                             th:each="wish : ${wishItems}"
-                             data-wish-card>
-                        <div class="accom-card__visual">
-                            <button class="accom-card__wish is-active"
-                                    type="button"
-                                    aria-label="찜"
-                                    aria-pressed="true"
-                                    th:attr="data-accom-id=${wish.accomId}"
-                                    data-wish-button>
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M12 20.5 4.8 13.8a4.9 4.9 0 0 1 6.9-6.9L12 7.2l.3-.3a4.9 4.9 0 0 1 6.9 6.9Z"/>
-                                </svg>
-                            </button>
-                            <img class="accom-card__image"
-                                 th:if="${wish.imgUrl != null and !#strings.isEmpty(wish.imgUrl)}"
-                                 th:src="${wish.imgUrl}"
-                                 th:alt="${wish.accomName}">
-                            <div class="accom-card__image-placeholder"
-                                 th:unless="${wish.imgUrl != null and !#strings.isEmpty(wish.imgUrl)}">
-                                <span th:text="${wish.grade != null ? wish.grade.num : 'GRADE'}">GRADE</span>
-                            </div>
+                <section class="wish-section" data-wish-content th:hidden="${wishCount == 0}">
+                    <div class="wish-section__head">
+                        <h2>찜한 숙소</h2>
+                    </div>
+                    <div class="wish-slider" th:with="cardCount=${#lists.size(wishItems)}" th:attr="data-card-count=${cardCount}">
+                        <button class="wish-slider__control wish-slider__control--prev"
+                                type="button"
+                                aria-label="이전 카드"
+                                th:if="${cardCount > 4}">
+                            &#8249;
+                        </button>
+
+                        <div class="wish-slider__track wish-list"
+                             th:classappend="${cardCount > 4} ? ' is-scrollable'">
+                            <article class="card accom-card"
+                                     th:each="wish : ${wishItems}"
+                                     data-wish-card>
+                                <div class="accom-card__visual">
+                                    <button class="accom-card__wish is-active"
+                                            type="button"
+                                            aria-label="찜"
+                                            aria-pressed="true"
+                                            th:attr="data-accom-id=${wish.accomId}"
+                                            data-wish-button>
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M12 20.5 4.8 13.8a4.9 4.9 0 0 1 6.9-6.9L12 7.2l.3-.3a4.9 4.9 0 0 1 6.9 6.9Z"/>
+                                        </svg>
+                                    </button>
+                                    <img class="accom-card__image"
+                                         th:if="${wish.imgUrl != null and !#strings.isEmpty(wish.imgUrl)}"
+                                         th:src="${wish.imgUrl}"
+                                         th:alt="${wish.accomName}">
+                                    <div class="accom-card__image-placeholder"
+                                         th:unless="${wish.imgUrl != null and !#strings.isEmpty(wish.imgUrl)}">
+                                        <span th:text="${wish.grade != null ? wish.grade.num : 'GRADE'}">GRADE</span>
+                                    </div>
+                                </div>
+
+                                <div class="card-body accom-info">
+                                    <div class="accom-card__badge-row"
+                                         th:with="gradeNum=${wish.grade != null ? wish.grade.num : 0}">
+                                        <span class="accom-card__kind"
+                                              th:text="${wish.accomType != null ? wish.accomType.label : '숙소'}">숙소</span>
+                                        <span class="accom-card__grade-stars" aria-label="숙소 등급">
+                                            <span class="star filled"
+                                                  th:each="i : ${#numbers.sequence(1, gradeNum)}">&#9733;</span>
+                                        </span>
+                                    </div>
+                                    <h3 class="accom-card__title" th:text="${wish.accomName}">숙소명</h3>
+
+                                    <div class="accom-card__rating">
+                                        <span class="accom-card__score"
+                                              th:text="${wish.avgRating != null ? #numbers.formatDecimal(wish.avgRating, 1, 1) : '0.0'}">0.0</span>
+                                        <div class="accom-card__rating-copy">
+                                            <a class="accom-card__review-link"
+                                               th:href="@{/reviews/accom/{id}(id=${wish.accomId})}"
+                                               th:text="${wish.reviewCount != null ? #numbers.formatInteger(wish.reviewCount, 1, 'COMMA') + '개 후기' : '후기 0개'}">후기 0개</a>
+                                        </div>
+                                    </div>
+
+                                    <div class="accom-card__meta">
+                                        <div class="accom-card__location">
+                                            <span th:text="${wish.location}">위치</span>
+                                        </div>
+                                        <div class="accom-card__desc">
+                                            <span th:text="${wish.accomDetail}">상세 설명</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="card-bottom accom-card__bottom">
+                                        <div class="accom-card__price-wrap">
+                                            <span class="accom-card__price-label">1박 기준</span>
+                                            <strong class="price"
+                                                    th:text="${#numbers.formatInteger(wish.pricePerNight, 3, 'COMMA')} + '원'">0원</strong>
+                                        </div>
+                                        <a class="reserve-btn" th:href="@{/accom/{accomId}(accomId=${wish.accomId})}">상세설명</a>
+                                    </div>
+                                </div>
+                            </article>
                         </div>
-
-                        <div class="card-body accom-info">
-                            <div class="accom-card__badge-row"
-                                 th:with="gradeNum=${wish.grade != null ? wish.grade.num : 0}">
-                                <span class="accom-card__kind"
-                                      th:text="${wish.accomType != null ? wish.accomType.label : '숙소'}">숙소</span>
-                                <span class="accom-card__grade-stars" aria-label="숙소 등급">
-                                    <span class="star filled"
-                                          th:each="i : ${#numbers.sequence(1, gradeNum)}">&#9733;</span>
-                                </span>
-                            </div>
-                            <h3 class="accom-card__title" th:text="${wish.accomName}">숙소명</h3>
-
-                            <div class="accom-card__rating">
-                                <span class="accom-card__score"
-                                      th:text="${wish.avgRating != null ? #numbers.formatDecimal(wish.avgRating, 1, 1) : '0.0'}">0.0</span>
-                                <div class="accom-card__rating-copy">
-                                    <a class="accom-card__review-link"
-                                       th:href="@{/reviews/accom/{id}(id=${wish.accomId})}"
-                                       th:text="${wish.reviewCount != null ? #numbers.formatInteger(wish.reviewCount, 1, 'COMMA') + '개 후기' : '후기 0개'}">후기 0개</a>
-                                </div>
-                            </div>
-
-                            <div class="accom-card__meta">
-                                <div class="accom-card__location">
-                                    <span th:text="${wish.location}">위치</span>
-                                </div>
-                                <div class="accom-card__desc">
-                                    <span th:text="${wish.accomDetail}">상세 설명</span>
-                                </div>
-                            </div>
-
-                            <div class="card-bottom accom-card__bottom">
-                                <div class="accom-card__price-wrap">
-                                    <span class="accom-card__price-label">1박 기준</span>
-                                    <strong class="price"
-                                            th:text="${#numbers.formatInteger(wish.pricePerNight, 3, 'COMMA')} + '원'">0원</strong>
-                                </div>
-                                <a class="reserve-btn" th:href="@{/accom/{accomId}(accomId=${wish.accomId})}">상세설명</a>
-                            </div>
-                        </div>
-                    </article>
+                        <button class="wish-slider__control wish-slider__control--next"
+                                type="button"
+                                aria-label="다음 카드"
+                                th:if="${cardCount > 4}">
+                            &#8250;
+                        </button>
+                    </div>
                     <div class="wish-list__footer">
                         <a th:href="@{/main}" class="wish-list__more">숙소 더 보러가기</a>
                     </div>
-                </div>
+                </section>
+
+                <section class="wish-section wish-section--activities" th:hidden="${activityWishCount == 0}">
+                    <div class="wish-section__head">
+                        <h2>찜한 즐길거리</h2>
+                    </div>
+                    <div class="wish-slider" th:with="cardCount=${#lists.size(activityWishItems)}" th:attr="data-card-count=${cardCount}">
+                        <button class="wish-slider__control wish-slider__control--prev"
+                                type="button"
+                                aria-label="이전 카드"
+                                th:if="${cardCount > 4}">
+                            &#8249;
+                        </button>
+
+                        <div class="wish-slider__track activity-wish-list"
+                             th:classappend="${cardCount > 4} ? ' is-scrollable'">
+                            <article class="activity-row-card activity-row-card--wish"
+                                     th:each="item : ${activityWishItems}"
+                                     data-activity-wish-card>
+                                <div class="activity-row-card__media-shell">
+                                    <button class="activity-row-card__wish is-active"
+                                            type="button"
+                                            aria-label="찜"
+                                            aria-pressed="true"
+                                            th:attr="data-activity-key=${item.activityKey},
+                                                     data-title=${item.title},
+                                                     data-image-url=${item.imageUrl},
+                                                     data-address=${item.address},
+                                                     data-period=${item.period},
+                                                     data-detail-url=${item.detailUrl},
+                                                     data-external-url=${item.externalUrl},
+                                                     data-category=${item.category},
+                                                     data-tel=${item.tel},
+                                                     data-region-name=${item.regionName}"
+                                            data-activity-wish-button>
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M12 20.5 4.8 13.8a4.9 4.9 0 0 1 6.9-6.9L12 7.2l.3-.3a4.9 4.9 0 0 1 6.9 6.9Z"/>
+                                        </svg>
+                                    </button>
+                                    <a class="activity-row-card__media-link"
+                                       th:href="${item.externalUrl != null and !#strings.isEmpty(item.externalUrl) ? item.externalUrl : item.detailUrl}"
+                                       target="_blank"
+                                       rel="noopener noreferrer">
+                                        <div class="activity-row-card__media"
+                                             th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}">
+                                            <img th:src="${item.imageUrl}"
+                                                 alt="즐길거리 이미지"
+                                                 onerror="this.style.display='none'">
+                                        </div>
+                                        <div class="activity-row-card__media activity-row-card__media--placeholder"
+                                             th:if="${item.imageUrl == null or #strings.isEmpty(item.imageUrl)}">
+                                            <span th:text="${item.title}">즐길거리</span>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <div class="activity-row-card__body">
+                                    <div class="activity-row-card__meta">
+                                        <span th:if="${item.category != null and !#strings.isEmpty(item.category)}"
+                                              th:text="${item.category}">행사/축제</span>
+                                        <span th:if="${item.period != null and !#strings.isEmpty(item.period)}"
+                                              th:text="${item.period}">2026.04.01 ~ 2026.04.30</span>
+                                    </div>
+                                    <h3 th:text="${item.title}">행사 제목</h3>
+                                    <p class="activity-row-card__address"
+                                       th:if="${item.address != null and !#strings.isEmpty(item.address)}"
+                                       th:text="${item.address}">주소</p>
+                                    <p class="activity-row-card__phone"
+                                       th:if="${item.tel != null and !#strings.isEmpty(item.tel)}">
+                                        문의: <span th:text="${item.tel}">000-0000-0000</span>
+                                    </p>
+                                    <div class="activity-row-card__actions">
+                                        <a class="activity-row-card__button activity-row-card__button--ghost"
+                                           th:href="${item.externalUrl != null and !#strings.isEmpty(item.externalUrl) ? item.externalUrl : item.detailUrl}"
+                                           target="_blank"
+                                           rel="noopener noreferrer">
+                                            즐길거리 보러가기
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+
+                        <button class="wish-slider__control wish-slider__control--next"
+                                type="button"
+                                aria-label="다음 카드"
+                                th:if="${cardCount > 4}">
+                            &#8250;
+                        </button>
+                    </div>
+                </section>
             </div>
         </div>
     </section>
     <script th:src="@{/js/wish.js}"></script>
+    <script th:src="@{/js/activity-wish.js}"></script>
+    <script th:src="@{/js/wish-slider.js}"></script>
 </th:block>
 </html>
