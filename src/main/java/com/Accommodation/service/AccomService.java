@@ -134,7 +134,9 @@ public class AccomService {
             return recentViewedList;
         }
 
-        for (Long accomId : accomIds) {
+        Set<Long> uniqueIds = new LinkedHashSet<>(accomIds);
+
+        for (Long accomId : uniqueIds) {
             if (accomId == null) {
                 continue;
             }

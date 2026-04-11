@@ -8,6 +8,8 @@ let transportMarkers = [];
 let selectedRouteMode = "car";
 let lastRouteContext = null;
 let lastRouteMetrics = null;
+let accomSearchPage = 0;
+let accomSearchTotalPages = 0;
 
 const geocodeCache = new Map();
 const nearbyTransportCache = new Map();
@@ -28,28 +30,22 @@ document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
   bindRouteModeButtons();
-  bindDestinationSelect();
   bindDestinationInput();
+  bindDestinationActions();
+  bindAccomSearchModal();
+  bindReservedAccomModal();
   initMap();
-
-  const select = getElement("destinationSelect");
-  const selectedOption = select?.options?.[select.selectedIndex];
-  const selectedAddress = selectedOption?.dataset?.location?.trim() || "";
-  const selectedName = selectedOption?.dataset?.name?.trim() || "";
-  const selectedImage = selectedOption?.dataset?.image?.trim() || "";
 
   const hiddenAddress = getElement("accomLocation")?.value?.trim() || "";
   const hiddenName = getElement("accomName")?.value?.trim() || "";
   const hiddenImage = getElement("accomImage")?.value?.trim() || "";
   const hiddenAccomId = getElement("accomId")?.value?.trim() || "";
 
-  const address = selectedAddress || hiddenAddress;
-  const accomName = selectedName || hiddenName || address;
-  const accomImage = selectedImage || hiddenImage;
+  const address = hiddenAddress;
+  const accomName = hiddenName || address;
+  const accomImage = hiddenImage;
 
-  syncDestinationSelect(hiddenAddress || selectedAddress || "", hiddenAccomId);
-  toggleDestinationInput(select?.value === "__custom__");
-  syncDestinationInput(hiddenAddress || selectedAddress || selectedName || "");
+  syncDestinationInput(hiddenAddress || hiddenName || "");
 
   if (!address) {
     resetUiWithoutDestination();
@@ -104,30 +100,6 @@ function bindRouteModeButtons() {
   syncRouteModeButtons();
 }
 
-function bindDestinationSelect() {
-  const select = getElement("destinationSelect");
-  if (!select) return;
-
-  select.addEventListener("change", () => {
-    const isCustom = select.value === "__custom__";
-    toggleDestinationInput(isCustom);
-
-    const selectedOption = select.options[select.selectedIndex];
-    const destinationInput = getElement("destinationInput");
-
-    if (destinationInput && !isCustom) {
-      destinationInput.value = selectedOption?.dataset?.location || selectedOption?.dataset?.name || "";
-    }
-
-    if (isCustom) {
-      destinationInput?.focus();
-      return;
-    }
-
-    applySelectedDestination();
-  });
-}
-
 function bindDestinationInput() {
   const input = getElement("destinationInput");
   if (!input) return;
@@ -143,17 +115,301 @@ function bindDestinationInput() {
   });
 
   input.addEventListener("blur", () => {
-    if (!input.value.trim()) {
-      const select = getElement("destinationSelect");
-      if (select?.value === "__custom__") {
-        select.selectedIndex = 0;
-        toggleDestinationInput(false);
-      }
-      return;
-    }
+    if (!input.value.trim()) return;
 
     applyTypedDestination().catch(error => {
       console.error("도착지 직접 입력 처리 실패", error);
+    });
+  });
+}
+
+function bindDestinationActions() {
+  getElement("openAccomSearchBtn")?.addEventListener("click", () => {
+    openAccomSearchModal();
+  });
+
+  getElement("fillReservedAccomBtn")?.addEventListener("click", async () => {
+    try {
+      const { ok, body } = await fetchJsonOrRedirect("/api/transport/reserved-accommodation");
+      if (!ok) {
+        alert(body.message || "예약 숙소를 찾지 못했습니다.");
+        return;
+      }
+
+      const items = Array.isArray(body.items) ? body.items : [];
+      if (!items.length) {
+        alert("예약 하신 숙소가 없습니다.");
+        return;
+      }
+
+      if (items.length === 1) {
+        const item = items[0];
+        syncDestinationInput(item.location || item.name || "");
+        await applyAccommodationDestination(
+            item.name || item.location || "예약 숙소",
+            item.location || "",
+            item.imageUrl || "",
+            item.id || ""
+        );
+        return;
+      }
+
+      openReservedAccomModal(items);
+    } catch (error) {
+      console.error("예약 숙소 자동 입력 실패", error);
+      alert("예약 숙소를 불러오지 못했습니다.");
+    }
+  });
+}
+
+function bindAccomSearchModal() {
+  getElement("closeAccomSearchBtn")?.addEventListener("click", closeAccomSearchModal);
+  getElement("accomSearchSubmitBtn")?.addEventListener("click", () => {
+    searchAccommodations(0).catch(error => {
+      console.error("숙소 검색 실패", error);
+      renderAccomSearchEmpty("숙소 검색 중 오류가 발생했습니다.");
+    });
+  });
+
+  getElement("accomSearchKeyword")?.addEventListener("keydown", event => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    searchAccommodations(0).catch(error => {
+      console.error("숙소 검색 실패", error);
+      renderAccomSearchEmpty("숙소 검색 중 오류가 발생했습니다.");
+    });
+  });
+
+  getElement("accomSearchModal")?.addEventListener("click", event => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    if (target.dataset.closeModal === "true") {
+      closeAccomSearchModal();
+      return;
+    }
+
+    const selectButton = target.closest("[data-accom-select]");
+    if (!selectButton) return;
+
+    const item = {
+      id: selectButton.dataset.id || "",
+      name: selectButton.dataset.name || "",
+      location: selectButton.dataset.location || "",
+      imageUrl: selectButton.dataset.image || ""
+    };
+
+    syncDestinationInput(item.location || item.name || "");
+    handleAccommodationSelection(item, closeAccomSearchModal, "숙소 선택 실패");
+  });
+}
+
+function bindReservedAccomModal() {
+  getElement("closeReservedAccomBtn")?.addEventListener("click", closeReservedAccomModal);
+  getElement("reservedAccomModal")?.addEventListener("click", event => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    if (target.dataset.closeReservedModal === "true") {
+      closeReservedAccomModal();
+      return;
+    }
+
+    const selectButton = target.closest("[data-reserved-accom-select]");
+    if (!selectButton) return;
+
+    const item = {
+      id: selectButton.dataset.id || "",
+      name: selectButton.dataset.name || "",
+      location: selectButton.dataset.location || "",
+      imageUrl: selectButton.dataset.image || ""
+    };
+
+    syncDestinationInput(item.location || item.name || "");
+    handleAccommodationSelection(item, closeReservedAccomModal, "예약 숙소 선택 실패");
+  });
+}
+
+async function handleAccommodationSelection(item, closeModalFn, errorLabel) {
+  try {
+    await applyAccommodationDestination(item.name, item.location, item.imageUrl, item.id);
+    closeModalFn();
+  } catch (error) {
+    console.error(errorLabel, error);
+    alert("선택한 숙소를 적용하지 못했습니다.");
+  }
+}
+
+function openAccomSearchModal() {
+  const modal = getElement("accomSearchModal");
+  if (!modal) return;
+
+  modal.classList.remove("is-hidden");
+  modal.setAttribute("aria-hidden", "false");
+
+  if (!getElement("accomSearchResultList")?.innerHTML?.trim()) {
+    searchAccommodations(0).catch(error => {
+      console.error("숙소 검색 초기화 실패", error);
+      renderAccomSearchEmpty("숙소 목록을 불러오지 못했습니다.");
+    });
+  }
+}
+
+function closeAccomSearchModal() {
+  const modal = getElement("accomSearchModal");
+  if (!modal) return;
+
+  modal.classList.add("is-hidden");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+function openReservedAccomModal(items) {
+  const modal = getElement("reservedAccomModal");
+  const info = getElement("reservedAccomResultInfo");
+  const list = getElement("reservedAccomResultList");
+  if (!modal || !info || !list) return;
+
+  info.innerText = `예약 숙소 ${items.length}개가 있습니다.`;
+  list.innerHTML = items.map(item => `
+    <article class="accom-search-item">
+      <div>
+        <h3 class="accom-search-item__title">${escapeHtml(item.name || "숙소")}</h3>
+        <div class="accom-search-item__location">${escapeHtml(item.location || "-")}</div>
+      </div>
+      <button
+        type="button"
+        class="primary-btn accom-search-item__select"
+        data-reserved-accom-select="true"
+        data-id="${escapeHtml(String(item.id || ""))}"
+        data-name="${escapeHtml(item.name || "")}"
+        data-location="${escapeHtml(item.location || "")}"
+        data-image="${escapeHtml(item.imageUrl || "")}">
+        선택
+      </button>
+    </article>
+  `).join("");
+
+  modal.classList.remove("is-hidden");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeReservedAccomModal() {
+  const modal = getElement("reservedAccomModal");
+  if (!modal) return;
+
+  modal.classList.add("is-hidden");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+async function searchAccommodations(page = 0) {
+  const keyword = getElement("accomSearchKeyword")?.value?.trim() || "";
+  const grade = getElement("accomSearchGrade")?.value || "";
+  const minPrice = getElement("accomSearchMinPrice")?.value?.trim() || "";
+  const maxPrice = getElement("accomSearchMaxPrice")?.value?.trim() || "";
+  const minRating = getElement("accomSearchMinRating")?.value || "";
+
+  const params = new URLSearchParams({ page: String(page) });
+  if (keyword) params.set("keyword", keyword);
+  if (grade) params.set("grade", grade);
+  if (minPrice) params.set("minPrice", minPrice);
+  if (maxPrice) params.set("maxPrice", maxPrice);
+  if (minRating) params.set("minRating", minRating);
+
+  const { ok, body } = await fetchJsonOrRedirect(`/api/transport/accommodation-search?${params.toString()}`);
+  if (!ok) {
+    throw new Error(body.message || "숙소 검색에 실패했습니다.");
+  }
+
+  accomSearchPage = Number(body.page || 0);
+  accomSearchTotalPages = Number(body.totalPages || 0);
+  renderAccomSearchResults(Array.isArray(body.items) ? body.items : [], Number(body.totalElements || 0));
+}
+
+function renderAccomSearchResults(items, totalElements) {
+  const info = getElement("accomSearchResultInfo");
+  const list = getElement("accomSearchResultList");
+  const pagination = getElement("accomSearchPagination");
+  if (!info || !list || !pagination) return;
+
+  info.innerText = totalElements > 0
+      ? `총 ${totalElements}개의 숙소가 검색되었습니다.`
+      : "검색 결과가 없습니다.";
+
+  if (!items.length) {
+    renderAccomSearchEmpty("조건에 맞는 숙소가 없습니다.");
+    pagination.innerHTML = "";
+    return;
+  }
+
+  list.innerHTML = items.map(item => `
+    <article class="accom-search-item">
+      <div>
+        <h3 class="accom-search-item__title">${escapeHtml(item.name || "숙소")}</h3>
+        <div class="accom-search-item__meta">등급 ${escapeHtml(String(item.grade || "-"))} / 1박 ${escapeHtml(Number(item.pricePerNight || 0).toLocaleString())}원 / 평점 ${escapeHtml(Number(item.avgRating || 0).toFixed(1))}</div>
+        <div class="accom-search-item__location">${escapeHtml(item.location || "-")}</div>
+      </div>
+      <button
+        type="button"
+        class="primary-btn accom-search-item__select"
+        data-accom-select="true"
+        data-id="${escapeHtml(String(item.id || ""))}"
+        data-name="${escapeHtml(item.name || "")}"
+        data-location="${escapeHtml(item.location || "")}"
+        data-image="${escapeHtml(item.imageUrl || "")}">
+        선택
+      </button>
+    </article>
+  `).join("");
+
+  renderAccomSearchPagination();
+}
+
+function renderAccomSearchEmpty(message) {
+  const list = getElement("accomSearchResultList");
+  if (!list) return;
+  list.innerHTML = `<div class="accom-search-empty">${escapeHtml(message)}</div>`;
+}
+
+function renderAccomSearchPagination() {
+  const pagination = getElement("accomSearchPagination");
+  if (!pagination) return;
+
+  if (accomSearchTotalPages <= 1) {
+    pagination.innerHTML = "";
+    return;
+  }
+
+  const currentGroupStart = Math.floor(accomSearchPage / 5) * 5;
+  const currentGroupEnd = Math.min(currentGroupStart + 5, accomSearchTotalPages);
+  const buttons = [];
+
+  if (currentGroupStart > 0) {
+    buttons.push(`<button type="button" class="accom-search-pagination__btn" data-page="${currentGroupStart - 1}">이전</button>`);
+  }
+
+  for (let page = currentGroupStart; page < currentGroupEnd; page += 1) {
+    buttons.push(`
+      <button
+        type="button"
+        class="accom-search-pagination__btn${page === accomSearchPage ? " is-active" : ""}"
+        data-page="${page}">
+        ${page + 1}
+      </button>
+    `);
+  }
+
+  if (currentGroupEnd < accomSearchTotalPages) {
+    buttons.push(`<button type="button" class="accom-search-pagination__btn" data-page="${currentGroupEnd}">다음</button>`);
+  }
+
+  pagination.innerHTML = buttons.join("");
+  pagination.querySelectorAll("[data-page]").forEach(button => {
+    button.addEventListener("click", () => {
+      const page = Number(button.getAttribute("data-page"));
+      searchAccommodations(page).catch(error => {
+        console.error("숙소 페이지 이동 실패", error);
+        renderAccomSearchEmpty("숙소 목록을 불러오지 못했습니다.");
+      });
     });
   });
 }
@@ -197,11 +453,7 @@ async function applyAccommodationDestination(name, address, imageUrl = "", accom
   const currentAddress = getElement("accomLocation")?.value?.trim() || "";
 
   setHiddenAccommodation(trimmedName, trimmedAddress, trimmedImageUrl, accomId);
-  syncDestinationSelect(trimmedAddress, accomId);
   syncDestinationInput(trimmedAddress);
-
-  const select = getElement("destinationSelect");
-  toggleDestinationInput(select?.value === "__custom__");
 
   syncAccommodationUi(trimmedName, trimmedAddress, trimmedImageUrl);
   updateDestinationSummary(trimmedName);
@@ -216,7 +468,7 @@ async function applyAccommodationDestination(name, address, imageUrl = "", accom
 
   clearRouteLine();
   lastRouteMetrics = null;
-  updateRouteSummary("미선택", "-", "-");
+  updateRouteSummary("-", "-", "-");
   renderTransitDetail(null);
   setModeTimeLabel("carTimeLabel", null, "자동차");
   setModeTimeLabel("walkTimeLabel", null, "도보");
@@ -246,58 +498,9 @@ function setHiddenAccommodation(name, address, imageUrl, accomId = "") {
   if (getElement("accomId")) getElement("accomId").value = accomId || "";
 }
 
-function syncDestinationSelect(address, accomId = "") {
-  const select = getElement("destinationSelect");
-  if (!select) return;
-
-  let matched = false;
-
-  if (accomId) {
-    const optionById = Array.from(select.options).find(option => String(option.value) === String(accomId));
-    if (optionById) {
-      select.value = optionById.value;
-      matched = true;
-    }
-  }
-
-  if (!matched && address) {
-    Array.from(select.options).forEach(option => {
-      const isMatch = (option.dataset.location?.trim() || "") === address;
-      option.selected = isMatch;
-      if (isMatch) matched = true;
-    });
-  }
-
-  if (!matched && select.value !== "__custom__") {
-    select.selectedIndex = 0;
-  }
-}
-
 function syncDestinationInput(value) {
   const input = getElement("destinationInput");
   if (input) input.value = value || "";
-}
-
-function applySelectedDestination() {
-  const select = getElement("destinationSelect");
-  if (!select) return;
-  if (select.value === "__custom__") return;
-
-  const option = select.options[select.selectedIndex];
-  const optionValue = option?.value || "";
-  const address = option?.dataset?.location || "";
-  const name = option?.dataset?.name || option?.text || "";
-  const imageUrl = option?.dataset?.image || "";
-
-  if (!address) {
-    resetAccommodationSelection();
-    return;
-  }
-
-  applyAccommodationDestination(name, address, imageUrl, optionValue).catch(error => {
-    console.error("도착지 선택 실패", error);
-    alert("숙소 정보를 불러오지 못했습니다.");
-  });
 }
 
 async function applyTypedDestination() {
@@ -313,18 +516,16 @@ async function applyTypedDestination() {
 }
 
 function resolveTypedDestination() {
-  const select = getElement("destinationSelect");
   const input = getElement("destinationInput");
   const rawValue = input?.value?.trim() || "";
 
-  if (!rawValue && select?.value !== "__custom__") return null;
-  if (!rawValue && select?.value === "__custom__") return null;
+  if (!rawValue) return null;
 
   const matchedOption = findAccommodationOption(rawValue);
   if (matchedOption) {
     return {
-      id: matchedOption.value || "",
-      name: matchedOption.dataset.name || matchedOption.text,
+      id: matchedOption.dataset.id || "",
+      name: matchedOption.dataset.name || rawValue,
       address: matchedOption.dataset.location || rawValue,
       imageUrl: matchedOption.dataset.image || ""
     };
@@ -339,14 +540,12 @@ function resolveTypedDestination() {
 }
 
 function findAccommodationOption(query) {
-  const select = getElement("destinationSelect");
-  if (!select) return null;
-
+  const options = document.querySelectorAll("#destinationOptions option");
   const normalizedQuery = normalizeDestinationText(query);
-  return Array.from(select.options).find(option => {
-    const optionName = normalizeDestinationText(option.dataset.name || option.text || "");
+
+  return Array.from(options).find(option => {
+    const optionName = normalizeDestinationText(option.dataset.name || option.value || "");
     const optionAddress = normalizeDestinationText(option.dataset.location || "");
-    if (!optionName && !optionAddress) return false;
 
     return (
         optionName === normalizedQuery ||
@@ -364,28 +563,18 @@ function normalizeDestinationText(value) {
       .trim();
 }
 
-function toggleDestinationInput(show) {
-  const input = getElement("destinationInput");
-  const select = getElement("destinationSelect");
-  if (!input) return;
-
-  input.classList.toggle("is-hidden", !show);
-  select?.classList.toggle("is-hidden", show);
-
-  if (select) {
-    select.disabled = show;
-  }
-}
-
 function syncAccommodationUi(name, address, imageUrl) {
   const stayCard = getElement("stayCard");
   const stayTitle = getElement("stayTitle");
+  const stayTitleLink = getElement("stayTitleLink");
   const accomAddress = getElement("accomAddress");
   const stayImage = getElement("stayImage");
   const stayIcon = getElement("stayIcon");
+  const accomId = getElement("accomId")?.value?.trim() || "";
 
   if (stayCard) stayCard.classList.remove("is-hidden");
   if (stayTitle) stayTitle.innerText = name;
+  if (stayTitleLink) stayTitleLink.href = accomId ? `/accom/${accomId}` : "#";
   if (accomAddress) accomAddress.innerText = address;
 
   if (stayImage) {
@@ -406,8 +595,19 @@ function syncAccommodationUi(name, address, imageUrl) {
 function resetUiWithoutDestination() {
   renderTransportGroups([], []);
   renderTransitDetail(null);
-  updateDestinationSummary("숙소를 선택해 주세요");
-  setDistanceInfo("상단 도착지 드롭다운에서 숙소를 선택하면 교통 정보가 표시됩니다.");
+  updateDestinationSummary("-");
+  setDistanceInfo("상단 도착지 입력창에 숙소를 입력하면 교통 정보가 표시됩니다.");
+}
+
+function resetRoutePlanner() {
+  const startInput = getElement("startLocation");
+  if (startInput) startInput.value = "";
+
+  selectedRouteMode = "car";
+  syncRouteModeButtons();
+  closeAccomSearchModal();
+  closeReservedAccomModal();
+  resetAccommodationSelection();
 }
 
 function resetAccommodationSelection() {
@@ -429,24 +629,22 @@ function resetAccommodationSelection() {
   clearRouteLine();
   renderTransportGroups([], []);
   renderTransitDetail(null);
-  updateRouteSummary("미선택", "-", "-");
-  updateDestinationSummary("숙소를 선택해 주세요");
+  updateRouteSummary("-", "-", "-");
+  updateDestinationSummary("-");
   setModeTimeLabel("carTimeLabel", null, "자동차");
   setModeTimeLabel("walkTimeLabel", null, "도보");
   setModeTimeLabel("transitTimeLabel", null, "대중교통");
   setHiddenAccommodation("", "", "", "");
   syncDestinationInput("");
-  toggleDestinationInput(false);
 
   const stayCard = getElement("stayCard");
   const stayImage = getElement("stayImage");
   const stayIcon = getElement("stayIcon");
   const stayTitle = getElement("stayTitle");
+  const stayTitleLink = getElement("stayTitleLink");
   const accomAddress = getElement("accomAddress");
-  const select = getElement("destinationSelect");
 
-  if (select) select.selectedIndex = 0;
-  if (stayCard) stayCard.classList.add("is-hidden");
+  if (stayCard) stayCard.classList.remove("is-hidden");
 
   if (stayImage) {
     stayImage.classList.add("is-hidden");
@@ -454,10 +652,11 @@ function resetAccommodationSelection() {
   }
 
   if (stayIcon) stayIcon.classList.remove("is-hidden");
-  if (stayTitle) stayTitle.innerText = "숙소를 선택해 주세요";
-  if (accomAddress) accomAddress.innerText = "상단 도착지 드롭다운에서 숙소를 선택해 주세요.";
+  if (stayTitle) stayTitle.innerText = "-";
+  if (stayTitleLink) stayTitleLink.href = "#";
+  if (accomAddress) accomAddress.innerText = "-";
 
-  setDistanceInfo("상단 도착지 드롭다운에서 숙소를 선택하면 교통 정보가 표시됩니다.");
+  setDistanceInfo("상단 도착지 입력창에 숙소를 입력하면 교통 정보가 표시됩니다.");
   map.flyTo(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, { duration: 0.5 });
   refreshMapSize();
 }
@@ -605,11 +804,11 @@ async function searchRoute() {
   const start = getElement("startLocation")?.value?.trim() || "";
 
   if (!start) {
-    alert("출발지를 먼저 입력해 주세요.");
+    alert("출발지를 선택해주세요.");
     return;
   }
   if (accomLat == null || accomLng == null) {
-    alert("도착 숙소를 먼저 선택해 주세요.");
+    alert("도착지를 선택해주세요.");
     return;
   }
 
@@ -630,7 +829,7 @@ async function useMyAddress() {
   await ensureResolvedDestination();
 
   if (accomLat == null || accomLng == null) {
-    alert("도착 숙소를 먼저 선택해 주세요.");
+    alert("도착지를 선택해주세요.");
     return;
   }
 
@@ -1327,6 +1526,7 @@ function buildTransitMetrics(distanceKm, transitRoute) {
     geometry: null,
     detail: detailParts.join(" / "),
     title: transitRoute.title || buildTransitTitle(transitRoute.steps),
+    firstStartStation: transitRoute.firstStartStation || "",
     steps: transitRoute.steps,
     payment: transitRoute.payment,
     alternatives: Array.isArray(transitRoute.alternatives) ? transitRoute.alternatives : []
@@ -1358,7 +1558,7 @@ function renderSelectedMode() {
   syncRouteModeButtons();
 
   if (!lastRouteMetrics || !lastRouteContext) {
-    renderTransitDetail(null);
+    renderTransitDetail(null, null);
     return;
   }
 
@@ -1375,7 +1575,7 @@ function renderSelectedMode() {
 
   if (selectedMetrics.minutes == null) {
     setDistanceInfo(selectedMetrics.message || "선택한 이동 수단의 예상 시간을 계산하지 못했습니다.");
-    renderTransitDetail(null);
+    renderTransitDetail(selectedRouteMode, null);
     clearRouteLine();
     return;
   }
@@ -1383,46 +1583,47 @@ function renderSelectedMode() {
   if (selectedRouteMode === "transit") {
     const detail = selectedMetrics.detail ? ` / ${selectedMetrics.detail}` : "";
     setDistanceInfo(`총 이동 거리 ${selectedMetrics.distanceKm.toFixed(2)}km / 예상 소요 시간 약 ${selectedMetrics.minutes}분${detail}`);
-    renderTransitDetail(selectedMetrics);
+    renderTransitDetail(selectedRouteMode, selectedMetrics);
   } else {
     setDistanceInfo(`총 이동 거리 ${selectedMetrics.distanceKm.toFixed(2)}km / ${MODE_META[selectedRouteMode].label} 기준 약 ${selectedMetrics.minutes}분`);
-    renderTransitDetail(null);
+    renderTransitDetail(selectedRouteMode, selectedMetrics);
   }
 
   drawSelectedRouteLine(selectedMetrics.geometry, selectedRouteMode);
 }
 
 function getFirstAvailableMode(metrics) {
-  return ["car", "walk", "transit"].find(mode => metrics[mode]?.minutes != null) || null;
+  return ["car", "transit"].find(mode => metrics[mode]?.minutes != null) || null;
 }
 
-function renderTransitDetail(transitMetrics) {
+function renderTransitDetail(mode, metrics) {
   const panel = getElement("transitDetailPanel");
   const title = getElement("transitDetailTitle");
   const meta = getElement("transitDetailMeta");
   const summary = getElement("transitDetailSummary");
+  const eyebrow = panel?.querySelector(".transit-detail-panel__eyebrow");
 
-  if (!panel || !title || !meta || !summary) return;
+  if (!panel || !title || !meta || !summary || !eyebrow) return;
 
-  if (!transitMetrics || transitMetrics.minutes == null) {
-    panel.classList.add("is-hidden");
+  if (!mode || !metrics || metrics.minutes == null) {
+    eyebrow.innerText = "이동 상세";
     title.innerText = "추천 경로를 불러오면 이동 수단이 표시됩니다";
     meta.innerText = "";
-    summary.innerHTML = "";
+    summary.innerText = "최적 출발지가 계산되면 이곳에 표시됩니다.";
     return;
   }
 
-  panel.classList.remove("is-hidden");
-  title.innerText = transitMetrics.title || "최적 경로";
-  meta.innerText = formatTransitHeadline(transitMetrics.minutes, transitMetrics.payment);
-  summary.innerHTML = escapeHtml(buildTransitSummary(transitMetrics)) + renderTransitAlternatives(transitMetrics.alternatives);
+  eyebrow.innerText = `${MODE_META[mode].label} 상세`;
+  title.innerText = buildRouteDetailTitle(mode, metrics);
+  meta.innerText = formatTransitHeadline(metrics.minutes);
+  summary.innerHTML = escapeHtml(buildRouteDetailSummary(mode, metrics)) + renderRouteDetailExtras(mode, metrics);
 }
 
-function formatTransitHeadline(minutes, payment) {
+function formatTransitHeadline(minutes) {
   const hour = Math.floor(minutes / 60);
   const minute = minutes % 60;
   const timeText = hour > 0 ? `${hour}시간 ${minute}분` : `${minute}분`;
-  return payment > 0 ? `${timeText} · ${payment.toLocaleString()}원` : timeText;
+  return timeText;
 }
 
 function buildTransitTitle(steps) {
@@ -1435,11 +1636,26 @@ function buildTransitTitle(steps) {
   return vehicleTitles.length ? vehicleTitles.join(" → ") : "추천 대중교통 경로";
 }
 
-function buildTransitSummary(transitMetrics) {
-  const parts = [];
-  if (transitMetrics.detail) parts.push(transitMetrics.detail);
-  if (transitMetrics.payment > 0) parts.push(`예상 요금 ${transitMetrics.payment.toLocaleString()}원`);
-  return parts.join(" / ");
+function buildRouteDetailTitle(mode, metrics) {
+  if (mode === "transit") {
+    return metrics.title || "대중교통 경로";
+  }
+  return `${MODE_META[mode].label} 경로`;
+}
+
+function buildRouteDetailSummary(mode, metrics) {
+  if (mode === "transit") {
+    if (metrics.firstStartStation) return `${metrics.firstStartStation} 출발`;
+    if (lastRouteContext?.label) return `${lastRouteContext.label} 출발`;
+    return "최적 출발지";
+  }
+  if (lastRouteContext?.label) return `${lastRouteContext.label} 출발`;
+  return "출발지";
+}
+
+function renderRouteDetailExtras(mode, metrics) {
+  if (mode !== "transit") return "";
+  return renderTransitAlternatives(metrics.alternatives);
 }
 
 function renderTransitSteps(steps) {
@@ -1561,14 +1777,14 @@ function setStartMarker(lat, lng, label) {
 }
 
 function updateRouteSummary(startText, distanceText, durationText) {
-  if (getElement("startSummary")) getElement("startSummary").innerText = startText || "미선택";
+  if (getElement("startSummary")) getElement("startSummary").innerText = startText || "-";
   if (getElement("distanceSummary")) getElement("distanceSummary").innerText = distanceText;
   if (getElement("durationSummary")) getElement("durationSummary").innerText = durationText;
 }
 
 function updateDestinationSummary(text) {
   if (getElement("destinationSummaryCard")) {
-    getElement("destinationSummaryCard").innerText = text || "숙소를 선택해 주세요";
+    getElement("destinationSummaryCard").innerText = text || "-";
   }
 }
 
@@ -1576,7 +1792,9 @@ function setPresetStart(place) {
   if (getElement("startLocation")) {
     getElement("startLocation").value = place;
   }
-  searchRoute();
+  if (accomLat != null && accomLng != null) {
+    searchRoute();
+  }
 }
 
 function focusAccommodation() {
@@ -1722,7 +1940,6 @@ function renderTransitAlternatives(alternatives) {
         <article class="transit-alt-card">
           <span class="transit-alt-card__type">${escapeHtml(item.title || "대중교통")}</span>
           <strong class="transit-alt-card__time">${escapeHtml(formatStepDuration(Number(item.totalTime || 0)))}</strong>
-          <span class="transit-alt-card__meta">${escapeHtml(item.detail || "예상 경로")}</span>
         </article>
       `).join("")}
     </div>

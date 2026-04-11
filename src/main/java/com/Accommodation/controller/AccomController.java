@@ -29,9 +29,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -233,8 +233,8 @@ public class AccomController {
             return;
         }
 
-        List<String> orderedIds = new ArrayList<>();
-        orderedIds.add(String.valueOf(accomId));
+        Set<String> orderedIdSet = new LinkedHashSet<>();
+        orderedIdSet.add(String.valueOf(accomId));
 
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
@@ -250,14 +250,23 @@ public class AccomController {
 
                 for (String rawId : value.split("[,-]")) {
                     String trimmed = rawId.trim();
-                    if (!trimmed.isEmpty() && !Objects.equals(trimmed, String.valueOf(accomId))) {
-                        orderedIds.add(trimmed);
+
+                    if (trimmed.isEmpty()) {
+                        continue;
                     }
+
+                    if (!trimmed.matches("\\d+")) {
+                        continue;
+                    }
+
+                    orderedIdSet.add(trimmed);
                 }
             }
         }
 
-        String cookieValue = String.join(RECENT_VIEWED_COOKIE_DELIMITER, orderedIds.stream().limit(RECENT_VIEWED_LIMIT).toList());
+        String cookieValue = orderedIdSet.stream()
+                .limit(RECENT_VIEWED_LIMIT)
+                .collect(Collectors.joining(RECENT_VIEWED_COOKIE_DELIMITER));
 
         Cookie cookie = new Cookie(RECENT_VIEWED_COOKIE_NAME, cookieValue);
         cookie.setPath("/");

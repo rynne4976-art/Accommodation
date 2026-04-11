@@ -25,6 +25,7 @@ import com.Accommodation.util.GuestPricingUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +39,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -240,6 +243,70 @@ public class OrderService {
     public List<OrderHistDto> getOrderListByStatus(String email, OrderStatus status, Pageable pageable) {
         List<Order> orders = orderRepository.findOrdersByStatus(email, status, pageable);
         return toOrderHistDtoList(orders);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Accom> getLatestReservedAccom(String email) {
+        if (email == null || email.isBlank()) {
+            return Optional.empty();
+        }
+
+        List<Order> orders = orderRepository.findOrders(email, PageRequest.of(0, 10));
+        for (Order order : orders) {
+            if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
+                continue;
+            }
+
+            for (OrderItem item : order.getOrderItems()) {
+                if (item != null && item.getAccom() != null) {
+                    Long accomId = item.getAccom().getId();
+                    if (accomId != null) {
+                        return Optional.of(
+                                accomRepository.findWithOperationInfoById(accomId)
+                                        .orElse(item.getAccom())
+                        );
+                    }
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Accom> getReservedAccommodations(String email, int limit) {
+        if (email == null || email.isBlank() || limit <= 0) {
+            return List.of();
+        }
+
+        List<Order> orders = orderRepository.findOrders(email, PageRequest.of(0, Math.max(limit * 2, 10)));
+        LinkedHashSet<Long> seenIds = new LinkedHashSet<>();
+        List<Accom> result = new ArrayList<>();
+
+        for (Order order : orders) {
+            if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
+                continue;
+            }
+
+            for (OrderItem item : order.getOrderItems()) {
+                if (item == null || item.getAccom() == null || item.getAccom().getId() == null) {
+                    continue;
+                }
+
+                Long accomId = item.getAccom().getId();
+                if (!seenIds.add(accomId)) {
+                    continue;
+                }
+
+                Accom accom = accomRepository.findWithOperationInfoById(accomId).orElse(item.getAccom());
+                result.add(accom);
+                if (result.size() >= limit) {
+                    return result;
+                }
+            }
+        }
+
+        return result;
     }
 
     private List<OrderHistDto> toOrderHistDtoList(List<Order> orders) {
