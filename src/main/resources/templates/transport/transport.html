@@ -68,20 +68,19 @@
                         <button type="button" class="route-mode" data-mode="transit">
                             <span class="route-mode__title">대중교통</span>
                             <span class="route-mode__desc">ODsay 경로 기준</span>
-                            <strong class="route-mode__time" id="transitTimeLabel">시간 미정</strong>
+                            <strong class="route-mode__time" id="transitTimeLabel">예상 시간</strong>
                         </button>
 
-                        <button type="button" class="route-mode route-mode--active" data-mode="car">
+                        <button type="button" class="route-mode" data-mode="car">
                             <span class="route-mode__title">자동차</span>
                             <span class="route-mode__desc">실제 차량 경로 계산</span>
-                            <strong class="route-mode__time" id="carTimeLabel">시간 미정</strong>
+                            <strong class="route-mode__time" id="carTimeLabel">예상 시간</strong>
                         </button>
                     </div>
 
                     <div class="route-actions">
                         <button type="button" class="ghost-btn destination-action-btn" onclick="searchRoute()">길찾기</button>
                         <button type="button" class="ghost-btn destination-action-btn" onclick="resetRoutePlanner()">초기화</button>
-                        <button type="button" class="secondary-btn" onclick="useMyAddress()">내 주소 사용</button>
                     </div>
 
                     <section id="transitDetailPanel" class="transit-detail-panel" aria-live="polite">
@@ -111,10 +110,11 @@
                         </div>
 
                         <div class="stay-copy">
-                            <div id="stayTitleLink"
-                                 class="stay-title-link">
+                            <a id="stayTitleLink"
+                                 class="stay-title-link"
+                                 th:href="${accom != null ? '/accom/' + accom.id : '#'}">
                                 <h3 id="stayTitle" th:text="${accom != null ? accom.accomName : '-'}"></h3>
-                            </div>
+                            </a>
                             <p id="accomAddress"
                                th:text="${accom != null ? accom.location : '-'}"></p>
                         </div>
@@ -170,16 +170,10 @@
                     <div class="map-panel-head">
                         <div>
                             <h2>지도</h2>
-                            <p id="distanceInfo" class="route-info">상단 도착지 입력창에 숙소를 입력하면 교통 정보가 표시됩니다.</p>
                         </div>
 
                         <div class="map-tools">
-                            <div class="map-legend" aria-hidden="true">
-                                <span class="legend-item"><span class="legend-dot legend-dot--stay"></span>숙소</span>
-                                <span class="legend-item"><span class="legend-dot legend-dot--bus"></span>버스</span>
-                                <span class="legend-item"><span class="legend-dot legend-dot--subway"></span>지하철</span>
-                            </div>
-                            <button type="button" class="map-focus-btn" onclick="focusAccommodation()">숙소 중심 보기</button>
+                            <button type="button" class="map-focus-btn" onclick="focusAccommodation()">숙소로 이동</button>
                         </div>
                     </div>
 
@@ -225,7 +219,6 @@
             <input type="hidden" id="accomName" th:value="${accom != null ? accom.accomName : ''}">
             <input type="hidden" id="accomImage" th:value="${accom != null and accom.accomImgList != null and !#lists.isEmpty(accom.accomImgList) ? accom.accomImgList[0].imgUrl : ''}">
             <input type="hidden" id="odsayWebKey" th:value="${odsayWebKey}">
-            <input type="hidden" id="myPageAddress" th:value="${myPageAddress}">
         </div>
     </section>
 

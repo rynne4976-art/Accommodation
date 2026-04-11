@@ -5,7 +5,7 @@ let accomMarker = null;
 let startMarker = null;
 let routeLine = null;
 let transportMarkers = [];
-let selectedRouteMode = "car";
+let selectedRouteMode = null;
 let lastRouteContext = null;
 let lastRouteMetrics = null;
 let accomSearchPage = 0;
@@ -19,6 +19,7 @@ const DEFAULT_MAP_ZOOM = 12;
 const LOGIN_URL = "/members/login";
 const WALK_LIMIT_KM = 12;
 const INTERCITY_LIMIT_KM = 45;
+const DEFAULT_TIME_LABEL = "예상 시간";
 
 const MODE_META = {
   transit: { label: "대중교통", color: "#2563eb", dashArray: "8 10" },
@@ -200,7 +201,7 @@ function bindAccomSearchModal() {
     };
 
     syncDestinationInput(item.location || item.name || "");
-    handleAccommodationSelection(item, closeAccomSearchModal, "숙소 선택 실패");
+    handleAccommodationSelection(item, "숙소 선택 실패");
   });
 }
 
@@ -226,14 +227,13 @@ function bindReservedAccomModal() {
     };
 
     syncDestinationInput(item.location || item.name || "");
-    handleAccommodationSelection(item, closeReservedAccomModal, "예약 숙소 선택 실패");
+    handleAccommodationSelection(item, "예약 숙소 선택 실패");
   });
 }
 
-async function handleAccommodationSelection(item, closeModalFn, errorLabel) {
+async function handleAccommodationSelection(item, errorLabel) {
   try {
     await applyAccommodationDestination(item.name, item.location, item.imageUrl, item.id);
-    closeModalFn();
   } catch (error) {
     console.error(errorLabel, error);
     alert("선택한 숙소를 적용하지 못했습니다.");
@@ -459,20 +459,18 @@ async function applyAccommodationDestination(name, address, imageUrl = "", accom
   updateDestinationSummary(trimmedName);
 
   if (trimmedAddress === currentAddress && accomLat != null && accomLng != null) {
-    if (lastRouteContext) {
-      await calculateAndRenderRoutes(lastRouteContext);
-    }
+    lastRouteContext = null;
+    resetModeTimeLabels();
     refreshMapSize();
     return;
   }
 
   clearRouteLine();
+  lastRouteContext = null;
   lastRouteMetrics = null;
   updateRouteSummary("-", "-", "-");
   renderTransitDetail(null);
-  setModeTimeLabel("carTimeLabel", null, "자동차");
-  setModeTimeLabel("walkTimeLabel", null, "도보");
-  setModeTimeLabel("transitTimeLabel", null, "대중교통");
+  resetModeTimeLabels();
 
   const geocode = await geocodeAddress(trimmedAddress);
   accomLat = geocode.lat;
@@ -483,12 +481,7 @@ async function applyAccommodationDestination(name, address, imageUrl = "", accom
   refreshMapSize();
 
   await loadNearbyTransport();
-
-  if (lastRouteContext) {
-    await calculateAndRenderRoutes(lastRouteContext);
-  } else {
-    setDistanceInfo("선택한 숙소 기준으로 주변 교통 정보를 표시합니다.");
-  }
+  setDistanceInfo("선택한 숙소 기준으로 주변 교통 정보를 표시합니다.");
 }
 
 function setHiddenAccommodation(name, address, imageUrl, accomId = "") {
@@ -603,7 +596,7 @@ function resetRoutePlanner() {
   const startInput = getElement("startLocation");
   if (startInput) startInput.value = "";
 
-  selectedRouteMode = "car";
+  selectedRouteMode = null;
   syncRouteModeButtons();
   closeAccomSearchModal();
   closeReservedAccomModal();
@@ -631,9 +624,7 @@ function resetAccommodationSelection() {
   renderTransitDetail(null);
   updateRouteSummary("-", "-", "-");
   updateDestinationSummary("-");
-  setModeTimeLabel("carTimeLabel", null, "자동차");
-  setModeTimeLabel("walkTimeLabel", null, "도보");
-  setModeTimeLabel("transitTimeLabel", null, "대중교통");
+  resetModeTimeLabels();
   setHiddenAccommodation("", "", "", "");
   syncDestinationInput("");
 
@@ -825,42 +816,6 @@ async function searchRoute() {
   }
 }
 
-async function useMyAddress() {
-  await ensureResolvedDestination();
-
-  if (accomLat == null || accomLng == null) {
-    alert("도착지를 선택해주세요.");
-    return;
-  }
-
-  try {
-    const myAddress = await fetchMyPageAddress();
-    if (!isUsableAddress(myAddress)) {
-      alert("마이페이지에 등록된 주소가 없습니다.");
-      return;
-    }
-
-    if (getElement("startLocation")) {
-      getElement("startLocation").value = myAddress;
-    }
-
-    const location = await geocodeAddress(myAddress);
-    setStartMarker(location.lat, location.lng, "내 주소");
-    updateRouteSummary(myAddress, "-", "-");
-    map.flyTo([location.lat, location.lng], Math.max(map.getZoom(), 14), { duration: 0.6 });
-    refreshMapSize();
-
-    await calculateAndRenderRoutes({
-      lat: location.lat,
-      lng: location.lng,
-      label: myAddress
-    });
-  } catch (error) {
-    console.error("내 주소 경로 계산 실패", error);
-    alert("마이페이지 주소로 경로를 찾을 수 없습니다.");
-  }
-}
-
 async function ensureResolvedDestination() {
   const typedDestination = resolveTypedDestination();
   if (!typedDestination) return;
@@ -876,111 +831,6 @@ async function ensureResolvedDestination() {
       typedDestination.imageUrl || "",
       typedDestination.id || ""
   );
-}
-
-async function fetchMyPageAddress() {
-  const hidden = getElement("myPageAddress")?.value?.trim() || "";
-  if (isUsableAddress(hidden) && !isAddressLabelOnly(hidden)) {
-    return hidden;
-  }
-
-  try {
-    const { ok, body } = await fetchJsonOrRedirect("/api/transport/my-address");
-    if (ok && isUsableAddress(body?.address) && !isAddressLabelOnly(body?.address)) {
-      return body.address.trim();
-    }
-  } catch (error) {
-    console.warn("내 주소 API 조회 실패, 마이페이지 HTML 파싱으로 재시도합니다.", error);
-  }
-
-  const response = await fetch("/members/mypage", {
-    method: "GET",
-    credentials: "same-origin",
-    headers: { Accept: "text/html" }
-  });
-
-  if (!response.ok) {
-    throw new Error("마이페이지를 불러오지 못했습니다.");
-  }
-
-  const parsed = parseAddressFromMyPageHtml(await response.text());
-  if (!isUsableAddress(parsed) || isAddressLabelOnly(parsed)) {
-    throw new Error("마이페이지 주소를 찾을 수 없습니다.");
-  }
-
-  return parsed.trim();
-}
-
-function parseAddressFromMyPageHtml(html) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
-
-  const candidates = [
-    ".mypage-item",
-    ".info-row",
-    ".profile-row",
-    "tr",
-    "li",
-    ".form-row",
-    ".user-info-row"
-  ];
-
-  for (const selector of candidates) {
-    for (const item of doc.querySelectorAll(selector)) {
-      const label =
-          item.querySelector(".mypage-item-label, .label, th, dt, .title")?.textContent?.trim() || "";
-
-      const value =
-          item.querySelector(".value, strong, td:last-child, dd, p")?.textContent?.trim() || "";
-
-      if (
-          ["주소", "기본 주소", "도로명 주소", "집 주소", "회원 주소"].includes(label) &&
-          isUsableAddress(value) &&
-          !isAddressLabelOnly(value)
-      ) {
-        return value;
-      }
-    }
-  }
-
-  const text = doc.body?.innerText || "";
-  const lines = text
-      .split("\n")
-      .map(line => line.trim())
-      .filter(Boolean);
-
-  for (const line of lines) {
-    if (isUsableAddress(line) && !isAddressLabelOnly(line)) {
-      if (/(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/.test(line)) {
-        return line;
-      }
-    }
-  }
-
-  return "";
-}
-
-function isAddressLabelOnly(value) {
-  const normalized = String(value || "").replace(/\s+/g, "").trim();
-  return [
-    "주소",
-    "기본주소",
-    "도로명주소",
-    "집주소",
-    "회원주소",
-    "address",
-    "Address"
-  ].includes(normalized);
-}
-
-function isUsableAddress(value) {
-  const text = String(value || "").trim();
-  if (!text) return false;
-  if (text.includes("입력된 정보 없음") || text.includes("없음")) return false;
-  if (isAddressLabelOnly(text)) return false;
-
-  return /(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/.test(text)
-      || /(로|길|동|읍|면|리)/.test(text);
 }
 
 async function calculateAndRenderRoutes(startContext) {
@@ -1012,9 +862,7 @@ async function calculateAndRenderRoutes(startContext) {
   if (!metrics) {
     renderTransitDetail(null);
     updateRouteSummary(startContext.label, "-", "-");
-    setModeTimeLabel("carTimeLabel", null, "자동차");
-    setModeTimeLabel("walkTimeLabel", null, "도보");
-    setModeTimeLabel("transitTimeLabel", null, "대중교통");
+    resetModeTimeLabels();
     setDistanceInfo("경로를 찾지 못했습니다. 출발지 또는 도착지를 다시 확인해 주세요.");
     alert("경로를 찾지 못했습니다. 출발지 또는 도착지를 다시 확인해 주세요.");
     return;
@@ -1023,7 +871,7 @@ async function calculateAndRenderRoutes(startContext) {
   lastRouteMetrics = metrics;
   renderModeDurations(metrics);
 
-  if (!metrics[selectedRouteMode]?.minutes) {
+  if (!selectedRouteMode || !metrics[selectedRouteMode]?.minutes) {
     selectedRouteMode = getFirstAvailableMode(metrics) || "car";
   }
 
@@ -1542,16 +1390,20 @@ function toRoundedMinutes(seconds) {
 }
 
 function renderModeDurations(metrics) {
-  setModeTimeLabel("carTimeLabel", metrics.car.minutes, "자동차");
-  setModeTimeLabel("walkTimeLabel", metrics.walk.minutes, metrics.walk.message || "도보");
-  setModeTimeLabel("transitTimeLabel", metrics.transit.minutes, "대중교통");
+  setModeTimeLabel("carTimeLabel", metrics.car.minutes);
+  setModeTimeLabel("transitTimeLabel", metrics.transit.minutes);
 }
 
-function setModeTimeLabel(elementId, minutes, fallbackLabel) {
+function setModeTimeLabel(elementId, minutes) {
   const element = getElement(elementId);
   if (!element) return;
 
-  element.innerText = minutes == null ? `${fallbackLabel} 정보 없음` : `약 ${minutes}분`;
+  element.innerText = minutes == null ? DEFAULT_TIME_LABEL : `약 ${minutes}분`;
+}
+
+function resetModeTimeLabels() {
+  setModeTimeLabel("carTimeLabel", null);
+  setModeTimeLabel("transitTimeLabel", null);
 }
 
 function renderSelectedMode() {
@@ -1658,62 +1510,6 @@ function renderRouteDetailExtras(mode, metrics) {
   return renderTransitAlternatives(metrics.alternatives);
 }
 
-function renderTransitSteps(steps) {
-  if (!Array.isArray(steps) || !steps.length) {
-    return `
-      <article class="transit-step">
-        <span class="transit-step__badge transit-step__badge--walk">안내</span>
-        <div class="transit-step__copy">
-          <strong>상세 구간 정보가 없습니다.</strong>
-          <span>대중교통 응답에 세부 구간이 포함되지 않았습니다.</span>
-        </div>
-      </article>
-    `;
-  }
-
-  return steps.map(step => {
-    const normalizedType = normalizeStepType(step.type, step.title);
-    const normalizedTitle = normalizeStepTitle(step.type, step.title);
-
-    return `
-      <article class="transit-step">
-        <span class="transit-step__badge transit-step__badge--${normalizedType}">${getTransitBadgeLabel(normalizedType)}</span>
-        <div class="transit-step__copy">
-          <strong>${escapeHtml(normalizedTitle)}</strong>
-          <span>${escapeHtml(step.summary || "")} · ${escapeHtml(step.durationText || "")}</span>
-        </div>
-      </article>
-    `;
-  }).join("");
-}
-
-function renderTransitStepBar(steps) {
-  if (!Array.isArray(steps) || !steps.length) {
-    return "";
-  }
-
-  const parsedSteps = steps.map(step => {
-    const normalizedType = normalizeStepType(step.type, step.title);
-    return {
-      type: normalizedType,
-      minutes: Number(step.minutes || extractStepMinutes(step.durationText)),
-      label: shortenStepLabel(normalizeStepTitle(step.type, step.title))
-    };
-  });
-
-  const totalMinutes = parsedSteps.reduce((sum, step) => sum + Math.max(step.minutes, 1), 0);
-
-  return parsedSteps.map(step => {
-    const width = totalMinutes > 0 ? Math.max((step.minutes / totalMinutes) * 100, 12) : 20;
-    return `
-      <span class="transit-step-bar__segment transit-step-bar__segment--${step.type}" style="width:${width}%">
-        <span class="transit-step-bar__time">${step.minutes}분</span>
-        <span class="transit-step-bar__label">${escapeHtml(step.label)}</span>
-      </span>
-    `;
-  }).join("");
-}
-
 function extractStepMinutes(text) {
   const match = String(text || "").match(/(\d+)/);
   return match ? Number(match[1]) : 1;
@@ -1726,19 +1522,6 @@ function formatStepDuration(minutes) {
   const hour = Math.floor(numericMinutes / 60);
   const minute = numericMinutes % 60;
   return hour > 0 ? `${hour}시간 ${minute}분` : `${minute}분`;
-}
-
-function shortenStepLabel(text) {
-  const value = String(text || "").trim();
-  if (value.length <= 10) return value;
-  return `${value.slice(0, 10)}…`;
-}
-
-function getTransitBadgeLabel(type) {
-  if (type === "bus") return "버스";
-  if (type === "train") return "기차";
-  if (type === "subway") return "지하철";
-  return "도보";
 }
 
 function drawSelectedRouteLine(geometry, mode) {
