@@ -249,10 +249,6 @@
     flex-wrap:wrap;
 }
 
-.route-actions .secondary-btn{
-    display:none;
-}
-
 .transport-modal{
     position:fixed;
     inset:0;
@@ -654,10 +650,6 @@
     line-height:1.6;
 }
 
-.planner-card--chooser{
-    padding-bottom:20px;
-}
-
 .planner-card__head h2{
     margin:0 0 6px;
     color:var(--transport-ink);
@@ -690,63 +682,6 @@
     color:var(--transport-ink);
     font-size:14px;
     font-weight:800;
-}
-
-.selectable-accoms{
-    display:grid;
-    gap:12px;
-    margin-top:18px;
-}
-
-.selectable-accom{
-    display:grid;
-    grid-template-columns:64px minmax(0, 1fr);
-    gap:12px;
-    align-items:center;
-    padding:12px;
-    border:1px solid #dbe3f0;
-    border-radius:18px;
-    background:linear-gradient(180deg, #fbfcff, #f4f7fc);
-    color:inherit;
-    text-decoration:none;
-}
-
-.selectable-accom:hover{
-    border-color:rgba(123,63,242,0.22);
-}
-
-.selectable-accom__image{
-    width:64px;
-    height:64px;
-    display:block;
-    object-fit:cover;
-    border-radius:18px;
-}
-
-.selectable-accom__image--empty{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:linear-gradient(135deg, var(--transport-primary), #9563ff);
-    color:#fff;
-    font-size:1.1rem;
-    font-weight:800;
-}
-
-.selectable-accom__name{
-    display:block;
-    color:var(--transport-ink);
-    font-size:15px;
-    font-weight:800;
-    line-height:1.35;
-}
-
-.selectable-accom__location{
-    display:block;
-    margin-top:4px;
-    color:var(--transport-muted);
-    font-size:12px;
-    line-height:1.5;
 }
 
 .quick-action{
@@ -936,21 +871,6 @@
     border:1px solid #e4e9f4;
 }
 
-.locate-fab{
-    position:absolute;
-    right:14px;
-    bottom:14px;
-    min-height:46px;
-    padding:0 16px;
-    border:none;
-    border-radius:999px;
-    background:#111827;
-    color:#fff;
-    font-size:13px;
-    font-weight:800;
-    cursor:pointer;
-}
-
 .transport-panel{
     display:flex;
     flex-direction:column;
@@ -1129,10 +1049,6 @@
         flex-direction:column;
     }
 
-    .destination-entry{
-        width:100%;
-    }
-
     .destination-actions{
         justify-content:stretch;
         flex-wrap:wrap;
@@ -1148,10 +1064,6 @@
     .transport-group-head{
         flex-direction:column;
         align-items:stretch;
-    }
-
-    .route-field{
-        min-height:72px;
     }
 
     .route-arrow{
@@ -1210,18 +1122,6 @@
         font-size:1.25rem;
     }
 
-    .selectable-accom{
-        grid-template-columns:56px minmax(0, 1fr);
-        padding:10px;
-        border-radius:16px;
-    }
-
-    .selectable-accom__image{
-        width:56px;
-        height:56px;
-        border-radius:16px;
-    }
-
     .quick-actions{
         gap:10px;
         margin-top:16px;
@@ -1256,10 +1156,4 @@
         min-height:340px;
     }
 
-    .locate-fab{
-        right:12px;
-        bottom:12px;
-        min-height:44px;
-        padding:0 14px;
-    }
 }

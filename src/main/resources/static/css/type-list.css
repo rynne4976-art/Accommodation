@@ -132,12 +132,20 @@
 }
 
 .type-thumb-box {
+    position: relative;
     width: 340px;
     min-width: 340px;
     height: 230px;
     border-radius: 22px;
     overflow: hidden;
     background: #eef2f7;
+}
+
+.type-card__wish {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
 }
 
 .type-thumb {

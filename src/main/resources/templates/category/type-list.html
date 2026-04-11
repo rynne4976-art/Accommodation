@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${pageTitle != null ? pageTitle : '숙소 목록'}">숙소 목록</title>
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/main.css}">
@@ -15,5 +17,6 @@
 <script th:src="@{/js/main.js}"></script>
 <script th:src="@{/js/type-filter.js}"></script>
 <script th:src="@{/js/category-booking.js}"></script>
+<script th:src="@{/js/wish.js}"></script>
 </body>
 </html>

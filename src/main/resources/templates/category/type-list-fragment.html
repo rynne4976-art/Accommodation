@@ -269,6 +269,15 @@
                 <div class="type-card-left">
                     <div class="type-media-block">
                         <div class="type-thumb-box">
+                            <button class="accom-card__wish type-card__wish"
+                                    type="button"
+                                    aria-label="찜"
+                                    th:attr="data-accom-id=${accom.id},aria-pressed='false'"
+                                    data-wish-button>
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 20.5 4.8 13.8a4.9 4.9 0 0 1 6.9-6.9L12 7.2l.3-.3a4.9 4.9 0 0 1 6.9 6.9Z"/>
+                                </svg>
+                            </button>
                             <a th:href="@{/accom/{accomId}(accomId=${accom.id})}" aria-label="숙소 상세 보기">
                                 <img class="type-thumb"
                                      th:if="${accom.imgUrl != null and !#strings.isEmpty(accom.imgUrl)}"
