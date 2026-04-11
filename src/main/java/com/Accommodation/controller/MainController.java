@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -200,6 +201,8 @@ public class MainController {
                     }
                 })
                 .filter(id -> id != null)
+                .collect(Collectors.toCollection(LinkedHashSet::new))
+                .stream()
                 .limit(RECENT_VIEWED_LIMIT)
                 .collect(Collectors.toList());
     }

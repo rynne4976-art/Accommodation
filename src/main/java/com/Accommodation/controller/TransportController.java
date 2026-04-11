@@ -3,6 +3,7 @@ package com.Accommodation.controller;
 import com.Accommodation.entity.Accom;
 import com.Accommodation.entity.AccomImg;
 import com.Accommodation.service.AccomService;
+import com.Accommodation.service.OrderService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
@@ -14,6 +15,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -27,6 +30,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -99,6 +103,7 @@ public class TransportController {
     );
 
     private final AccomService accomService;
+    private final OrderService orderService;
     private final ObjectMapper objectMapper;
 
     @Value("${odsay.api.key:}")
@@ -204,7 +209,12 @@ public class TransportController {
                     "id", accom.getId(),
                     "name", safeText(accom.getAccomName(), "숙소"),
                     "location", safeText(accom.getLocation(), ""),
-                    "imageUrl", resolvePrimaryImage(accom)
+                    "imageUrl", resolvePrimaryImage(accom),
+                    "detail", safeText(accom.getAccomDetail(), "숙소 설명이 없습니다."),
+                    "pricePerNight", accom.getPricePerNight() != null ? accom.getPricePerNight() : 0,
+                    "grade", accom.getGrade() != null ? accom.getGrade().getNum() : 0,
+                    "avgRating", accom.getAvgRating() != null ? accom.getAvgRating() : 0.0,
+                    "reviewCount", accom.getReviewCount() != null ? accom.getReviewCount() : 0
             ));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -221,6 +231,73 @@ public class TransportController {
                     .body(Map.of("message", "마이페이지에 등록된 주소가 없습니다."));
         }
         return ResponseEntity.ok(Map.of("address", address));
+    }
+
+    @GetMapping(value = "/api/transport/reserved-accommodation", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> reservedAccommodation(Principal principal) {
+        if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "로그인이 필요합니다."));
+        }
+
+        List<Map<String, Object>> items = orderService.getReservedAccommodations(principal.getName(), 20).stream()
+                .map(accom -> Map.<String, Object>of(
+                        "id", accom.getId(),
+                        "name", safeText(accom.getAccomName(), "숙소"),
+                        "location", safeText(accom.getLocation(), ""),
+                        "imageUrl", resolvePrimaryImage(accom)
+                ))
+                .toList();
+
+        return ResponseEntity.ok(Map.of(
+                "count", items.size(),
+                "items", items
+        ));
+    }
+
+    @GetMapping(value = "/api/transport/accommodation-search", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> searchAccommodations(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "grade", required = false) String grade,
+            @RequestParam(value = "minPrice", required = false) Integer minPrice,
+            @RequestParam(value = "maxPrice", required = false) Integer maxPrice,
+            @RequestParam(value = "minRating", required = false) Double minRating,
+            @RequestParam(value = "page", defaultValue = "0") int page
+    ) {
+        int safePage = Math.max(page, 0);
+
+        com.Accommodation.dto.AccomSearchDto searchDto = new com.Accommodation.dto.AccomSearchDto();
+        searchDto.setSearchQuery(keyword);
+        searchDto.setMinPrice(minPrice);
+        searchDto.setMaxPrice(maxPrice);
+        searchDto.setMinRating(minRating);
+        searchDto.setGrade(parseGrade(grade));
+
+        Page<com.Accommodation.dto.MainAccomDto> accomPage =
+                accomService.getMainAccomPage(searchDto, PageRequest.of(safePage, 5));
+
+        List<Map<String, Object>> items = accomPage.getContent().stream()
+                .map(item -> Map.<String, Object>of(
+                        "id", item.getId(),
+                        "name", safeText(item.getAccomName(), "숙소"),
+                        "location", safeText(item.getLocation(), ""),
+                        "imageUrl", safeText(item.getImgUrl(), ""),
+                        "grade", item.getGrade() != null ? item.getGrade().getNum() : 0,
+                        "pricePerNight", item.getPricePerNight() != null ? item.getPricePerNight() : 0,
+                        "avgRating", item.getAvgRating() != null ? item.getAvgRating() : 0.0,
+                        "reviewCount", item.getReviewCount() != null ? item.getReviewCount() : 0
+                ))
+                .toList();
+
+        return ResponseEntity.ok(Map.of(
+                "items", items,
+                "page", accomPage.getNumber(),
+                "size", accomPage.getSize(),
+                "totalPages", accomPage.getTotalPages(),
+                "totalElements", accomPage.getTotalElements()
+        ));
     }
 
     private String resolveMyPageAddress(String requestAddress, HttpSession session) {
@@ -241,6 +318,27 @@ public class TransportController {
         }
 
         return "";
+    }
+
+    private com.Accommodation.constant.AccomGrade parseGrade(String grade) {
+        if (grade == null || grade.isBlank()) {
+            return null;
+        }
+
+        String normalized = grade.trim().toUpperCase();
+        try {
+            return com.Accommodation.constant.AccomGrade.valueOf(normalized);
+        } catch (IllegalArgumentException ignored) {
+        }
+
+        return switch (normalized) {
+            case "1", "ONE" -> com.Accommodation.constant.AccomGrade.ONE;
+            case "2", "TWO" -> com.Accommodation.constant.AccomGrade.TWO;
+            case "3", "THREE" -> com.Accommodation.constant.AccomGrade.THREE;
+            case "4", "FOUR" -> com.Accommodation.constant.AccomGrade.FOUR;
+            case "5", "FIVE" -> com.Accommodation.constant.AccomGrade.FIVE;
+            default -> null;
+        };
     }
 
     private String extractAddressDeep(Object target, IdentityHashMap<Object, Boolean> visited) {

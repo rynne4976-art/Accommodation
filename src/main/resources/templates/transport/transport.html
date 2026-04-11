@@ -31,96 +31,74 @@
                         <div>
                             <p class="route-box__eyebrow">빠른 길찾기</p>
                             <h2>숙소까지 가장 편한 경로를 찾아보세요</h2>
-                            <p class="route-box__sub">출발지를 입력하거나 내 주소를 사용해 바로 경로를 확인할 수 있습니다.</p>
+                            <p class="route-box__sub">출발지와 도착지를 입력해 경로를 확인할 수 있습니다.</p>
                         </div>
                     </div>
 
-                    <div class="route-box__body">
-                        <div class="route-fields">
-                            <label class="route-field route-field--start" for="startLocation">
-                                <span class="route-field__icon">출발</span>
-                                <span class="route-field__copy">
-                                    <span class="route-field__label">출발지</span>
-                                    <input type="text" id="startLocation" placeholder="예: 서울역, 강남역, 김포공항 또는 내 주소">
-                                </span>
-                            </label>
-
-                            <div class="route-arrow" aria-hidden="true">→</div>
-
-                            <div class="route-field route-field--end">
-                                <span class="route-field__icon route-field__icon--end">도착</span>
-                                <span class="route-field__copy">
-                                    <span class="route-field__label">도착지</span>
-                                    <span class="destination-entry">
-                                        <select id="destinationSelect" class="route-field__select">
-                                            <option value="">숙소 선택</option>
-                                            <option value="__custom__">직접 입력</option>
-                                            <option th:each="selectableAccom : ${selectableAccomList}"
-                                                    th:value="${selectableAccom.id}"
-                                                    th:text="${selectableAccom.accomName}"
-                                                    th:selected="${accom != null and selectableAccom.id == accom.id}"
-                                                    th:attr="data-name=${selectableAccom.accomName},
-                                                             data-location=${selectableAccom.location},
-                                                             data-image=${selectableAccom.imgUrl}">
-                                            </option>
-                                        </select>
-
-                                        <input type="text"
-                                               id="destinationInput"
-                                               class="route-field__inline-input is-hidden"
-                                               placeholder="도착지 이름 또는 주소 입력 후 Enter">
-                                    </span>
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="route-modes" aria-label="이동 수단">
-                            <button type="button" class="route-mode" data-mode="transit">
-                                <span class="route-mode__title">대중교통</span>
-                                <span class="route-mode__desc">ODsay 경로 기준</span>
-                                <strong class="route-mode__time" id="transitTimeLabel">시간 미정</strong>
-                            </button>
-
-                            <button type="button" class="route-mode route-mode--active" data-mode="car">
-                                <span class="route-mode__title">자동차</span>
-                                <span class="route-mode__desc">실제 차량 경로 계산</span>
-                                <strong class="route-mode__time" id="carTimeLabel">시간 미정</strong>
-                            </button>
-
-                            <button type="button" class="route-mode" data-mode="walk">
-                                <span class="route-mode__title">도보</span>
-                                <span class="route-mode__desc">실제 보행 경로 계산</span>
-                                <strong class="route-mode__time" id="walkTimeLabel">시간 미정</strong>
-                            </button>
-                        </div>
-
-                        <div class="route-actions">
-                            <button type="button" class="primary-btn" onclick="searchRoute()">길찾기</button>
-                            <button type="button" class="secondary-btn" onclick="useMyAddress()">내 주소 사용</button>
-                            <button type="button" class="ghost-btn" onclick="focusAccommodation()">숙소 위치 보기</button>
-                        </div>
-
-                        <section id="transitDetailPanel" class="transit-detail-panel is-hidden" aria-live="polite">
-                            <div class="transit-detail-panel__head">
-                                <div>
-                                    <span class="transit-detail-panel__eyebrow">대중교통 상세</span>
-                                    <h3 id="transitDetailTitle">추천 경로를 불러오면 이동 수단이 표시됩니다</h3>
-                                </div>
-                                <span id="transitDetailMeta" class="transit-detail-panel__meta"></span>
-                            </div>
-
-                            <div class="transit-detail-panel__tabs" aria-hidden="true">
-                                <span class="transit-detail-panel__tab transit-detail-panel__tab--active">최적</span>
-                                <span class="transit-detail-panel__tab">추천 경로</span>
-                            </div>
-
-                            <p id="transitDetailSummary" class="transit-detail-panel__summary"></p>
-                        </section>
+                    <div class="destination-actions">
+                        <button type="button" class="ghost-btn destination-action-btn" id="openAccomSearchBtn">숙소 검색</button>
+                        <button type="button" class="ghost-btn destination-action-btn" id="fillReservedAccomBtn">예약 숙소</button>
                     </div>
+
+                    <div class="route-fields">
+                        <input type="text" id="startLocation" class="route-input" placeholder="출발지 입력">
+
+                        <div class="route-arrow" aria-hidden="true">→</div>
+
+                        <input type="text"
+                               id="destinationInput"
+                               class="route-input"
+                               placeholder="도착지 입력">
+                    </div>
+
+                    <datalist id="destinationOptions">
+                        <option th:each="selectableAccom : ${selectableAccomList}"
+                                th:value="${selectableAccom.accomName}"
+                                th:attr="data-id=${selectableAccom.id},
+                                         data-name=${selectableAccom.accomName},
+                                         data-location=${selectableAccom.location},
+                                         data-image=${selectableAccom.imgUrl}">
+                        </option>
+                    </datalist>
+
+                    <p class="route-field__hint"><strong>출발지 팁 :</strong> 역, 공항, 버스터미널처럼 익숙한 장소명으로 입력해 길찾기를 확인해 보세요.</p>
+                    <p class="route-field__hint"><strong>도착지 팁 :</strong> 숙소 검색 / 예약 숙소를 활용해 도착지를 설정해 보세요.</p>
+
+                    <div class="route-modes" aria-label="이동 수단">
+                        <button type="button" class="route-mode" data-mode="transit">
+                            <span class="route-mode__title">대중교통</span>
+                            <span class="route-mode__desc">ODsay 경로 기준</span>
+                            <strong class="route-mode__time" id="transitTimeLabel">시간 미정</strong>
+                        </button>
+
+                        <button type="button" class="route-mode route-mode--active" data-mode="car">
+                            <span class="route-mode__title">자동차</span>
+                            <span class="route-mode__desc">실제 차량 경로 계산</span>
+                            <strong class="route-mode__time" id="carTimeLabel">시간 미정</strong>
+                        </button>
+                    </div>
+
+                    <div class="route-actions">
+                        <button type="button" class="ghost-btn destination-action-btn" onclick="searchRoute()">길찾기</button>
+                        <button type="button" class="ghost-btn destination-action-btn" onclick="resetRoutePlanner()">초기화</button>
+                        <button type="button" class="secondary-btn" onclick="useMyAddress()">내 주소 사용</button>
+                    </div>
+
+                    <section id="transitDetailPanel" class="transit-detail-panel" aria-live="polite">
+                        <div class="transit-detail-panel__head">
+                            <div>
+                                <span class="transit-detail-panel__eyebrow">대중교통 상세</span>
+                                <h3 id="transitDetailTitle">추천 경로를 불러오면 이동 수단이 표시됩니다</h3>
+                            </div>
+                            <span id="transitDetailMeta" class="transit-detail-panel__meta"></span>
+                        </div>
+
+                        <p id="transitDetailSummary" class="transit-detail-panel__summary"></p>
+                    </section>
                 </div>
 
                 <div class="hero-side">
-                    <div id="stayCard" th:classappend="${accom != null} ? '' : ' is-hidden'" class="stay-card">
+                    <div id="stayCard" class="stay-card">
                         <div class="stay-media">
                             <img id="stayImage"
                                  th:src="${accom != null and accom.accomImgList != null and !#lists.isEmpty(accom.accomImgList) ? accom.accomImgList[0].imgUrl : ''}"
@@ -133,9 +111,12 @@
                         </div>
 
                         <div class="stay-copy">
-                            <h3 id="stayTitle" th:text="${accom != null ? accom.accomName : '숙소를 선택해 주세요'}"></h3>
+                            <div id="stayTitleLink"
+                                 class="stay-title-link">
+                                <h3 id="stayTitle" th:text="${accom != null ? accom.accomName : '-'}"></h3>
+                            </div>
                             <p id="accomAddress"
-                               th:text="${accom != null ? accom.location : '상단 도착지 드롭다운에서 숙소를 선택해 주세요.'}"></p>
+                               th:text="${accom != null ? accom.location : '-'}"></p>
                         </div>
                     </div>
 
@@ -150,40 +131,38 @@
                             <button type="button" class="quick-action" onclick="setPresetStart('강남역')">강남역</button>
                             <button type="button" class="quick-action" onclick="setPresetStart('김포공항')">김포공항</button>
                         </div>
-
-                        <div class="planner-card__hint">
-                            <strong>출발지 입력 팁</strong>
-                            <p>역, 공항, 버스터미널처럼 익숙한 장소명으로 입력하거나 내 주소 버튼을 눌러 빠르게 길찾기를 확인해 보세요.</p>
-                        </div>
                     </div>
+
+                    <section class="summary-panel">
+                        <div class="summary-panel__head">
+                            <h2>경로 요약</h2>
+                            <p>숙소까지 이동 정보를 한눈에 확인해 보세요.</p>
+                        </div>
+
+                        <div class="summary-grid">
+                            <article class="summary-card summary-card--start">
+                                <span class="summary-label">출발지</span>
+                                <strong id="startSummary">-</strong>
+                            </article>
+
+                            <article class="summary-card summary-card--destination">
+                                <span class="summary-label">도착지</span>
+                                <strong id="destinationSummaryCard"
+                                        th:text="${accom != null ? accom.accomName : '-'}"></strong>
+                            </article>
+
+                            <article class="summary-card summary-card--distance">
+                                <span class="summary-label">이동 거리</span>
+                                <strong id="distanceSummary">-</strong>
+                            </article>
+
+                            <article class="summary-card summary-card--duration">
+                                <span class="summary-label">예상 시간</span>
+                                <strong id="durationSummary">-</strong>
+                            </article>
+                        </div>
+                    </section>
                 </div>
-            </section>
-
-            <section class="summary-grid">
-                <article class="summary-card summary-card--start">
-                    <span class="summary-label">출발지</span>
-                    <strong id="startSummary">미선택</strong>
-                    <span class="summary-card__accent" aria-hidden="true"></span>
-                </article>
-
-                <article class="summary-card summary-card--destination">
-                    <span class="summary-label">도착지</span>
-                    <strong id="destinationSummaryCard"
-                            th:text="${accom != null ? accom.accomName : '숙소를 선택해 주세요'}"></strong>
-                    <span class="summary-card__accent" aria-hidden="true"></span>
-                </article>
-
-                <article class="summary-card summary-card--distance">
-                    <span class="summary-label">이동 거리</span>
-                    <strong id="distanceSummary">-</strong>
-                    <span class="summary-card__accent" aria-hidden="true"></span>
-                </article>
-
-                <article class="summary-card summary-card--duration">
-                    <span class="summary-label">예상 시간</span>
-                    <strong id="durationSummary">-</strong>
-                    <span class="summary-card__accent" aria-hidden="true"></span>
-                </article>
             </section>
 
             <section class="map-layout">
@@ -191,7 +170,7 @@
                     <div class="map-panel-head">
                         <div>
                             <h2>지도</h2>
-                            <p id="distanceInfo" class="route-info">상단 도착지 드롭다운에서 숙소를 선택하면 교통 정보가 표시됩니다.</p>
+                            <p id="distanceInfo" class="route-info">상단 도착지 입력창에 숙소를 입력하면 교통 정보가 표시됩니다.</p>
                         </div>
 
                         <div class="map-tools">
@@ -249,6 +228,61 @@
             <input type="hidden" id="myPageAddress" th:value="${myPageAddress}">
         </div>
     </section>
+
+    <div id="accomSearchModal" class="transport-modal is-hidden" aria-hidden="true">
+        <div class="transport-modal__backdrop" data-close-modal="true"></div>
+        <section class="transport-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="accomSearchModalTitle">
+            <div class="transport-modal__head">
+                <div>
+                    <p class="transport-modal__eyebrow">숙소 검색</p>
+                    <h2 id="accomSearchModalTitle">숙소를 검색해 도착지에 입력하세요</h2>
+                </div>
+                <button type="button" class="transport-modal__close" id="closeAccomSearchBtn" aria-label="닫기">×</button>
+            </div>
+
+            <div class="accom-search-filter">
+                <input type="text" id="accomSearchKeyword" class="accom-search-filter__input" placeholder="숙소명 검색">
+                <select id="accomSearchGrade" class="accom-search-filter__select">
+                    <option value="">등급 전체</option>
+                    <option value="ONE">1성급</option>
+                    <option value="TWO">2성급</option>
+                    <option value="THREE">3성급</option>
+                    <option value="FOUR">4성급</option>
+                    <option value="FIVE">5성급</option>
+                </select>
+                <input type="number" id="accomSearchMinPrice" class="accom-search-filter__input" placeholder="최소 가격">
+                <input type="number" id="accomSearchMaxPrice" class="accom-search-filter__input" placeholder="최대 가격">
+                <select id="accomSearchMinRating" class="accom-search-filter__select">
+                    <option value="">평점 전체</option>
+                    <option value="4.5">4.5 이상</option>
+                    <option value="4">4.0 이상</option>
+                    <option value="3.5">3.5 이상</option>
+                    <option value="3">3.0 이상</option>
+                </select>
+                <button type="button" class="primary-btn accom-search-filter__submit" id="accomSearchSubmitBtn">검색</button>
+            </div>
+
+            <div id="accomSearchResultInfo" class="accom-search-result-info">조건에 맞는 숙소를 검색하세요.</div>
+            <div id="accomSearchResultList" class="accom-search-result-list"></div>
+            <div id="accomSearchPagination" class="accom-search-pagination"></div>
+        </section>
+    </div>
+
+    <div id="reservedAccomModal" class="transport-modal is-hidden" aria-hidden="true">
+        <div class="transport-modal__backdrop" data-close-reserved-modal="true"></div>
+        <section class="transport-modal__dialog transport-modal__dialog--narrow" role="dialog" aria-modal="true" aria-labelledby="reservedAccomModalTitle">
+            <div class="transport-modal__head">
+                <div>
+                    <p class="transport-modal__eyebrow">예약 숙소</p>
+                    <h2 id="reservedAccomModalTitle">예약한 숙소를 선택하세요</h2>
+                </div>
+                <button type="button" class="transport-modal__close" id="closeReservedAccomBtn" aria-label="닫기">×</button>
+            </div>
+
+            <div id="reservedAccomResultInfo" class="accom-search-result-info">예약 숙소 목록을 불러오는 중입니다.</div>
+            <div id="reservedAccomResultList" class="accom-search-result-list"></div>
+        </section>
+    </div>
 
     <script th:src="@{/js/transport-map.js}"></script>
 </div>

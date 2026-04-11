@@ -244,69 +244,11 @@
         </div>
     </div>
 
-        <div class="accom-content-main">
-            <div class="accom-slider" data-accom-slider th:if="${accomList != null and !#lists.isEmpty(accomList)}">
-            <article class="card accom-card"
-                     th:each="accom : ${accomList}"
-                     th:attr="data-detail-url=@{/accom/{accomId}(accomId=${accom.id})}">
-                    <div class="accom-card__visual">
-                        <button class="accom-card__wish"
-                                type="button"
-                                aria-label="찜"
-                                aria-pressed="false"
-                                th:attr="data-accom-id=${accom.id}"
-                                data-wish-button>
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 20.5 4.8 13.8a4.9 4.9 0 0 1 6.9-6.9L12 7.2l.3-.3a4.9 4.9 0 0 1 6.9 6.9Z"/>
-                            </svg>
-                        </button>
-                        <a class="accom-card__image-link"
-                           th:href="@{/accom/{accomId}(accomId=${accom.id})}"
-                           th:aria-label="${accom.accomName + ' 상세보기'}">
-                            <img class="accom-card__image" th:if="${accom.imgUrl != null and !#strings.isEmpty(accom.imgUrl)}" th:src="${accom.imgUrl}" th:alt="${accom.accomName}">
-                            <div class="accom-card__image-placeholder" th:unless="${accom.imgUrl != null and !#strings.isEmpty(accom.imgUrl)}">
-                                <span th:text="${accom.grade}">GRADE</span>
-                            </div>
-                        </a>
-                    </div>
-
-                    <div class="card-body accom-info">
-                        <div class="accom-card__badge-row"
-                             th:with="gradeNum=${accom.grade != null ? accom.grade.num : 0}">
-                            <span class="accom-card__kind"
-                                  th:text="${accom.accomType != null ? accom.accomType.label : '숙소'}">호텔</span>
-                            <span class="accom-card__grade-stars" aria-label="숙소 등급">
-                                <span class="star filled"
-                                      th:each="i : ${#numbers.sequence(1,gradeNum)}">&#9733;</span>
-                            </span>
-                        </div>
-                        <div class="accom-card__rating">
-                            <span class="accom-card__score" th:text="${accom.avgRating != null ? #numbers.formatDecimal(accom.avgRating, 1, 1) : '0.0'}">0.0</span>
-                            <div class="accom-card__rating-copy">
-                                <a class="accom-card__review-link"
-                                   th:href="@{/reviews/accom/{id}(id=${accom.id})}"
-                                   th:text="${accom.reviewCount != null ? #numbers.formatInteger(accom.reviewCount, 1, 'COMMA') + '개 후기' : '후기 0개'}">후기 0개</a>
-                            </div>
-                        </div>
-
-                        <div class="accom-card__meta">
-                            <div class="accom-card__location">
-                                <span th:text="${accom.location}">위치</span>
-                            </div>
-                            <div class="accom-card__desc">
-                                <span th:text="${accom.accomDetail}">상세설명</span>
-                            </div>
-                        </div>
-
-                        <div class="card-bottom accom-card__bottom">
-                            <div class="accom-card__price-wrap">
-                                <span class="accom-card__price-label">1박 기준</span>
-                                <strong class="price" th:text="${#numbers.formatInteger(accom.pricePerNight, 3, 'COMMA')} + '원'">120,000원</strong>
-                            </div>
-                            <a class="reserve-btn" th:href="@{/accom/{accomId}(accomId=${accom.id})}">상세설명</a>
-                        </div>
-                    </div>
-            </article>
+    <div class="accom-content-main">
+        <div class="accom-slider" data-accom-slider th:if="${accomList != null and !#lists.isEmpty(accomList)}">
+            <th:block th:each="accom : ${accomList}">
+                <th:block th:replace="~{fragments/accom-card :: content(${accom}, ${accom.id}, false)}"></th:block>
+            </th:block>
         </div>
     </div>
 
