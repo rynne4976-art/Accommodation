@@ -1,4 +1,4 @@
-<div th:fragment="chatbot" class="chatbot-widget" xmlns:th="http://www.thymeleaf.org">
+﻿<div th:fragment="chatbot" class="chatbot-widget" xmlns:th="http://www.thymeleaf.org">
     <div id="chatbot-backdrop" class="chatbot-backdrop is-hidden"></div>
     <button type="button"
             id="chatbot-toggle"
@@ -35,10 +35,13 @@
                 </span>
                 <div>
                     <strong>AI 숙소 챗봇</strong>
-                    <p>예약, 맞춤 추천, 숙소 비교를 도와드립니다.</p>
+                    <p>장바구니, 맞춤 추천, 숙소 비교를 도와드립니다.</p>
                 </div>
             </div>
-            <button type="button" id="chatbot-close" class="chatbot-window__close" aria-label="Close chatbot">&times;</button>
+            <div class="chatbot-window__header-actions">
+                <button type="button" id="chatbot-home" class="chatbot-window__home">처음으로</button>
+                <button type="button" id="chatbot-close" class="chatbot-window__close" aria-label="Close chatbot">&times;</button>
+            </div>
         </header>
 
         <div id="chatbot-flow" class="chatbot-flow"></div>
@@ -49,7 +52,7 @@
         </div>
 
         <form id="chatbot-form" class="chatbot-window__form">
-            <input id="chatbot-input" type="text" maxlength="120" placeholder="원하는 조건이나 비교할 숙소명을 입력하세요.">
+            <input id="chatbot-input" type="text" maxlength="120" placeholder="?먰븯??議곌굔?대굹 鍮꾧탳???숈냼紐낆쓣 ?낅젰?섏꽭??">
             <button type="submit" id="chatbot-send" aria-label="Send">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M3 20 21 12 3 4l2.8 7.1L14 12l-8.2.9L3 20Z"></path>

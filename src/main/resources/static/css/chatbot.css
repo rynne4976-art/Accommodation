@@ -73,6 +73,13 @@
     color: #ffffff;
 }
 
+.chatbot-window__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
 .chatbot-window__brand {
     display: flex;
     align-items: center;
@@ -121,6 +128,19 @@
     font-size: 28px;
     line-height: 1;
     flex-shrink: 0;
+}
+
+.chatbot-window__home {
+    border: 0;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    min-height: 48px;
+    padding: 0 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
 /* ── 플로우 ── */
@@ -283,6 +303,10 @@
     gap: 12px;
 }
 
+.chatbot-date-fields--occupancy {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .chatbot-date-field {
     display: block;
 }
@@ -297,11 +321,62 @@
 
 .chatbot-date-field input {
     width: 100%;
+    box-sizing: border-box;
     border: 2px solid #cfe9f4;
     border-radius: 14px;
     padding: 14px;
     font-size: 17px;          /* ↑ 14 → 17 */
     color: #0f2030;
+    background: #ffffff;
+}
+
+.chatbot-guest-select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 2px solid #cfe9f4;
+    border-radius: 14px;
+    padding: 14px 44px 14px 14px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f2030;
+    background: linear-gradient(180deg, #ffffff 0%, #f3fbff 100%);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #2ea8d6 50%),
+        linear-gradient(135deg, #2ea8d6 50%, transparent 50%),
+        linear-gradient(180deg, #ffffff 0%, #f3fbff 100%);
+    background-position:
+        calc(100% - 22px) calc(50% - 3px),
+        calc(100% - 16px) calc(50% - 3px),
+        0 0;
+    background-size: 6px 6px, 6px 6px, 100% 100%;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+.chatbot-guest-input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 2px solid #cfe9f4;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f2030;
+    background: linear-gradient(180deg, #ffffff 0%, #f3fbff 100%);
+}
+
+.chatbot-guest-select:focus {
+    outline: none;
+    border-color: #2ea8d6;
+    box-shadow: 0 0 0 4px rgba(46, 168, 214, 0.14);
+}
+
+.chatbot-guest-input:focus {
+    outline: none;
+    border-color: #2ea8d6;
+    box-shadow: 0 0 0 4px rgba(46, 168, 214, 0.14);
 }
 
 .chatbot-date-apply {
@@ -420,198 +495,6 @@
     fill: currentColor;
 }
 
-/* ── 취향 선택 카드 ── */
-.chatbot-taste-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.chatbot-taste-card {
-    border: 2px solid #d4ecf7;
-    border-radius: 20px;
-    background: #fff;
-    padding: 18px 14px;
-    cursor: pointer;
-    text-align: center;
-    transition: border-color 0.15s, background 0.15s, transform 0.15s;
-}
-
-.chatbot-taste-card:hover {
-    border-color: #2ea8d6;
-    background: #f0faff;
-}
-
-.chatbot-taste-card__icon {
-    font-size: 32px;
-    display: block;
-    margin-bottom: 8px;
-}
-
-.chatbot-taste-card__label {
-    font-size: 16px;
-    font-weight: 700;
-    color: #0f2030;
-    display: block;
-}
-
-.chatbot-taste-card__desc {
-    font-size: 13px;
-    color: #3a5568;
-    display: block;
-    margin-top: 4px;
-}
-
-/* ── 즐길거리 활동 카드 그리드 ── */
-.chatbot-activity-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-    padding: 0 24px 18px;
-}
-
-.chatbot-activity-card {
-    border-radius: 18px;
-    overflow: hidden;
-    background: #fff;
-    border: 1.5px solid #dce8f0;
-    display: flex;
-    flex-direction: column;
-    text-decoration: none;
-    color: inherit;
-    transition: transform 0.18s;
-}
-
-.chatbot-activity-card:hover {
-}
-
-.chatbot-activity-card__img {
-    width: 100%;
-    height: 110px;
-    object-fit: cover;
-    display: block;
-}
-
-.chatbot-activity-card__placeholder {
-    width: 100%;
-    height: 110px;
-    background: linear-gradient(135deg, #e7f7fc, #d0f0fb);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 36px;
-}
-
-.chatbot-activity-card__badges {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    padding: 10px 12px 0;
-}
-
-.chatbot-activity-card__badge {
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.4;
-}
-
-.chatbot-activity-card__badge--festival {
-    background: #fff7ed;
-    color: #c2410c;
-    border: 1px solid #fed7aa;
-}
-
-.chatbot-activity-card__badge--spot {
-    background: #eff9ff;
-    color: #075985;
-    border: 1px solid #bae6fd;
-}
-
-.chatbot-activity-card__badge--culture {
-    background: #fdf4ff;
-    color: #7e22ce;
-    border: 1px solid #e9d5ff;
-}
-
-.chatbot-activity-card__badge--sports {
-    background: #f0fdf4;
-    color: #166534;
-    border: 1px solid #bbf7d0;
-}
-
-.chatbot-activity-card__badge--ongoing {
-    background: #dc2626;
-    color: #fff;
-    border: none;
-    animation: ongoing-pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes ongoing-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.72; }
-}
-
-.chatbot-activity-card__body {
-    padding: 8px 12px 14px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.chatbot-activity-card__title {
-    font-size: 14px;
-    font-weight: 700;
-    color: #0f2030;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.chatbot-activity-card__period {
-    font-size: 12px;
-    color: #c2410c;
-    font-weight: 600;
-}
-
-.chatbot-activity-card__address {
-    font-size: 12px;
-    color: #3a5568;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.chatbot-activity-card__link {
-    margin-top: auto;
-    padding-top: 8px;
-    font-size: 13px;
-    font-weight: 700;
-    color: #2ea8d6;
-}
-
-/* ── 즐길거리 섹션 헤더 ── */
-.chatbot-activity-section-header {
-    padding: 4px 24px 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.chatbot-activity-section-header__icon {
-    font-size: 18px;
-}
-
-.chatbot-activity-section-header__title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #0f2030;
-}
-
 /* ── 숙소 추천 카드 그리드 ── */
 .chatbot-accom-grid {
     display: grid;
@@ -625,6 +508,131 @@
     flex-direction: column;
     text-decoration: none;
     color: inherit;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.chatbot-accom-grid .accom-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,255,0.98));
+    border: 1px solid #e6ebf5;
+    border-radius: 24px;
+}
+
+.chatbot-accom-grid .chatbot-accom-select-card {
+    width: 100%;
+    padding: 0;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+}
+
+.chatbot-accom-grid .accom-card__visual {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(230, 235, 245, 0.85);
+    background: linear-gradient(135deg, #eef3ff, #f8fbff);
+}
+
+.chatbot-accom-grid .accom-card__image,
+.chatbot-accom-grid .accom-card__image-placeholder {
+    display: block;
+    width: 100%;
+    height: 182px;
+    object-fit: cover;
+}
+
+.chatbot-accom-grid .accom-card__image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #eef3ff, #f8fbff);
+    color: #667085;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.chatbot-accom-grid .accom-info {
+    padding: 16px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    background: #ffffff;
+}
+
+.chatbot-accom-grid .accom-card__title {
+    margin: 0;
+    color: #111827;
+    font-size: 0.94rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.chatbot-accom-grid .accom-card__rating-copy,
+.chatbot-accom-grid .accom-card__review-link,
+.chatbot-accom-grid .accom-card__kind,
+.chatbot-accom-grid .accom-card__location,
+.chatbot-accom-grid .accom-card__desc,
+.chatbot-accom-grid .accom-card__price-label {
+    color: #6b7280;
+}
+
+.chatbot-accom-grid .accom-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.chatbot-accom-grid .accom-card__location,
+.chatbot-accom-grid .accom-card__desc {
+    line-height: 1.4;
+    word-break: keep-all;
+}
+
+.chatbot-accom-grid .accom-card__bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+    margin-top: auto;
+}
+
+.chatbot-accom-grid .accom-card__price-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.chatbot-accom-grid .price {
+    display: block;
+    color: #111827;
+    font-size: 1.04rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.chatbot-accom-grid .reserve-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 92px;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #7b3ff2, #9258ff);
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 /* ── 숙소 선택 그리드 (비교) ── */
@@ -988,12 +996,7 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .chatbot-accom-grid,
-    .chatbot-activity-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .chatbot-taste-grid {
+    .chatbot-accom-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -1007,8 +1010,7 @@
 }
 
 @media (max-width: 480px) {
-    .chatbot-accom-grid,
-    .chatbot-activity-grid {
+    .chatbot-accom-grid {
         grid-template-columns: minmax(0, 1fr);
     }
 
@@ -1016,7 +1018,4 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .chatbot-taste-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 }

@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     const configEl = document.getElementById('categoryBookingConfig');
     const modal = document.getElementById('categoryBookingModal');
     const cartNotice = document.getElementById('categoryCartNotice');
@@ -798,9 +798,9 @@
             }
 
             const message = await response.text();
-            alert(`장바구니 담기에 실패했습니다: ${message}`);
+            alert(`장바구니에 담지 못했습니다.\n이유: ${message}`);
         } catch (error) {
-            alert(`오류가 발생했습니다: ${error.message}`);
+            alert(`장바구니에 담지 못했습니다.\n이유: ${error.message}`);
         }
     }
 
