@@ -418,7 +418,7 @@
 .transit-detail-panel{
     padding:18px;
     border:1px solid #e4e8f4;
-    border-radius:20px;
+    border-radius:8px;
     background:
         radial-gradient(circle at top right, rgba(37,99,235,0.08), transparent 28%),
         linear-gradient(180deg, #ffffff, #f8fbff);
@@ -467,26 +467,193 @@
     line-height:1.7;
 }
 
+.long-transit-result{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:14px;
+    padding:14px;
+    border:1px solid #bfdbfe;
+    border-radius:8px;
+    background:linear-gradient(180deg, #eff6ff 0%, #fff 100%);
+}
+
+.long-transit-result__badge{
+    width:max-content;
+    max-width:100%;
+    padding:4px 8px;
+    border-radius:8px;
+    background:#dbeafe;
+    color:#1d4ed8;
+    font-size:12px;
+    font-weight:800;
+}
+
+.long-transit-result__time{
+    color:var(--transport-ink);
+    font-size:24px;
+    font-weight:900;
+    line-height:1.2;
+}
+
+.long-transit-result__route{
+    color:var(--transport-ink);
+    font-size:14px;
+    font-weight:800;
+    line-height:1.45;
+}
+
+.long-transit-result__note{
+    color:var(--transport-muted);
+    font-size:12px;
+    line-height:1.5;
+}
+
+.transit-step-list{
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin:16px 0 0;
+    padding:0;
+}
+
+.transit-step{
+    display:flex;
+    gap:12px;
+    padding:13px 14px;
+    border:1px solid #d8e0ee;
+    border-radius:8px;
+    background:linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+    box-shadow:0 8px 20px rgba(15, 23, 42, .06);
+}
+
+.transit-step__index{
+    flex:0 0 28px;
+    width:28px;
+    height:28px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:8px;
+    background:#e0f2fe;
+    color:#0369a1;
+    font-size:12px;
+    font-weight:800;
+}
+
+.transit-step--train .transit-step__index{
+    background:#d1fae5;
+    color:#047857;
+}
+
+.transit-step--subway .transit-step__index{
+    background:#e0e7ff;
+    color:#4338ca;
+}
+
+.transit-step--bus .transit-step__index{
+    background:#fef3c7;
+    color:#b45309;
+}
+
+.transit-step--walk .transit-step__index{
+    background:#f1f5f9;
+    color:#475569;
+}
+
+.transit-step__body{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+
+.transit-step__title{
+    color:var(--transport-ink);
+    font-size:14px;
+    font-weight:800;
+}
+
+.transit-step__summary,
+.transit-step__time{
+    color:var(--transport-muted);
+    font-size:12px;
+    line-height:1.5;
+}
+
+.transit-step__station{
+    width:max-content;
+    max-width:100%;
+    padding:3px 7px;
+    border-radius:8px;
+    background:#f1f5f9;
+    color:#475569;
+    font-size:11px;
+    font-weight:800;
+}
+
+.transit-alt-section{
+    margin-top:14px;
+}
+
+.transit-alt-section__head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:8px;
+    color:var(--transport-ink);
+    font-size:13px;
+}
+
+.transit-alt-section__head span{
+    color:var(--transport-muted);
+    font-size:12px;
+    font-weight:700;
+}
+
 .transit-alt-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
-    gap:10px;
-    margin-top:12px;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:12px;
 }
 
 .transit-alt-card{
     display:flex;
     flex-direction:column;
-    gap:6px;
-    padding:12px 14px;
+    gap:8px;
+    padding:14px;
     border:1px solid #dbe3f3;
-    border-radius:16px;
-    background:#fff;
+    border-radius:8px;
+    background:linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+    box-shadow:0 10px 24px rgba(15, 23, 42, .06);
+}
+
+.transit-alt-card.is-fastest{
+    border-color:#22c55e;
+    background:linear-gradient(180deg, #f0fdf4 0%, #fff 100%);
 }
 
 .transit-alt-card__type{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:6px;
     color:#2563eb;
     font-size:12px;
+    font-weight:800;
+}
+
+.transit-alt-card__badge{
+    display:inline-flex;
+    align-items:center;
+    min-height:20px;
+    padding:0 7px;
+    border-radius:8px;
+    background:#dcfce7;
+    color:#15803d;
+    font-size:11px;
     font-weight:800;
 }
 
@@ -494,6 +661,74 @@
     color:var(--transport-ink);
     font-size:18px;
     font-weight:800;
+}
+
+.transit-alt-card__detail,
+.transit-alt-card__route{
+    color:var(--transport-muted);
+    font-size:12px;
+    line-height:1.5;
+}
+
+.transit-alt-steps{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin:4px 0 0;
+    padding:10px 0 0;
+    border-top:1px dashed #dbe3f3;
+    list-style:none;
+}
+
+.transit-alt-step{
+    display:grid;
+    grid-template-columns:22px minmax(0, 1fr);
+    gap:8px;
+    align-items:flex-start;
+}
+
+.transit-alt-step__dot{
+    width:22px;
+    height:22px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:8px;
+    background:#f1f5f9;
+    color:#475569;
+    font-size:11px;
+    font-weight:800;
+}
+
+.transit-alt-step--train .transit-alt-step__dot{
+    background:#d1fae5;
+    color:#047857;
+}
+
+.transit-alt-step--subway .transit-alt-step__dot{
+    background:#e0e7ff;
+    color:#4338ca;
+}
+
+.transit-alt-step--bus .transit-alt-step__dot{
+    background:#fef3c7;
+    color:#b45309;
+}
+
+.transit-alt-step__text{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    color:var(--transport-muted);
+    font-size:12px;
+    line-height:1.45;
+}
+
+.transit-alt-step__text strong{
+    color:var(--transport-ink);
+    font-size:12px;
 }
 
 .primary-btn,
