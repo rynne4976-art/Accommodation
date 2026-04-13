@@ -1016,8 +1016,8 @@ body.modal-open {
 }
 
 .review-modal-dialog-compact {
-    width: min(1040px, calc(100vw - 48px));
-    max-width: 1040px;
+    width: min(820px, calc(100vw - 48px));
+    max-width: 820px;
     max-height: calc(100vh - 48px);
 }
 
@@ -1192,7 +1192,7 @@ body.modal-open {
 
 .my-review-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+    grid-template-columns: 1fr;
     gap: 24px;
     align-items: start;
 }
@@ -1202,6 +1202,24 @@ body.modal-open {
     display: flex;
     flex-direction: column;
     gap: 18px;
+}
+
+.my-review-side-column {
+    padding-top: 24px;
+    border-top: 1px solid #eaecf0;
+}
+
+#myReviewModal .review-modal-dialog-compact {
+    width: min(820px, calc(100vw - 48px));
+    max-width: 820px;
+}
+
+#myReviewModal .my-review-layout {
+    grid-template-columns: 1fr;
+}
+
+#myReviewModal .modal-preview-list {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .review-empty-inline {
@@ -1607,6 +1625,10 @@ body.modal-open {
         max-height: calc(100vh - 24px);
     }
 
+    #myReviewModal .modal-preview-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .review-page-grid {
         grid-template-columns: 1fr;
     }
@@ -1685,6 +1707,10 @@ body.modal-open {
         border-radius: 20px;
     }
 
+    .my-review-side-column {
+        padding-top: 18px;
+    }
+
     .review-modal-actions {
         flex-direction: column-reverse;
     }
@@ -1695,5 +1721,9 @@ body.modal-open {
 
     .review-card-body {
         flex-direction: column;
+    }
+
+    #myReviewModal .modal-preview-list {
+        grid-template-columns: 1fr;
     }
 }
