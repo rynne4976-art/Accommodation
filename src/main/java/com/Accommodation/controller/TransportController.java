@@ -235,8 +235,10 @@ public class TransportController {
         }
 
         if (tmapApiKey == null || tmapApiKey.isBlank()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "TMAP API key is not configured."));
+            return ResponseEntity.ok(Map.of(
+                    "available", false,
+                    "message", "TMAP API key is not configured."
+            ));
         }
 
         try {
@@ -261,10 +263,10 @@ public class TransportController {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(
+                return ResponseEntity.ok(Map.of(
+                        "available", false,
                         "message", "TMAP driving route lookup failed",
-                        "status", response.statusCode(),
-                        "body", response.body() == null ? "" : response.body()
+                        "status", response.statusCode()
                 ));
             }
 
@@ -277,20 +279,30 @@ public class TransportController {
 
             JsonNode properties = features.get(0).path("properties");
             Map<String, Object> route = new LinkedHashMap<>();
+            route.put("available", true);
             route.put("distance", properties.path("totalDistance").asInt(0));
             route.put("duration", properties.path("totalTime").asInt(0));
             route.put("geometry", buildTmapRouteGeometry(features));
             route.put("source", "tmap");
             return ResponseEntity.ok(route);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(Map.of("message", "경로를 불러오지 못했습니다."));
+            return ResponseEntity.ok(Map.of(
+                    "available", false,
+                    "message", "경로를 불러오지 못했습니다."
+            ));
         }
     }
 
     @PostMapping(value = "/api/transport/tmap-transit-route", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<?> tmapTransitRoute(@RequestBody Map<String, Object> request) {
+        if (tmapApiKey == null || tmapApiKey.isBlank()) {
+            return ResponseEntity.ok(Map.of(
+                    "available", false,
+                    "message", "TMAP API key is not configured."
+            ));
+        }
+
         try {
             String startX = String.valueOf(request.get("startX"));
             String startY = String.valueOf(request.get("startY"));
@@ -376,7 +388,6 @@ public class TransportController {
             ));
 
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.ok(Map.of(
                     "available", false,
                     "message", e.getMessage() == null ? "TMAP 대중교통 조회 실패" : e.getMessage()
