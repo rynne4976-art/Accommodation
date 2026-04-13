@@ -197,29 +197,35 @@ Accommodation/
 
 ## 6. 데이터베이스 구조
 
-README에서는 가독성을 위해 핵심 관계를 도메인별로 나눠 표시했습니다. 전체 ERD 원본은 [docs/erd.dbml](C:\tpro\Accommodation\docs\erd.dbml)에서 확인할 수 있습니다.
+README에서는 가독성을 위해 핵심 관계를 도메인별로 나눠 표시했습니다.
 
-문서용 ERD는 한 장에 전체 구조를 모두 넣기보다, 흐름별 핵심 관계만 분리해 보여주는 방식으로 구성하는 편이 더 읽기 좋습니다.
+README용 ERD는 전체 구조를 한 장에 모두 담기보다, 흐름별 핵심 관계를 분리해 보여주도록 정리했습니다.
 
-README에 넣을 실제 이미지 제작 기준은 [docs/erd-layout-guide.md](C:\tpro\Accommodation\docs\erd-layout-guide.md)에 정리했습니다.
+전체 ERD 원본은 [docs/erd.dbml](docs/erd.dbml)에서, README용 ERD 이미지 제작 기준은 [docs/erd-layout-guide.md](docs/erd-layout-guide.md)에서 확인할 수 있습니다.
 
 ### 1. 예약 관련 ERD
 
-회원이 주문을 생성하고, 주문 항목과 숙박 일자를 기준으로 예약 정보가 관리됩니다.
+<p align="center">
+  <img src="docs/images/erd-reservation.png" alt="예약 관련 ERD">
+</p>
 
-`README용 예약 ERD 이미지 삽입 예정`
+회원이 주문을 생성하고, 주문 항목과 숙박 일자를 기준으로 예약 정보가 관리됩니다.
 
 ### 2. 회원 활동 관련 ERD
 
-회원의 찜, 장바구니, 리뷰, 알림 기능을 중심으로 구성했습니다.
+<p align="center">
+  <img src="docs/images/erd-member-activity.png" alt="회원 활동 관련 ERD">
+</p>
 
-`README용 회원 활동 ERD 이미지 삽입 예정`
+회원의 찜, 장바구니, 리뷰, 알림 기능을 중심으로 구성했습니다.
 
 ### 3. 숙소 상세 정보 관련 ERD
 
-숙소 이미지, 운영 정책, 운영일 정보를 분리해 관리합니다.
+<p align="center">
+  <img src="docs/images/erd-accom-detail.png" alt="숙소 상세 정보 관련 ERD">
+</p>
 
-`README용 숙소 상세 ERD 이미지 삽입 예정`
+숙소 이미지, 운영 정책, 운영일 정보를 분리해 관리합니다.
 
 ### 관계 요약
 
@@ -237,7 +243,7 @@ README에 넣을 실제 이미지 제작 기준은 [docs/erd-layout-guide.md](C:
 | `Member` → `CartItem`, `Accom` → `CartItem` | 각각 1:N, 장바구니 기능 |
 | `Member` → `Notification` | 1:N, 사용자 알림 |
 
-실제 ERD 문서화 원본은 [docs/erd.dbml](C:\tpro\Accommodation\docs\erd.dbml)이며, `dbdiagram.io`에 붙여 넣으면 전체 관계도를 시각화할 수 있습니다. README에는 가독성을 위해 흐름별 핵심 구조만 분리해 표시했습니다.
+`docs/erd.dbml`은 `dbdiagram.io`에 붙여 넣어 전체 관계도를 시각화할 수 있습니다.
 
 ---
 
