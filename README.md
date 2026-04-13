@@ -199,40 +199,84 @@ Accommodation/
 
 README에서는 가독성을 위해 핵심 관계를 도메인별로 나눠 표시했습니다. 전체 ERD 원본은 [docs/erd.dbml](C:\tpro\Accommodation\docs\erd.dbml)에서 확인할 수 있습니다.
 
-### 회원 활동 축
+문서용 ERD는 한 장에 모든 관계를 담기보다, 흐름별로 나눠 읽히도록 구성했습니다.
+
+배치 기준:
+
+- 예약 흐름: `MEMBER → ORDERS → ORDER_ITEM → ORDER_STAY_DATE`를 중심축으로 배치
+- 회원 활동 흐름: `MEMBER`를 중앙에 두고 `WISH`, `CART_ITEM`, `REVIEW`, `NOTIFICATION`을 주변에 배치
+- 숙소 정보 흐름: `ACCOM`을 중심에 두고 `ACCOM_IMG`, `ACCOM_OPERATION_POLICY`, `ACCOM_OPERATION_DAY`를 가까이 배치
+- 연결선은 최대한 직선으로 유지하고, 박스 크기와 간격은 통일
+- README용 그림은 테이블명 중심으로 단순화하고, 필요할 때만 핵심 관계만 노출
+
+### 1. 예약 관련 ERD
+
+회원이 주문을 생성하고, 주문 항목과 숙박 일자를 기준으로 예약 정보가 관리됩니다.
+
+```text
+MEMBER
+  |
+ORDERS
+  |
+ORDER_ITEM ---- ACCOM
+  |
+ORDER_STAY_DATE
+```
 
 ```mermaid
 erDiagram
-    MEMBER ||--o{ REVIEW : writes
+    MEMBER ||--o{ ORDERS : creates
+    ORDERS ||--o{ ORDER_ITEM : contains
+    ORDER_ITEM }o--|| ACCOM : reserves
+    ORDER_ITEM ||--o{ ORDER_STAY_DATE : expands
+```
+
+### 2. 회원 활동 관련 ERD
+
+회원의 찜, 장바구니, 리뷰, 알림 기능을 중심으로 구성했습니다.
+
+```text
+           REVIEW
+             |
+WISH ---- MEMBER ---- CART_ITEM
+             |
+      NOTIFICATION
+
+ACCOM
+ ├─ REVIEW
+ ├─ WISH
+ └─ CART_ITEM
+```
+
+```mermaid
+erDiagram
     MEMBER ||--o{ WISH : saves
     MEMBER ||--o{ CART_ITEM : owns
+    MEMBER ||--o{ REVIEW : writes
     MEMBER ||--o{ NOTIFICATION : receives
 
-    ACCOM ||--o{ REVIEW : reviewed
-    ACCOM ||--o{ WISH : wished
-    ACCOM ||--o{ CART_ITEM : added
+    ACCOM ||--o{ WISH : targets
+    ACCOM ||--o{ CART_ITEM : added_to
+    ACCOM ||--o{ REVIEW : reviewed_in
 
     REVIEW ||--o{ REVIEW_IMG : has
 ```
 
-### 예약 축
+### 3. 숙소 상세 정보 관련 ERD
 
-```mermaid
-erDiagram
-    MEMBER ||--o{ ORDERS : places
-    ORDERS ||--o{ ORDER_ITEM : contains
-    ACCOM ||--o{ ORDER_ITEM : booked
-    ORDER_ITEM ||--o{ ORDER_STAY_DATE : expands
-    ACCOM ||--o{ ORDER_STAY_DATE : reserved
+숙소 이미지, 운영 정책, 운영일 정보를 분리해 관리합니다.
+
+```text
+             ACCOM
+        /      |      \
+ACCOM_IMG ACCOM_OPERATION_POLICY ACCOM_OPERATION_DAY
 ```
-
-### 숙소 메타 축
 
 ```mermaid
 erDiagram
     ACCOM ||--o{ ACCOM_IMG : has
     ACCOM ||--|| ACCOM_OPERATION_POLICY : has
-    ACCOM ||--o{ ACCOM_OPERATION_DAY : operates
+    ACCOM ||--o{ ACCOM_OPERATION_DAY : operates_on
 ```
 
 ### 관계 요약
@@ -251,7 +295,7 @@ erDiagram
 | `Member` → `CartItem`, `Accom` → `CartItem` | 각각 1:N, 장바구니 기능 |
 | `Member` → `Notification` | 1:N, 사용자 알림 |
 
-실제 ERD 문서화 원본은 [docs/erd.dbml](C:\tpro\Accommodation\docs\erd.dbml)이며, `dbdiagram.io`에 붙여 넣으면 전체 관계도를 시각화할 수 있습니다.
+실제 ERD 문서화 원본은 [docs/erd.dbml](C:\tpro\Accommodation\docs\erd.dbml)이며, `dbdiagram.io`에 붙여 넣으면 전체 관계도를 시각화할 수 있습니다. README에는 가독성을 위해 흐름별 핵심 구조만 분리해 표시했습니다.
 
 ---
 
