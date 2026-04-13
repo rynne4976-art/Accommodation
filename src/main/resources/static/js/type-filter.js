@@ -99,6 +99,51 @@
         document.dispatchEvent(new CustomEvent("typeList:updated"));
     };
 
+    const resetFieldValue = (input) => {
+        if (!(input instanceof HTMLInputElement) || !input.name) {
+            return;
+        }
+
+        switch (input.name) {
+            case "adultCount":
+            case "childCount":
+                input.value = "0";
+                break;
+            case "roomCount":
+            case "page":
+                input.value = "1";
+                break;
+            case "searchQuery":
+            case "checkInDate":
+            case "checkOutDate":
+            case "grade":
+            case "minPrice":
+            case "maxPrice":
+            case "minRating":
+                input.value = "";
+                break;
+            default:
+                break;
+        }
+    };
+
+    const resetBookingAndFilterForms = (bookingForm, filterForm) => {
+        bookingForm.querySelectorAll("input").forEach(resetFieldValue);
+
+        if (!filterForm) {
+            return;
+        }
+
+        filterForm.querySelectorAll('input[type="hidden"]').forEach(resetFieldValue);
+        filterForm.querySelectorAll('input[type="radio"]').forEach((input) => {
+            input.checked = input.value === "";
+        });
+
+        applyPriceRange(filterForm, "");
+        updateFilterChipState(filterForm);
+        syncSharedFields();
+    };
+
     document.querySelectorAll(".type-filter-form").forEach((form) => {
         form.addEventListener("change", async (event) => {
             const target = event.target;
@@ -126,5 +171,23 @@
         form.addEventListener("submit", () => {
             syncSharedFields();
         });
+    });
+
+    document.addEventListener("bookingBar:reset", async (event) => {
+        const bookingForm = event.detail?.form;
+        if (!(bookingForm instanceof HTMLFormElement) || !bookingForm.closest(".type-search-panel")) {
+            return;
+        }
+
+        const section = bookingForm.closest(".type-accom-section");
+        const filterForm = section?.querySelector(".type-filter-form");
+
+        resetBookingAndFilterForms(bookingForm, filterForm);
+
+        try {
+            await replaceResults(bookingForm);
+        } catch (_) {
+            window.location.href = bookingForm.action;
+        }
     });
 })();
