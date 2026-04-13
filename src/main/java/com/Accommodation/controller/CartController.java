@@ -4,6 +4,7 @@ import com.Accommodation.dto.CartItemDto;
 import com.Accommodation.dto.CartListItemDto;
 import com.Accommodation.dto.CartSelectionRequest;
 import com.Accommodation.service.CartService;
+import com.Accommodation.service.MemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import java.util.List;
 public class CartController {
 
     private final CartService cartService;
+    private final MemberService memberService;
 
     @GetMapping("/cart")
     public String cartList(Model model, Principal principal) {
@@ -49,6 +51,10 @@ public class CartController {
     public ResponseEntity<?> addToCart(@RequestBody @Valid CartItemDto cartItemDto,
                                        BindingResult bindingResult,
                                        Principal principal) {
+        if (!memberService.hasRequiredReservationInfo(principal.getName())) {
+            return new ResponseEntity<>("예약을 위해 연락처와 주소를 먼저 입력해주세요.", HttpStatus.BAD_REQUEST);
+        }
+
         if (bindingResult.hasErrors()) {
             StringBuilder sb = new StringBuilder();
             for (FieldError error : bindingResult.getFieldErrors()) {
@@ -104,6 +110,10 @@ public class CartController {
     @ResponseBody
     public ResponseEntity<?> confirmCartItem(@PathVariable Long cartItemId,
                                              Principal principal) {
+        if (!memberService.hasRequiredReservationInfo(principal.getName())) {
+            return new ResponseEntity<>("예약을 위해 연락처와 주소를 먼저 입력해주세요.", HttpStatus.BAD_REQUEST);
+        }
+
         Long orderId;
         try {
             orderId = cartService.confirmCartItem(cartItemId, principal.getName());
@@ -117,6 +127,10 @@ public class CartController {
     @ResponseBody
     public ResponseEntity<?> confirmSelectedCartItems(@RequestBody CartSelectionRequest request,
                                                       Principal principal) {
+        if (!memberService.hasRequiredReservationInfo(principal.getName())) {
+            return new ResponseEntity<>("예약을 위해 연락처와 주소를 먼저 입력해주세요.", HttpStatus.BAD_REQUEST);
+        }
+
         try {
             List<Long> orderIds = cartService.confirmSelectedCartItems(
                     principal.getName(),
