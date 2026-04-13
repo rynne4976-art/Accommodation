@@ -31,7 +31,7 @@
     }
 
     function formatDisplayDate(date) {
-        return date.getMonth() + '.' + String(date.getDate()).padStart(2, '0') + ' ' + weekdays[date.getDay()];
+        return (date.getMonth() + 1) + '.' + String(date.getDate()).padStart(2, '0') + ' ' + weekdays[date.getDay()];
     }
 
     function formatRangeText(startDate, endDate) {

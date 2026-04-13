@@ -3,6 +3,7 @@ package com.Accommodation.controller;
 import com.Accommodation.dto.ChatbotActivityItemDto;
 import com.Accommodation.dto.ChatbotAssistantResponseDto;
 import com.Accommodation.dto.ChatbotComparisonResponseDto;
+import com.Accommodation.dto.ChatbotOptionResponseDto;
 import com.Accommodation.dto.ChatbotRecommendationResponseDto;
 import com.Accommodation.dto.ChatbotSelectableAccomDto;
 import com.Accommodation.service.AccomService;
@@ -34,6 +35,14 @@ public class ChatbotController {
     @GetMapping("/recommendations")
     public ChatbotRecommendationResponseDto recommendations(@RequestParam("query") String query) {
         return accomService.getChatbotRecommendations(query);
+    }
+
+    @GetMapping("/options")
+    public ChatbotOptionResponseDto options() {
+        return new ChatbotOptionResponseDto(
+                accomService.getChatbotLocationOptions(),
+                accomService.getChatbotAccomTypeOptions()
+        );
     }
 
     @GetMapping("/selectable-accoms")
@@ -76,8 +85,10 @@ public class ChatbotController {
     @GetMapping("/activities")
     public List<ChatbotActivityItemDto> activities(
             @RequestParam(value = "keyword", defaultValue = "") String keyword,
-            @RequestParam(value = "region", defaultValue = "서울") String region) {
-        return regionActivityService.getChatbotActivities(keyword, region);
+            @RequestParam(value = "region", defaultValue = "서울") String region,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return regionActivityService.getChatbotActivities(keyword, region, startDate, endDate);
     }
 
     @GetMapping("/assistant")

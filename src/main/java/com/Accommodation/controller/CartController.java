@@ -33,7 +33,6 @@ public class CartController {
         boolean hasUnreservableItem = cartItems.stream()
                 .anyMatch(item -> !item.isReservable());
 
-        model.addAttribute("compactHeader", true);
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("cartCount", cartItems.size());
         model.addAttribute("cartTotalPrice", totalPrice);

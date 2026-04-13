@@ -1,4 +1,7 @@
 ﻿<div th:fragment="chatbot" class="chatbot-widget" xmlns:th="http://www.thymeleaf.org">
+    <div id="chatbot-security"
+         th:attr="data-csrf-token=${_csrf != null ? _csrf.token : ''},data-csrf-header=${_csrf != null ? _csrf.headerName : ''}"
+         hidden></div>
     <div id="chatbot-backdrop" class="chatbot-backdrop is-hidden"></div>
     <button type="button"
             id="chatbot-toggle"

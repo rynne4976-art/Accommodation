@@ -15,12 +15,13 @@
         return;
     }
 
-    const bookingPresets = {
-        type: ['호텔', '리조트', '펜션', '모텔', '게스트하우스', '전체'],
-        location: ['서울', '부산', '제주', '강릉', '경주', '직접 입력']
+    const defaultBookingPresets = {
+        type: ['호텔', '펜션', '리조트', '모텔', '게스트하우스', '전체'],
+        location: ['서울', '부산', '강릉', '제주', '경주']
     };
-    const curationLocations = ['서울', '부산', '제주', '강릉', '경주', '여수'];
+    const defaultCurationLocations = ['서울', '부산', '강릉', '제주', '경주'];
     const curationPrices = [
+        { title: '상관 없음', subtitle: '모든 가격대', minPrice: null, maxPrice: null },
         { title: '5만원 미만', subtitle: '초저가 중심', minPrice: null, maxPrice: 50000 },
         { title: '5만원 이상 ~ 10만원 미만', subtitle: '가성비 숙소', minPrice: 50000, maxPrice: 100000 },
         { title: '10만원 이상 ~ 15만원 미만', subtitle: '중간 가격대', minPrice: 100000, maxPrice: 150000 },
@@ -38,11 +39,17 @@
 
     const state = {
         initialized: false,
+        optionsLoaded: false,
         mode: '',
         step: 'category',
         booking: emptyBooking(),
         curation: emptyCuration(),
-        comparison: emptyComparison()
+        comparison: emptyComparison(),
+        options: {
+            bookingTypes: defaultBookingPresets.type.slice(),
+            bookingLocations: defaultBookingPresets.location.slice(),
+            curationLocations: defaultCurationLocations.slice()
+        }
     };
 
     const CATEGORY_COMMANDS = ['장바구니 담기', '맞춤 추천', '숙소 비교'];
@@ -103,17 +110,46 @@
         handleInput(value);
     });
 
-    function initializeChat() {
+    async function initializeChat() {
         state.initialized = true;
         state.mode = '';
         state.step = 'category';
         state.booking = emptyBooking();
         state.curation = emptyCuration();
         state.comparison = emptyComparison();
+        await loadChatbotOptions();
         clearMessages();
         renderFlow();
         pushMessage('bot', '무엇을 도와드릴까요? 장바구니 담기, 맞춤 추천, 숙소 비교를 지원합니다.');
         renderCategoryStage();
+    }
+
+    async function loadChatbotOptions() {
+        if (state.optionsLoaded) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/chatbot/options', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('options request failed');
+            }
+
+            await response.json();
+            state.options = {
+                bookingTypes: defaultBookingPresets.type.slice(),
+                bookingLocations: defaultBookingPresets.location.slice(),
+                curationLocations: defaultCurationLocations.slice()
+            };
+            state.optionsLoaded = true;
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     function renderFlow() {
@@ -339,7 +375,7 @@
         input.placeholder = '숙소 유형을 입력하거나 선택하세요.';
         clearStage();
         renderStepNavigation();
-        stage.appendChild(buildCardGrid(bookingPresets.type.map(function (title) {
+        stage.appendChild(buildCardGrid(state.options.bookingTypes.map(function (title) {
             return { title: title, subtitle: '유형 선택' };
         }), function (item) {
             pushMessage('user', item.title);
@@ -351,7 +387,7 @@
         input.placeholder = '지역을 입력하거나 선택하세요.';
         clearStage();
         renderStepNavigation();
-        stage.appendChild(buildCardGrid(bookingPresets.location.map(function (title) {
+        stage.appendChild(buildCardGrid(state.options.bookingLocations.map(function (title) {
             return { title: title, subtitle: '지역 선택' };
         }), function (item) {
             pushMessage('user', item.title);
@@ -363,7 +399,7 @@
         input.placeholder = '추천받을 지역을 입력하거나 선택하세요.';
         clearStage();
         renderStepNavigation();
-        stage.appendChild(buildCardGrid(curationLocations.map(function (title) {
+        stage.appendChild(buildCardGrid(state.options.curationLocations.map(function (title) {
             return { title: title, subtitle: '추천 지역' };
         }), function (item) {
             pushMessage('user', item.title);
@@ -578,10 +614,10 @@
     }
 
     async function requestCurationRecommendations() {
+        const loadingMessage = pushLoadingMessage();
         try {
             clearStage();
             renderStepNavigation();
-            pushMessage('bot', '선택한 조건으로 AI 맞춤 추천을 생성하고 있습니다.');
 
             const response = await fetch('/api/chatbot/assistant?message=' + encodeURIComponent(buildCurationAssistantPrompt()), {
                 headers: {
@@ -595,6 +631,7 @@
 
             const data = await response.json();
             const filteredRecommendations = applyCurationFilters(data.recommendations || []);
+            removeMessage(loadingMessage);
 
             renderRecommendationResult({
                 interpretedNeeds: [
@@ -609,8 +646,8 @@
             });
         } catch (error) {
             console.error(error);
-            pushMessage('bot', '맞춤 추천 API 응답이 없어 검색 결과 페이지로 바로 안내합니다.');
-            renderRecommendationFallback();
+            removeMessage(loadingMessage);
+            pushMessage('bot', '맞춤 추천을 불러오지 못했습니다. 검색 결과로 이동하거나 다시 시도해 주세요.');
             setContextualQuickActions(['검색 결과로 이동', '다시 시도', '다시 기능 선택'], function (value) {
                 if (value === '검색 결과로 이동') {
                     redirectToCurationSearch();
@@ -628,8 +665,10 @@
     function applyCurationFilters(items) {
         const minPrice = state.curation.minPrice;
         const maxPrice = state.curation.maxPrice;
-        if (minPrice != null || maxPrice != null) {
-            return items.filter(function (item) {
+        const requestedGuestCount = (Number(state.curation.adultCount) || 0) + (Number(state.curation.childCount) || 0);
+
+        return items.filter(function (item) {
+            if (minPrice != null || maxPrice != null) {
                 if (typeof item.pricePerNight !== 'number') {
                     return false;
                 }
@@ -639,26 +678,22 @@
                 if (maxPrice != null && item.pricePerNight >= maxPrice) {
                     return false;
                 }
-                return true;
-            });
-        }
-        return items;
+            }
+
+            if (requestedGuestCount > 0 && !matchesGuestPolicy(item, requestedGuestCount)) {
+                return false;
+            }
+
+            return true;
+        });
     }
 
     function renderRecommendationResult(data) {
         clearStage();
 
-        const needs = Array.isArray(data.interpretedNeeds) ? data.interpretedNeeds : [];
         const recommendations = dedupeRecommendations(Array.isArray(data.recommendations) ? data.recommendations : []);
 
         input.placeholder = '원하는 기능을 선택하거나 직접 입력하세요.';
-
-        const summary = document.createElement('div');
-        summary.className = 'chatbot-summary';
-        summary.innerHTML = (needs.length ? needs : ['조건을 넓게 해석해 추천했습니다.']).map(function (item) {
-            return summaryItem('조건', item);
-        }).join('');
-        stage.appendChild(summary);
 
         if (!recommendations.length) {
             const empty = document.createElement('div');
@@ -667,52 +702,7 @@
             empty.innerHTML = summaryItem('안내', '조건에 맞는 추천 숙소가 없습니다.');
             stage.appendChild(empty);
         } else {
-            const grid = document.createElement('div');
-            grid.className = 'chatbot-accom-grid';
-
-            recommendations.forEach(function (item) {
-                const stars = Array.from({ length: item.grade || 0 }, function () {
-                    return '<span class="star filled">&#9733;</span>';
-                }).join('');
-
-                const card = document.createElement('a');
-                card.href = '/accom/' + item.accomId;
-                card.className = 'accom-card card';
-                card.innerHTML =
-                    '<div class="accom-card__visual">' +
-                        (item.imgUrl
-                            ? '<img class="accom-card__image" src="' + escapeHtml(item.imgUrl) + '" alt="' + escapeHtml(item.accomName) + '">'
-                            : '<div class="accom-card__image-placeholder"><span>' + escapeHtml(String(item.grade || '')) + '</span></div>') +
-                    '</div>' +
-                    '<div class="card-body accom-info">' +
-                        '<div class="accom-card__badge-row">' +
-                            '<span class="accom-card__kind">' + escapeHtml(item.accomType || '숙소') + '</span>' +
-                            '<span class="accom-card__grade-stars">' + stars + '</span>' +
-                        '</div>' +
-                        '<h3 class="accom-card__title">' + escapeHtml(item.accomName) + '</h3>' +
-                        '<div class="accom-card__rating">' +
-                            '<span class="accom-card__score">' + formatRating(item.avgRating) + '</span>' +
-                            '<div class="accom-card__rating-copy">' +
-                                '<span class="accom-card__review-link">' + (item.reviewCount || 0) + '개 후기</span>' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="accom-card__meta">' +
-                            '<div class="accom-card__location"><span>' + escapeHtml(item.location || '') + '</span></div>' +
-                            '<div class="accom-card__desc"><span>' + escapeHtml((item.reasons || []).join(' / ')) + '</span></div>' +
-                        '</div>' +
-                        '<div class="card-bottom accom-card__bottom">' +
-                            '<div class="accom-card__price-wrap">' +
-                                '<span class="accom-card__price-label">1박 기준</span>' +
-                                '<strong class="price">' + formatPrice(item.pricePerNight) + '</strong>' +
-                            '</div>' +
-                            '<span class="reserve-btn">상세보기</span>' +
-                        '</div>' +
-                    '</div>';
-
-                grid.appendChild(card);
-            });
-
-            stage.appendChild(grid);
+            stage.appendChild(buildRecommendationGrid(recommendations));
         }
 
         setContextualQuickActions(['조건 다시 선택', '검색 결과로 이동', '다시 기능 선택'], function (value) {
@@ -736,19 +726,168 @@
         });
     }
 
-    function renderRecommendationFallback() {
+    function renderTripPlanResult(recommendations, region, checkInDate, checkOutDate) {
         clearStage();
         input.placeholder = '원하는 기능을 선택하거나 직접 입력하세요.';
 
         const summary = document.createElement('div');
         summary.className = 'chatbot-summary';
         summary.innerHTML = [
-            summaryItem('지역', state.curation.location || '-'),
-            summaryItem('체크인', state.curation.checkInDate || '-'),
-            summaryItem('체크아웃', state.curation.checkOutDate || '-'),
-            summaryItem('가격대', state.curation.priceLabel || '가격 무관')
+            summaryItem('지역', region || '-'),
+            summaryItem('체크인', checkInDate || '-'),
+            summaryItem('체크아웃', checkOutDate || '-')
         ].join('');
         stage.appendChild(summary);
+
+        const stayTitle = document.createElement('div');
+        stayTitle.className = 'chatbot-plan-section-title';
+        stayTitle.textContent = '추천 숙소';
+        stage.appendChild(stayTitle);
+
+        if (Array.isArray(recommendations) && recommendations.length) {
+            stage.appendChild(buildRecommendationGrid(dedupeRecommendations(recommendations)));
+        } else {
+            const emptyStay = document.createElement('div');
+            emptyStay.className = 'chatbot-summary';
+            emptyStay.innerHTML = summaryItem('안내', '조건에 맞는 추천 숙소가 없습니다.');
+            stage.appendChild(emptyStay);
+        }
+
+        const activityTitle = document.createElement('div');
+        activityTitle.className = 'chatbot-plan-section-title';
+        activityTitle.textContent = '축제 · 행사 · 관광지';
+        stage.appendChild(activityTitle);
+
+        const loading = document.createElement('div');
+        loading.className = 'chatbot-summary';
+        loading.innerHTML = summaryItem('안내', '여행 일정에 맞는 즐길거리를 불러오는 중입니다.');
+        stage.appendChild(loading);
+
+        const params = new URLSearchParams({
+            region: region || '서울',
+            startDate: checkInDate || '',
+            endDate: checkOutDate || ''
+        });
+
+        fetch('/api/chatbot/activities?' + params.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('activities request failed');
+                }
+                return response.json();
+            })
+            .then(function (items) {
+                if (loading.parentNode) {
+                    loading.parentNode.removeChild(loading);
+                }
+                stage.appendChild(buildActivityGrid(Array.isArray(items) ? items : []));
+            })
+            .catch(function (error) {
+                console.error(error);
+                if (loading.parentNode) {
+                    loading.parentNode.removeChild(loading);
+                }
+                const empty = document.createElement('div');
+                empty.className = 'chatbot-summary';
+                empty.innerHTML = summaryItem('안내', '여행 일정에 맞는 즐길거리를 불러오지 못했습니다.');
+                stage.appendChild(empty);
+            });
+
+        setContextualQuickActions(['다시 검색', '다시 기능 선택'], function (value) {
+            if (value === '다시 검색') {
+                clearStage();
+                return;
+            }
+            resetChat();
+        });
+    }
+
+    function buildRecommendationGrid(recommendations) {
+        const grid = document.createElement('div');
+        grid.className = 'chatbot-accom-grid';
+
+        recommendations.forEach(function (item) {
+            const stars = Array.from({ length: item.grade || 0 }, function () {
+                return '<span class="star filled">&#9733;</span>';
+            }).join('');
+
+            const card = document.createElement('a');
+            card.href = '/accom/' + item.accomId;
+            card.className = 'accom-card card';
+            card.innerHTML =
+                '<div class="accom-card__visual">' +
+                    (item.imgUrl
+                        ? '<img class="accom-card__image" src="' + escapeHtml(item.imgUrl) + '" alt="' + escapeHtml(item.accomName) + '">'
+                        : '<div class="accom-card__image-placeholder"><span>' + escapeHtml(String(item.grade || '')) + '</span></div>') +
+                '</div>' +
+                '<div class="card-body accom-info">' +
+                    '<div class="accom-card__badge-row">' +
+                        '<span class="accom-card__kind">' + escapeHtml(item.accomType || '숙소') + '</span>' +
+                        '<span class="accom-card__grade-stars">' + stars + '</span>' +
+                    '</div>' +
+                    '<h3 class="accom-card__title">' + escapeHtml(item.accomName) + '</h3>' +
+                    '<div class="accom-card__rating">' +
+                        '<span class="accom-card__score">' + formatRating(item.avgRating) + '</span>' +
+                        '<div class="accom-card__rating-copy">' +
+                            '<span class="accom-card__review-link">' + (item.reviewCount || 0) + '개 후기</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="accom-card__meta">' +
+                        '<div class="accom-card__location"><span>' + escapeHtml(item.location || '') + '</span></div>' +
+                        '<div class="accom-card__desc"><span>' + escapeHtml((item.reasons || []).join(' / ')) + '</span></div>' +
+                    '</div>' +
+                    '<div class="card-bottom accom-card__bottom">' +
+                        '<div class="accom-card__price-wrap">' +
+                            '<span class="accom-card__price-label">1박 기준</span>' +
+                            '<strong class="price">' + formatPrice(item.pricePerNight) + '</strong>' +
+                        '</div>' +
+                        '<span class="reserve-btn">상세보기</span>' +
+                    '</div>' +
+                '</div>';
+
+            grid.appendChild(card);
+        });
+
+        return grid;
+    }
+
+    function buildActivityGrid(items) {
+        const grid = document.createElement('div');
+        grid.className = 'chatbot-activity-grid';
+
+        if (!items.length) {
+            const empty = document.createElement('div');
+            empty.className = 'chatbot-summary';
+            empty.innerHTML = summaryItem('안내', '해당 일정에 맞는 축제·행사 정보가 없습니다. 대표 관광지를 참고해 주세요.');
+            grid.appendChild(empty);
+            return grid;
+        }
+
+        items.forEach(function (item) {
+            const card = document.createElement(item.linkUrl ? 'a' : 'div');
+            card.className = 'chatbot-activity-card';
+            if (item.linkUrl) {
+                card.href = item.linkUrl;
+                card.target = '_blank';
+                card.rel = 'noopener noreferrer';
+            }
+
+            card.innerHTML =
+                '<div class="chatbot-activity-card__body">' +
+                    '<span class="chatbot-activity-card__category">' + escapeHtml(item.category || '추천') + '</span>' +
+                    '<strong class="chatbot-activity-card__title">' + escapeHtml(item.title || '추천 장소') + '</strong>' +
+                    '<span class="chatbot-activity-card__meta">' + escapeHtml(item.address || '') + '</span>' +
+                    '<span class="chatbot-activity-card__meta">' + escapeHtml(item.period || '상시 운영') + '</span>' +
+                '</div>';
+
+            grid.appendChild(card);
+        });
+
+        return grid;
     }
 
     function buildCardGrid(items, callback) {
@@ -846,6 +985,7 @@
     }
 
     function requestAssistantReply(message) {
+        const loadingMessage = pushLoadingMessage();
         fetch('/api/chatbot/assistant?message=' + encodeURIComponent(message), {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
@@ -858,14 +998,50 @@
                 return response.json();
             })
             .then(function (data) {
-                pushMessage('bot', data.answer || '추천 결과를 확인해주세요.');
+                removeMessage(loadingMessage);
+                const recommendations = Array.isArray(data.recommendations) ? data.recommendations : [];
+                const actionType = data.actionType || '';
+                const answer = data.answer || '추천 결과를 확인해주세요.';
+
+                if (answer !== '상세보기를 클릭하면 자세한 정보를 확인할 수 있습니다.' || recommendations.length > 0) {
+                    pushMessage('bot', answer);
+                }
+
+                if (actionType === 'compare_ready' && recommendations.length >= 2) {
+                    requestCompare(recommendations[0], recommendations[1]);
+                    return;
+                }
+
+                if (actionType === 'trip_plan_ready') {
+                    renderTripPlanResult(
+                        recommendations,
+                        data.region || '',
+                        data.checkInDate || '',
+                        data.checkOutDate || ''
+                    );
+                    return;
+                }
+
+                if (actionType === 'cart_added') {
+                    clearStage();
+                    setContextualQuickActions(['장바구니 보기', '처음으로'], function (value) {
+                        if (value === '장바구니 보기') {
+                            window.location.href = '/cart';
+                            return;
+                        }
+                        goToCategorySelection();
+                    });
+                    return;
+                }
+
                 renderRecommendationResult({
                     interpretedNeeds: [],
-                    recommendations: Array.isArray(data.recommendations) ? data.recommendations : []
+                    recommendations: recommendations
                 });
             })
             .catch(function (error) {
                 console.error(error);
+                removeMessage(loadingMessage);
                 pushMessage('bot', 'AI 추천을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
             });
     }
@@ -880,6 +1056,7 @@
             childCount: String(state.booking.childCount || 0),
             roomCount: String(state.booking.roomCount || 1)
         });
+        const loadingMessage = pushLoadingMessage();
 
         fetch('/api/chatbot/cart-candidates?' + params.toString(), {
             headers: {
@@ -893,6 +1070,7 @@
                 return response.json();
             })
             .then(function (data) {
+                removeMessage(loadingMessage);
                 const recommendations = Array.isArray(data.recommendations) ? data.recommendations : [];
                 const actionType = data.actionType || '';
 
@@ -926,6 +1104,7 @@
             })
             .catch(function (error) {
                 console.error(error);
+                removeMessage(loadingMessage);
                 pushMessage('bot', '장바구니 후보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
             });
     }
@@ -945,13 +1124,6 @@
         clearStage();
         renderStepNavigation();
         input.placeholder = '숙박 업소를 선택해 주세요.';
-
-        const summary = document.createElement('div');
-        summary.className = 'chatbot-summary';
-        summary.innerHTML = buildBookingFailureNeeds().map(function (item) {
-            return summaryItem('조건', item);
-        }).join('');
-        stage.appendChild(summary);
 
         const grid = document.createElement('div');
         grid.className = 'chatbot-accom-grid';
@@ -1013,13 +1185,19 @@
     }
 
     function submitBookingCartSelection(accomId, accomName) {
+        const securityEl = document.getElementById('chatbot-security');
         const csrfTokenMeta = document.querySelector('meta[name="_csrf"]');
         const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
-        const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : readCookieValue('XSRF-TOKEN');
-        const csrfHeaderName = csrfHeaderMeta ? csrfHeaderMeta.content : 'X-XSRF-TOKEN';
+        const csrfToken = csrfTokenMeta
+            ? csrfTokenMeta.content
+            : (securityEl ? securityEl.dataset.csrfToken : '') || readCookieValue('XSRF-TOKEN');
+        const csrfHeaderName = csrfHeaderMeta
+            ? csrfHeaderMeta.content
+            : (securityEl ? securityEl.dataset.csrfHeader : '') || 'X-XSRF-TOKEN';
         const headers = {
             'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            Accept: 'application/json'
         };
 
         if (csrfToken) {
@@ -1028,6 +1206,7 @@
 
         fetch('/cart', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: headers,
             body: JSON.stringify({
                 accomId: accomId,
@@ -1039,6 +1218,9 @@
             })
         })
             .then(function (response) {
+                if (response.redirected) {
+                    throw new Error('로그인이 필요하거나 보안 검증에 실패했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.');
+                }
                 if (response.ok) {
                     return response.text();
                 }
@@ -1047,6 +1229,9 @@
                 }
                 if (response.status === 403) {
                     throw new Error('보안 토큰이 만료되었거나 권한이 없습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.');
+                }
+                if (response.status === 405) {
+                    throw new Error('장바구니 요청이 보안 검증에서 차단되었습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.');
                 }
                 return response.text().then(function (message) {
                     throw new Error(message || '장바구니에 담지 못했습니다.');
@@ -1102,6 +1287,21 @@
             return { min: 1, max: 6, label: typeLabel || '해당 숙소 유형' };
         }
         return { min: 2, max: 10, label: typeLabel || '해당 숙소 유형' };
+    }
+
+    function matchesGuestPolicy(item, requestedGuestCount) {
+        const accomType = String(item && item.accomType ? item.accomType : '').toUpperCase();
+        const isCompactStay = accomType.indexOf('모텔') >= 0 || accomType.indexOf('게스트하우스') >= 0
+            || accomType === 'MOTEL' || accomType === 'GUESTHOUSE';
+        const minGuests = isCompactStay ? 1 : 2;
+        const maxGuests = isCompactStay ? 6 : 10;
+        const guestCapacity = Number(item && item.guestCount);
+
+        if (requestedGuestCount < minGuests || requestedGuestCount > maxGuests) {
+            return false;
+        }
+
+        return !guestCapacity || guestCapacity >= requestedGuestCount;
     }
 
     function buildGuestPrompt(typeLabel) {
@@ -1542,9 +1742,10 @@
     }
 
     async function requestCompare(left, right) {
+        state.mode = 'comparison';
         clearStage();
         clearQuickActions();
-        pushMessage('bot', left.accomName + ' vs ' + right.accomName + ' 비교를 시작합니다.');
+        const loadingMessage = pushLoadingMessage();
 
         try {
             const res = await fetch(
@@ -1553,11 +1754,13 @@
             );
             if (!res.ok) throw new Error('failed');
             const data = await res.json();
+            removeMessage(loadingMessage);
 
             state.step = 'comparison-result';
             renderFlow();
             renderComparisonResult(data, left, right);
         } catch (e) {
+            removeMessage(loadingMessage);
             pushMessage('bot', '비교 정보를 불러오지 못했습니다.');
             setContextualQuickActions(['다시 선택', '처음으로'], function (v) {
                 if (v === '다시 선택') {
@@ -1606,8 +1809,14 @@
         // 메트릭 비교
         const metricsEl = document.createElement('div');
         metricsEl.className = 'chatbot-metrics';
+        const metricMax = {
+            price: 300000,
+            rating: 5,
+            grade: 5,
+            guest: 10
+        };
 
-        function metricRow(label, lVal, rVal, lDisplay, rDisplay, compareType) {
+        function metricRow(label, lVal, rVal, lDisplay, rDisplay, compareType, maxValue) {
             // compareType: 'low' (낮을수록 좋음: 가격), 'high' (높을수록 좋음: 평점, 등급 등)
             let lWins = false;
             let rWins = false;
@@ -1623,8 +1832,9 @@
                 rWins = rVal > lVal;
             }
 
-            const lPct = lVal > 0 || rVal > 0 ? Math.round(lVal / (lVal + rVal) * 100) : 50;
-            const rPct = 100 - lPct;
+            const safeMax = maxValue > 0 ? maxValue : Math.max(lVal, rVal, 1);
+            const lPct = Math.max(0, Math.min(100, Math.round((lVal / safeMax) * 100)));
+            const rPct = Math.max(0, Math.min(100, Math.round((rVal / safeMax) * 100)));
 
             const row = document.createElement('div');
             row.className = 'chatbot-metric-row';
@@ -1644,21 +1854,21 @@
         // 호출 부분 수정
         const lPrice = L.pricePerNight || 0;
         const rPrice = R.pricePerNight || 0;
-        metricsEl.appendChild(metricRow('가격', lPrice, rPrice, formatPrice(L.pricePerNight), formatPrice(R.pricePerNight), 'low'));
+        metricsEl.appendChild(metricRow('가격', lPrice, rPrice, formatPrice(L.pricePerNight), formatPrice(R.pricePerNight), 'low', metricMax.price));
 
-        const lRating = (L.avgRating || 0) * 10;
-        const rRating = (R.avgRating || 0) * 10;
-        metricsEl.appendChild(metricRow('평점', lRating, rRating, '★ ' + formatRating(L.avgRating), '★ ' + formatRating(R.avgRating), 'high'));
+        const lRating = L.avgRating || 0;
+        const rRating = R.avgRating || 0;
+        metricsEl.appendChild(metricRow('평점', lRating, rRating, '★ ' + formatRating(L.avgRating), '★ ' + formatRating(R.avgRating), 'high', metricMax.rating));
 
         const lGrade = L.grade || 0;
         const rGrade = R.grade || 0;
         metricsEl.appendChild(metricRow('등급', lGrade, rGrade,
             Array.from({ length: lGrade }, function () { return '★'; }).join('') || '-',
-            Array.from({ length: rGrade }, function () { return '★'; }).join('') || '-', 'high'));
+            Array.from({ length: rGrade }, function () { return '★'; }).join('') || '-', 'high', metricMax.grade));
 
         const lGuest = L.guestCount || 0;
         const rGuest = R.guestCount || 0;
-        metricsEl.appendChild(metricRow('수용인원', lGuest, rGuest, lGuest + '명', rGuest + '명', 'high'));
+        metricsEl.appendChild(metricRow('수용인원', lGuest, rGuest, lGuest + '명', rGuest + '명', 'high', metricMax.guest));
 
         // 체크인 단순 표시
         const checkInRow = document.createElement('div');
@@ -1759,6 +1969,17 @@ metricsEl.appendChild(checkOutRow);
         item.appendChild(bubble);
         messages.appendChild(item);
         messages.scrollTop = messages.scrollHeight;
+        return item;
+    }
+
+    function pushLoadingMessage() {
+        return pushMessage('bot', '검색 중 입니다.');
+    }
+
+    function removeMessage(messageElement) {
+        if (messageElement && messageElement.parentNode) {
+            messageElement.parentNode.removeChild(messageElement);
+        }
     }
 
     function clearMessages() {

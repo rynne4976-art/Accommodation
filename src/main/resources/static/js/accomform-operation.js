@@ -23,6 +23,19 @@
         return yyyy + '-' + mm + '-' + dd;
     }
 
+    function parseLocalDate(value) {
+        if (!value) {
+            return null;
+        }
+
+        const parts = value.split('-').map(Number);
+        if (parts.length !== 3 || parts.some(Number.isNaN)) {
+            return null;
+        }
+
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
     function getTodayString() {
         const now = new Date();
         return formatDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
@@ -59,8 +72,12 @@
     function selectDateRange(startValue, endValue) {
         const from = startValue <= endValue ? startValue : endValue;
         const to = startValue <= endValue ? endValue : startValue;
-        let cursor = new Date(from + 'T00:00:00');
-        const last = new Date(to + 'T00:00:00');
+        let cursor = parseLocalDate(from);
+        const last = parseLocalDate(to);
+
+        if (!cursor || !last) {
+            return;
+        }
 
         while (cursor <= last) {
             selectedDateSet.add(formatDate(cursor));
@@ -88,10 +105,10 @@
             return;
         }
 
-        const startDate = new Date(startValue);
-        const endDate = new Date(endValue);
+        const startDate = parseLocalDate(startValue);
+        const endDate = parseLocalDate(endValue);
 
-        if (startDate > endDate) {
+        if (!startDate || !endDate || startDate > endDate) {
             operationDateListBox.innerHTML = '<p class="operation-date-placeholder is-error">운영 종료일은 운영 시작일보다 빠를 수 없습니다.</p>';
             updateOperationDateState();
             return;
