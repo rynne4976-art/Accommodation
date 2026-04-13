@@ -1,5 +1,6 @@
 package com.Accommodation.service;
 
+import com.Accommodation.constant.AccomType;
 import com.Accommodation.dto.AccomFormDto;
 import com.Accommodation.dto.AccomSearchDto;
 import com.Accommodation.dto.ChatbotComparisonItemDto;
@@ -41,11 +42,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class AccomService {
+    private static final Pattern LOCATION_SPLIT_PATTERN = Pattern.compile("[\\s,/()]+");
 
     private final AccomRepository accomRepository;
     private final AccomImgService accomImgService;
@@ -219,7 +224,38 @@ public class AccomService {
     public ChatbotRecommendationResponseDto getChatbotRecommendations(String query) {
         String safeQuery = query == null ? "" : query.trim();
         List<String> interpretedNeeds = interpretNeeds(safeQuery);
-        List<MainAccomDto> candidates = getMainAccomPage(new AccomSearchDto(), PageRequest.of(0, 60)).getContent();
+        Optional<String> requestedLocationKeyword = extractLocationKeyword(safeQuery);
+        Optional<String> requestedLocationTerm = extractRequestedLocationTerm(safeQuery);
+        AccomType requestedAccomType = extractRequestedAccomType(safeQuery);
+        Integer requestedGuestCount = extractRequestedGuestCount(safeQuery);
+        LocalDate requestedCheckInDate = extractRequestedCheckInDate(safeQuery);
+        LocalDate requestedCheckOutDate = extractRequestedCheckOutDate(safeQuery, requestedCheckInDate);
+        List<MainAccomDto> allCandidates = filterCandidatesByOperationAvailability(
+                getMainAccomPage(new AccomSearchDto(), PageRequest.of(0, 60)).getContent(),
+                requestedCheckInDate,
+                requestedCheckOutDate
+        );
+        List<MainAccomDto> directNameMatches = allCandidates.stream()
+                .filter(candidate -> isDirectNameMatch(candidate, safeQuery))
+                .toList();
+        List<MainAccomDto> locationCandidates = requestedLocationKeyword
+                .map(keyword -> allCandidates.stream()
+                        .filter(candidate -> matchesLocationKeyword(candidate.getLocation(), keyword))
+                        .toList())
+                .orElse(allCandidates);
+        List<MainAccomDto> candidates = !directNameMatches.isEmpty()
+                ? directNameMatches
+                : requestedAccomType == null
+                ? locationCandidates
+                : locationCandidates.stream()
+                        .filter(candidate -> requestedAccomType.equals(candidate.getAccomType()))
+                        .toList();
+        if (requestedGuestCount != null) {
+            candidates = candidates.stream()
+                    .filter(candidate -> matchesGuestPolicy(candidate, requestedGuestCount))
+                    .toList();
+        }
+        String assistantMessage = null;
 
         List<ChatbotRecommendationItemDto> recommendations = candidates.stream()
                 .map(candidate -> toRecommendationItem(candidate, safeQuery))
@@ -232,6 +268,49 @@ public class AccomService {
                 .toList();
 
         if (recommendations.isEmpty()) {
+            if (requestedCheckInDate != null && requestedCheckOutDate != null) {
+                return new ChatbotRecommendationResponseDto(
+                        safeQuery,
+                        interpretedNeeds,
+                        List.of(),
+                        "해당 조건에 맞는 숙소가 없습니다."
+                );
+            }
+
+            if (requestedLocationKeyword.isPresent() && requestedAccomType != null && !locationCandidates.isEmpty()) {
+                assistantMessage = buildMissingTypeMessage(requestedLocationKeyword.get(), requestedAccomType);
+                recommendations = locationCandidates.stream()
+                        .map(candidate -> toRecommendationItem(candidate, requestedLocationKeyword.get()))
+                        .filter(Objects::nonNull)
+                        .sorted(Comparator
+                                .comparing(ChatbotRecommendationItemDto::getAvgRating, Comparator.nullsLast(Comparator.reverseOrder()))
+                                .thenComparing(ChatbotRecommendationItemDto::getReviewCount, Comparator.nullsLast(Comparator.reverseOrder())))
+                        .limit(5)
+                        .toList();
+            }
+
+            if (recommendations.isEmpty() && requestedLocationKeyword.isPresent()) {
+                List<ChatbotRecommendationItemDto> nearbyRecommendations = findNearbyRecommendations(
+                        requestedLocationKeyword.get(),
+                        allCandidates,
+                        requestedAccomType,
+                        requestedGuestCount
+                );
+                if (!nearbyRecommendations.isEmpty()) {
+                    assistantMessage = requestedLocationKeyword.get() + " 지역에는 조건에 맞는 숙소가 없어 가까운 지역 숙소를 추천드려요.";
+                    recommendations = nearbyRecommendations;
+                } else {
+                    assistantMessage = requestedLocationKeyword.get() + " 지역에는 등록된 숙소가 없습니다.";
+                }
+            }
+
+            if (recommendations.isEmpty() && requestedLocationKeyword.isEmpty() && requestedLocationTerm.isPresent()) {
+                assistantMessage = requestedLocationTerm.get() + " 지역에는 등록된 숙소가 없습니다.";
+            }
+
+            if (requestedLocationKeyword.isPresent() || requestedLocationTerm.isPresent()) {
+                return new ChatbotRecommendationResponseDto(safeQuery, interpretedNeeds, recommendations, assistantMessage);
+            }
             recommendations = candidates.stream()
                     .sorted(Comparator
                             .comparing(MainAccomDto::getAvgRating, Comparator.nullsLast(Comparator.reverseOrder()))
@@ -252,7 +331,7 @@ public class AccomService {
                     .toList();
         }
 
-        return new ChatbotRecommendationResponseDto(safeQuery, interpretedNeeds, recommendations);
+        return new ChatbotRecommendationResponseDto(safeQuery, interpretedNeeds, recommendations, assistantMessage);
     }
 
 
@@ -376,7 +455,7 @@ public class AccomService {
         List<String> needs = new ArrayList<>();
         String normalized = normalize(query);
 
-        extractFirstKeyword(normalized, List.of("강릉", "서울", "부산", "제주", "경주", "여수", "속초", "전주", "춘천"))
+        extractLocationKeyword(normalized)
                 .ifPresent(keyword -> needs.add("희망 지역: " + keyword));
         extractFirstKeyword(normalized, List.of("부모", "가족", "아이", "연인", "친구", "혼자"))
                 .ifPresent(keyword -> needs.add("동행 유형: " + keyword + " 여행"));
@@ -418,21 +497,34 @@ public class AccomService {
         List<String> reasons = new ArrayList<>();
 
         if (!normalizedQuery.isBlank()) {
-            List<String> locationKeywords = Arrays.asList("강릉", "서울", "부산", "제주", "경주", "여수", "속초", "전주", "춘천");
-            boolean queryHasLocation = locationKeywords.stream()
-                    .anyMatch(keyword -> normalizedQuery.contains(normalize(keyword)));
-            boolean candidateMatchesLocation = locationKeywords.stream()
-                    .anyMatch(keyword -> normalizedQuery.contains(normalize(keyword)) && location.contains(normalize(keyword)));
-
-            if (queryHasLocation && !candidateMatchesLocation) {
-                return List.of();
+            if (isDirectNameMatch(candidate, query)) {
+                reasons.add("입력한 숙소명과 일치합니다.");
             }
 
-            locationKeywords.forEach(keyword -> {
-                if (normalizedQuery.contains(normalize(keyword)) && location.contains(normalize(keyword))) {
-                    reasons.add(keyword + " 지역 조건과 맞습니다.");
+            Optional<String> requestedLocationKeyword = extractLocationKeyword(normalizedQuery);
+            if (requestedLocationKeyword.isPresent()) {
+                String locationKeyword = requestedLocationKeyword.get();
+                if (!matchesLocationKeyword(location, locationKeyword)) {
+                    return List.of();
                 }
-            });
+                reasons.add(locationKeyword + " 지역 조건과 맞습니다.");
+            }
+
+            AccomType requestedAccomType = extractRequestedAccomType(normalizedQuery);
+            if (requestedAccomType != null && candidate.getAccomType() != requestedAccomType) {
+                return List.of();
+            }
+            if (requestedAccomType != null && candidate.getAccomType() == requestedAccomType) {
+                reasons.add(requestedAccomType.getLabel() + " 유형 조건과 맞습니다.");
+            }
+
+            Integer requestedGuestCount = extractRequestedGuestCount(query);
+            if (requestedGuestCount != null && !matchesGuestPolicy(candidate, requestedGuestCount)) {
+                return List.of();
+            }
+            if (requestedGuestCount != null) {
+                reasons.add(requestedGuestCount + "명 인원 조건과 맞습니다.");
+            }
 
             if (normalizedQuery.contains("한옥") && (detail.contains("한옥") || name.contains("한옥"))) {
                 reasons.add("한옥 스테이 키워드와 일치합니다.");
@@ -597,7 +689,408 @@ public class AccomService {
                 .findFirst();
     }
 
+    public List<String> getChatbotLocationOptions() {
+        return accomRepository.findDistinctActiveLocations().stream()
+                .map(this::extractRepresentativeLocation)
+                .filter(value -> value != null && !value.isBlank())
+                .distinct()
+                .sorted()
+                .limit(12)
+                .toList();
+    }
+
+    public List<String> getChatbotAccomTypeOptions() {
+        return accomRepository.findDistinctActiveAccomTypes().stream()
+                .map(AccomType::getLabel)
+                .filter(value -> value != null && !value.isBlank())
+                .toList();
+    }
+
+    public List<MainAccomDto> filterCandidatesByOperationAvailability(
+            List<MainAccomDto> candidates,
+            LocalDate checkInDate,
+            LocalDate checkOutDate) {
+        if (candidates == null || candidates.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Accom> accomMap = new LinkedHashMap<>();
+        for (MainAccomDto candidate : candidates) {
+            if (candidate == null || candidate.getId() == null || accomMap.containsKey(candidate.getId())) {
+                continue;
+            }
+            accomRepository.findWithOperationInfoById(candidate.getId())
+                    .ifPresent(accom -> accomMap.put(candidate.getId(), accom));
+        }
+
+        return candidates.stream()
+                .filter(candidate -> candidate != null && candidate.getId() != null)
+                .filter(candidate -> isAvailableForChatbotStay(accomMap.get(candidate.getId()), checkInDate, checkOutDate))
+                .toList();
+    }
+
+    public Optional<String> extractLocationKeyword(String text) {
+        String normalizedText = normalize(text);
+        List<String> dbLocationKeywords = getLocationKeywordsFromDb().stream()
+                .sorted(Comparator.comparingInt(String::length).reversed())
+                .toList();
+
+        Optional<String> directPhraseMatch = dbLocationKeywords.stream()
+                .filter(keyword -> normalizedText.contains(normalize(keyword)))
+                .findFirst();
+        if (directPhraseMatch.isPresent()) {
+            return directPhraseMatch;
+        }
+
+        return extractSearchTerms(text).stream()
+                .map(this::normalize)
+                .flatMap(term -> dbLocationKeywords.stream()
+                        .filter(keyword -> {
+                            String normalizedKeyword = normalize(keyword);
+                            return normalizedKeyword.contains(term) || term.contains(normalizedKeyword);
+                        }))
+                .findFirst();
+    }
+
+    public Optional<String> extractRequestedLocationTerm(String text) {
+        return extractSearchTerms(text).stream().findFirst();
+    }
+
+    private AccomType extractRequestedAccomType(String text) {
+        String normalizedText = normalize(text);
+        if (normalizedText.contains(normalize("게스트하우스"))) {
+            return AccomType.GUESTHOUSE;
+        }
+        if (normalizedText.contains(normalize("리조트"))) {
+            return AccomType.RESORT;
+        }
+        if (normalizedText.contains(normalize("펜션"))) {
+            return AccomType.PENSION;
+        }
+        if (normalizedText.contains(normalize("모텔"))) {
+            return AccomType.MOTEL;
+        }
+        if (normalizedText.contains(normalize("호텔"))) {
+            return AccomType.HOTEL;
+        }
+        return null;
+    }
+
+    public boolean matchesLocationKeyword(String candidateLocation, String locationKeyword) {
+        if (candidateLocation == null || locationKeyword == null || locationKeyword.isBlank()) {
+            return false;
+        }
+
+        String normalizedKeyword = normalize(locationKeyword);
+        return extractAddressKeywords(candidateLocation).stream()
+                .map(this::normalize)
+                .anyMatch(alias -> alias.contains(normalizedKeyword) || normalizedKeyword.contains(alias));
+    }
+
+    private boolean isDirectNameMatch(MainAccomDto candidate, String query) {
+        if (candidate == null || candidate.getAccomName() == null || query == null || query.isBlank()) {
+            return false;
+        }
+
+        String normalizedQuery = normalize(query);
+        String normalizedName = normalize(candidate.getAccomName());
+        return normalizedQuery.contains(normalizedName) || normalizedName.contains(normalizedQuery);
+    }
+
+    private Integer extractRequestedGuestCount(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+
+        Integer adultCount = extractCount(text, "(성인|어른)\\s*(\\d+)\\s*(명|인)?", 2);
+        Integer childCount = extractCount(text, "(아동|아이|어린이)\\s*(\\d+)\\s*(명|인)?", 2);
+        if (adultCount != null || childCount != null) {
+            return Math.max(1, (adultCount != null ? adultCount : 0) + (childCount != null ? childCount : 0));
+        }
+
+        return extractCount(text, "(\\d+)\\s*(명|인)", 1);
+    }
+
+    private LocalDate extractRequestedCheckInDate(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+
+        java.util.regex.Matcher isoMatcher = Pattern.compile("(\\d{4})[-./](\\d{1,2})[-./](\\d{1,2})").matcher(text);
+        if (isoMatcher.find()) {
+            return parseDateSafely(
+                    Integer.parseInt(isoMatcher.group(1)),
+                    Integer.parseInt(isoMatcher.group(2)),
+                    Integer.parseInt(isoMatcher.group(3))
+            );
+        }
+
+        java.util.regex.Matcher monthDayMatcher = Pattern.compile("(\\d{1,2})\\s*월\\s*(\\d{1,2})\\s*일").matcher(text);
+        if (!monthDayMatcher.find()) {
+            return null;
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDate parsed = parseDateSafely(
+                today.getYear(),
+                Integer.parseInt(monthDayMatcher.group(1)),
+                Integer.parseInt(monthDayMatcher.group(2))
+        );
+        if (parsed == null) {
+            return null;
+        }
+        return parsed.isBefore(today) ? parsed.plusYears(1) : parsed;
+    }
+
+    private LocalDate extractRequestedCheckOutDate(String text, LocalDate checkInDate) {
+        if (text == null || text.isBlank() || checkInDate == null) {
+            return null;
+        }
+
+        Integer nights = extractCount(text, "(\\d+)\\s*박", 1);
+        if (nights != null && nights > 0) {
+            return checkInDate.plusDays(nights);
+        }
+
+        java.util.regex.Matcher isoMatcher = Pattern.compile("(\\d{4})[-./](\\d{1,2})[-./](\\d{1,2})").matcher(text);
+        if (isoMatcher.find() && isoMatcher.find()) {
+            return parseDateSafely(
+                    Integer.parseInt(isoMatcher.group(1)),
+                    Integer.parseInt(isoMatcher.group(2)),
+                    Integer.parseInt(isoMatcher.group(3))
+            );
+        }
+
+        java.util.regex.Matcher monthDayMatcher = Pattern.compile("(\\d{1,2})\\s*월\\s*(\\d{1,2})\\s*일").matcher(text);
+        if (monthDayMatcher.find() && monthDayMatcher.find()) {
+            LocalDate parsed = parseDateSafely(
+                    checkInDate.getYear(),
+                    Integer.parseInt(monthDayMatcher.group(1)),
+                    Integer.parseInt(monthDayMatcher.group(2))
+            );
+            if (parsed == null) {
+                return null;
+            }
+            return parsed.isAfter(checkInDate) ? parsed : parsed.plusYears(1);
+        }
+
+        return null;
+    }
+
+    private Integer extractCount(String text, String regex, int groupIndex) {
+        java.util.regex.Matcher matcher = Pattern.compile(regex).matcher(text);
+        if (!matcher.find()) {
+            return null;
+        }
+        return Integer.parseInt(matcher.group(groupIndex));
+    }
+
+    private boolean matchesGuestPolicy(MainAccomDto candidate, int requestedGuestCount) {
+        if (candidate == null || candidate.getAccomType() == null) {
+            return false;
+        }
+
+        int minGuests = candidate.getAccomType() == AccomType.MOTEL || candidate.getAccomType() == AccomType.GUESTHOUSE ? 1 : 2;
+        int maxGuests = candidate.getAccomType() == AccomType.MOTEL || candidate.getAccomType() == AccomType.GUESTHOUSE ? 6 : 10;
+        if (requestedGuestCount < minGuests || requestedGuestCount > maxGuests) {
+            return false;
+        }
+
+        return candidate.getGuestCount() == null || candidate.getGuestCount() >= requestedGuestCount;
+    }
+
+    private boolean isAvailableForChatbotStay(Accom accom, LocalDate checkInDate, LocalDate checkOutDate) {
+        if (accom == null || Boolean.TRUE.equals(accom.getDeleted())) {
+            return false;
+        }
+
+        AccomOperationPolicy policy = accom.getOperationPolicy();
+        if (policy == null || accom.getOperationDayList() == null || accom.getOperationDayList().isEmpty()) {
+            return false;
+        }
+
+        Set<LocalDate> operationDateSet = accom.getOperationDayList().stream()
+                .map(AccomOperationDay::getOperationDate)
+                .filter(Objects::nonNull)
+                .collect(HashSet::new, HashSet::add, HashSet::addAll);
+        if (operationDateSet.isEmpty()) {
+            return false;
+        }
+
+        if (checkInDate == null || checkOutDate == null) {
+            return true;
+        }
+
+        if (!checkOutDate.isAfter(checkInDate)) {
+            return false;
+        }
+
+        if (policy.getOperationStartDate() != null && checkInDate.isBefore(policy.getOperationStartDate())) {
+            return false;
+        }
+
+        LocalDate lastStayDate = checkOutDate.minusDays(1);
+        if (policy.getOperationEndDate() != null && lastStayDate.isAfter(policy.getOperationEndDate())) {
+            return false;
+        }
+
+        LocalDate cursor = checkInDate;
+        while (cursor.isBefore(checkOutDate)) {
+            if (!operationDateSet.contains(cursor)) {
+                return false;
+            }
+            cursor = cursor.plusDays(1);
+        }
+
+        return true;
+    }
+
+    private String buildMissingTypeMessage(String locationKeyword, AccomType requestedAccomType) {
+        return locationKeyword + "에는 " + requestedAccomType.getLabel() + "이 없습니다. 다른 숙박 업소를 추천드려요.";
+    }
+
+    private List<ChatbotRecommendationItemDto> findNearbyRecommendations(
+            String requestedLocationKeyword,
+            List<MainAccomDto> allCandidates,
+            AccomType requestedAccomType,
+            Integer requestedGuestCount) {
+        String requestedRoot = findLocationRootByKeyword(requestedLocationKeyword);
+        if (requestedRoot.isBlank()) {
+            return List.of();
+        }
+
+        return allCandidates.stream()
+                .filter(candidate -> !matchesLocationKeyword(candidate.getLocation(), requestedLocationKeyword))
+                .filter(candidate -> requestedRoot.equals(extractLocationRoot(candidate.getLocation())))
+                .filter(candidate -> requestedAccomType == null || requestedAccomType.equals(candidate.getAccomType()))
+                .filter(candidate -> requestedGuestCount == null || matchesGuestPolicy(candidate, requestedGuestCount))
+                .map(candidate -> toRecommendationItem(candidate, requestedRoot))
+                .filter(Objects::nonNull)
+                .sorted(Comparator
+                        .comparing(ChatbotRecommendationItemDto::getAvgRating, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(ChatbotRecommendationItemDto::getReviewCount, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(5)
+                .toList();
+    }
+
+    private List<String> getLocationKeywordsFromDb() {
+        return accomRepository.findDistinctActiveLocations().stream()
+                .flatMap(location -> extractAddressKeywords(location).stream())
+                .filter(keyword -> keyword != null && !keyword.isBlank())
+                .distinct()
+                .toList();
+    }
+
+    private List<String> extractSearchTerms(String text) {
+        if (text == null || text.isBlank()) {
+            return List.of();
+        }
+
+        return Stream.of(text.split("\\s+"))
+                .map(String::trim)
+                .map(token -> token.replaceAll("[^가-힣0-9]", ""))
+                .filter(token -> token.length() >= 2)
+                .filter(token -> !Set.of(
+                        "숙소", "예약", "예약해줘", "예약해주세요", "여행", "여행일정", "일정", "일정짜줘",
+                        "짜줘", "추천", "검색", "해줘", "달라고", "부탁해", "호텔", "모텔", "펜션", "리조트", "게스트하우스"
+                ).contains(token))
+                .toList();
+    }
+
+    private String extractRepresentativeLocation(String location) {
+        List<String> segments = splitLocationSegments(location);
+        if (segments.isEmpty()) {
+            return "";
+        }
+
+        if (segments.size() >= 2 && isProvinceSegment(segments.get(0))) {
+            return simplifyLocationSegment(segments.get(1));
+        }
+
+        return simplifyLocationSegment(segments.get(0));
+    }
+
+    private String findLocationRootByKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return "";
+        }
+
+        return accomRepository.findDistinctActiveLocations().stream()
+                .filter(location -> matchesLocationKeyword(location, keyword))
+                .map(this::extractLocationRoot)
+                .filter(root -> root != null && !root.isBlank())
+                .findFirst()
+                .orElse("");
+    }
+
+    private String extractLocationRoot(String location) {
+        List<String> segments = splitLocationSegments(location);
+        if (segments.isEmpty()) {
+            return "";
+        }
+        return simplifyLocationSegment(segments.get(0));
+    }
+
+    private Set<String> extractAddressKeywords(String location) {
+        Set<String> keywords = new TreeSet<>(Comparator.comparingInt(String::length).reversed().thenComparing(String::compareTo));
+        for (String segment : splitLocationSegments(location)) {
+            if (segment.length() < 2) {
+                continue;
+            }
+            keywords.add(segment);
+
+            String simplified = simplifyLocationSegment(segment);
+            if (simplified.length() >= 2) {
+                keywords.add(simplified);
+            }
+        }
+        return keywords;
+    }
+
+    private List<String> splitLocationSegments(String location) {
+        if (location == null || location.isBlank()) {
+            return List.of();
+        }
+
+        return Stream.of(LOCATION_SPLIT_PATTERN.split(location.trim()))
+                .map(String::trim)
+                .filter(segment -> !segment.isBlank())
+                .toList();
+    }
+
+    private boolean isProvinceSegment(String segment) {
+        return segment.endsWith("도") || segment.endsWith("특별자치도");
+    }
+
+    private String simplifyLocationSegment(String segment) {
+        if (segment == null) {
+            return "";
+        }
+
+        String simplified = segment
+                .replace("특별자치도", "")
+                .replace("특별자치시", "")
+                .replace("특별시", "")
+                .replace("광역시", "")
+                .replace("자치시", "");
+
+        if (simplified.endsWith("시") || simplified.endsWith("군") || simplified.endsWith("구")) {
+            simplified = simplified.substring(0, simplified.length() - 1);
+        } else if (simplified.endsWith("도")) {
+            simplified = simplified.substring(0, simplified.length() - 1);
+        }
+        return simplified.trim();
+    }
+
     private String normalize(String value) {
         return value == null ? "" : value.toLowerCase(Locale.KOREA).replaceAll("\\s+", "");
+    }
+
+    private LocalDate parseDateSafely(int year, int month, int day) {
+        try {
+            return LocalDate.of(year, month, day);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

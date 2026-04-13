@@ -12,4 +12,9 @@ public class ChatbotRecommendationResponseDto {
     private String query;
     private List<String> interpretedNeeds;
     private List<ChatbotRecommendationItemDto> recommendations;
+    private String assistantMessage;
+
+    public ChatbotRecommendationResponseDto(String query, List<String> interpretedNeeds, List<ChatbotRecommendationItemDto> recommendations) {
+        this(query, interpretedNeeds, recommendations, null);
+    }
 }

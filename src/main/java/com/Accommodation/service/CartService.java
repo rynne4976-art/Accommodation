@@ -153,6 +153,10 @@ public class CartService {
         cartItemRepository.delete(cartItem);
     }
 
+    public void removeAllCartItems(String email) {
+        cartItemRepository.deleteByMemberEmail(email);
+    }
+
     public void updateCartItem(Long cartItemId, CartItemDto dto, String email) {
         CartItem cartItem = cartItemRepository.findByIdAndMemberEmail(cartItemId, email)
                 .orElseThrow(() -> new EntityNotFoundException("장바구니 항목을 찾을 수 없습니다."));

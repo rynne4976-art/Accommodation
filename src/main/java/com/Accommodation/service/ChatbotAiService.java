@@ -34,8 +34,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.concurrent.CompletableFuture;
@@ -52,6 +52,7 @@ public class ChatbotAiService {
     private final WishService wishService;
     private final OrderService orderService;
     private final NotificationService notificationService;
+    private final RegionActivityService regionActivityService;
     private final ObjectMapper objectMapper;
 
     @Value("${ai.openai.base-url:https://openrouter.ai/api}")
@@ -76,6 +77,7 @@ public class ChatbotAiService {
         String safeMessage = message == null ? "" : message.trim();
         ChatbotRecommendationResponseDto recommendationResponse = accomService.getChatbotRecommendations(safeMessage);
         List<ChatbotRecommendationItemDto> recommendations = recommendationResponse.getRecommendations();
+        String assistantMessage = recommendationResponse.getAssistantMessage();
 
         if (safeMessage.isBlank()) {
             return new ChatbotAssistantResponseDto("질문을 입력해 주세요.", recommendations);
@@ -84,6 +86,10 @@ public class ChatbotAiService {
         ChatbotAssistantResponseDto actionResponse = tryHandleActionRequest(safeMessage, email, recentViewedCookie, recommendations);
         if (actionResponse != null) {
             return actionResponse;
+        }
+
+        if (assistantMessage != null && !assistantMessage.isBlank()) {
+            return new ChatbotAssistantResponseDto(assistantMessage, recommendations);
         }
 
         if (apiKey == null || apiKey.isBlank()) {
@@ -293,7 +299,17 @@ public class ChatbotAiService {
             String email,
             String recentViewedCookie,
             List<ChatbotRecommendationItemDto> recommendations) {
-        ChatbotAssistantResponseDto response = tryHandleCartRequest(message, email, recommendations);
+        ChatbotAssistantResponseDto response = tryHandleComparisonRequest(message, recommendations);
+        if (response != null) {
+            return response;
+        }
+
+        response = tryHandleTripPlanRequest(message);
+        if (response != null) {
+            return response;
+        }
+
+        response = tryHandleCartRequest(message, email, recommendations);
         if (response != null) {
             return response;
         }
@@ -304,6 +320,11 @@ public class ChatbotAiService {
         }
 
         response = tryHandleRecentViewedRequest(message, recentViewedCookie);
+        if (response != null) {
+            return response;
+        }
+
+        response = tryHandleReservationGuideRequest(message, recommendations);
         if (response != null) {
             return response;
         }
@@ -319,6 +340,121 @@ public class ChatbotAiService {
         }
 
         return null;
+    }
+
+    private ChatbotAssistantResponseDto tryHandleTripPlanRequest(String message) {
+        if (!containsAny(
+                message,
+                "여행 일정", "여행일정", "여행 계획", "여행계획",
+                "일정 짜", "일정짜", "일정 만들", "일정만들",
+                "계획 짜", "계획짜", "계획 세워", "계획세워", "계획 만들", "계획만들",
+                "여행 짜", "여행짜", "여행 만들", "여행만들",
+                "플랜 짜", "플랜짜", "플랜 만들", "플랜만들",
+                "코스 짜", "코스짜", "코스 만들", "코스만들"
+        )) {
+            return null;
+        }
+
+        ParsedCartRequest parsed = parseCartRequest(message);
+        if (parsed == null || parsed.locationKeyword() == null || parsed.checkInDate() == null || parsed.checkOutDate() == null) {
+            return new ChatbotAssistantResponseDto("여행 일정을 짜려면 지역, 체크인 날짜, 숙박 일수를 함께 알려주세요.", List.of());
+        }
+
+        List<ChatbotRecommendationItemDto> stayRecommendations = findCartCandidates(parsed).stream()
+                .limit(3)
+                .map(this::toRecommendationItem)
+                .toList();
+
+        String answer = stayRecommendations.isEmpty()
+                ? "해당 조건에 맞는 숙소가 없습니다."
+                : parsed.locationKeyword() + " " + parsed.checkInDate() + "부터 " + parsed.checkOutDate()
+                + "까지 일정에 맞는 숙소와 즐길거리를 추천합니다.";
+
+        return new ChatbotAssistantResponseDto(
+                answer,
+                stayRecommendations,
+                "trip_plan_ready",
+                null,
+                parsed.locationKeyword(),
+                parsed.checkInDate(),
+                parsed.checkOutDate()
+        );
+    }
+
+    private ChatbotAssistantResponseDto tryHandleReservationGuideRequest(
+            String message,
+            List<ChatbotRecommendationItemDto> recommendations) {
+        if (!message.contains("예약")) {
+            return null;
+        }
+
+        if (containsAny(message, "예약 내역", "예약내역", "예약 목록", "예약목록", "예약 취소", "주문 취소", "주문")) {
+            return null;
+        }
+
+        if (containsAny(message, "장바구니", "카트")) {
+            return null;
+        }
+
+        ParsedCartRequest parsed = parseCartRequestWithOptionalDates(message);
+        List<ChatbotRecommendationItemDto> filteredRecommendations = recommendations;
+        String locationTerm = accomService.extractRequestedLocationTerm(message).orElse(null);
+
+        if (parsed == null || parsed.locationKeyword() == null) {
+            if (locationTerm != null && !locationTerm.isBlank()) {
+                return new ChatbotAssistantResponseDto(locationTerm + " 지역에는 등록된 숙소가 없습니다.", List.of());
+            }
+            return new ChatbotAssistantResponseDto("입력한 지역에는 등록된 숙소가 없습니다.", List.of());
+        }
+
+        if (parsed.accomType() != null || parsed.locationKeyword() != null) {
+            filteredRecommendations = findCartCandidates(parsed).stream()
+                    .limit(5)
+                    .map(this::toRecommendationItem)
+                    .toList();
+        }
+
+        if (filteredRecommendations.isEmpty()) {
+            return new ChatbotAssistantResponseDto("해당 조건에 맞는 숙소가 없습니다.", List.of());
+        }
+
+        MainAccomDto target = findAccomTargetFromMessage(message, filteredRecommendations);
+        String accomName = target != null && target.getAccomName() != null && !target.getAccomName().isBlank()
+                ? target.getAccomName()
+                : parsed.locationKeyword() + " 숙소";
+
+        return new ChatbotAssistantResponseDto(accomName + " 장바구니 담기를 우선 진행해 주세요.", filteredRecommendations);
+    }
+
+    private ChatbotAssistantResponseDto tryHandleComparisonRequest(
+            String message,
+            List<ChatbotRecommendationItemDto> recommendations) {
+        if (!containsAny(message, "비교")) {
+            return null;
+        }
+
+        List<MainAccomDto> allAccoms = accomService.getMainAccomPage(new AccomSearchDto(), PageRequest.of(0, 200)).getContent();
+        List<MainAccomDto> matched = allAccoms.stream()
+                .filter(item -> containsNormalized(message, item.getAccomName()))
+                .sorted(Comparator.comparingInt((MainAccomDto item) -> item.getAccomName().length()).reversed())
+                .distinct()
+                .limit(2)
+                .toList();
+
+        if (matched.size() < 2) {
+            return new ChatbotAssistantResponseDto("비교할 숙소 두 곳의 이름을 함께 입력해 주세요.", recommendations);
+        }
+
+        List<ChatbotRecommendationItemDto> comparisonTargets = matched.stream()
+                .map(this::toRecommendationItem)
+                .toList();
+
+        return new ChatbotAssistantResponseDto(
+                matched.get(0).getAccomName() + "와(과) " + matched.get(1).getAccomName() + " 비교를 진행합니다.",
+                comparisonTargets,
+                "compare_ready",
+                null
+        );
     }
 
     private ChatbotAssistantResponseDto tryHandleCartRequest(
@@ -352,6 +488,17 @@ public class ChatbotAiService {
                 return new ChatbotAssistantResponseDto("장바구니가 비어 있어서 삭제할 항목이 없습니다.", List.of(), "cart_remove", null);
             }
 
+            if (containsAny(message, "전부", "전체", "모두", "다")) {
+                int removedCount = cartItems.size();
+                cartService.removeAllCartItems(email);
+                return new ChatbotAssistantResponseDto(
+                        "장바구니에 담긴 숙소 " + removedCount + "건을 모두 삭제했습니다.",
+                        List.of(),
+                        "cart_remove",
+                        null
+                );
+            }
+
             CartListItemDto target = findCartTarget(cartItems, message);
             if (target == null) {
                 return new ChatbotAssistantResponseDto("삭제할 장바구니 숙소를 찾지 못했습니다. 숙소명을 함께 말씀해 주세요.", toRecommendationItemsFromCart(cartItems), "cart_remove", null);
@@ -368,12 +515,12 @@ public class ChatbotAiService {
 
         ParsedCartRequest parsed = parseCartRequest(message);
         if (parsed == null || parsed.checkInDate() == null || parsed.checkOutDate() == null) {
-            return new ChatbotAssistantResponseDto("장바구니에 담으려면 체크인 날짜와 숙박 일수를 함께 알려주세요. 예: 서울 5월 10일부터 2박 3일 호텔 장바구니에 담아줘", recommendations);
+            return new ChatbotAssistantResponseDto("장바구니에 담으려면 지역, 숙박업소 종류, 체크인 날짜와 숙박 일수, 인원, 객실 수를 함께 알려주세요.", recommendations);
         }
 
         List<MainAccomDto> candidates = findCartCandidates(parsed);
         if (candidates.isEmpty()) {
-            return new ChatbotAssistantResponseDto("조건에 맞는 숙소를 찾지 못했습니다. 지역이나 숙박 조건을 조금 완화해서 다시 요청해 주세요.", recommendations);
+            return new ChatbotAssistantResponseDto("해당 조건에 맞는 숙소가 없습니다.", List.of());
         }
 
         String lastFailureReason = null;
@@ -612,12 +759,19 @@ public class ChatbotAiService {
     }
 
     private List<MainAccomDto> findCartCandidates(ParsedCartRequest parsed) {
-        return accomService.getMainAccomPage(new AccomSearchDto(), PageRequest.of(0, 200)).getContent().stream()
-                .filter(item -> parsed.locationKeyword() == null || containsIgnoreCase(item.getLocation(), parsed.locationKeyword()))
+        List<MainAccomDto> filtered = accomService.getMainAccomPage(new AccomSearchDto(), PageRequest.of(0, 200)).getContent().stream()
+                .filter(item -> parsed.locationKeyword() == null || accomService.matchesLocationKeyword(item.getLocation(), parsed.locationKeyword()))
                 .filter(item -> parsed.accomType() == null || item.getAccomType() == parsed.accomType())
                 .filter(item -> item.getGrade() != null && item.getGrade().getNum() >= parsed.minGrade())
                 .filter(item -> item.getGuestCount() == null || item.getGuestCount() >= parsed.adultCount() + parsed.childCount())
                 .filter(item -> item.getRoomCount() == null || item.getRoomCount() >= parsed.roomCount())
+                .toList();
+
+        return accomService.filterCandidatesByOperationAvailability(
+                        filtered,
+                        parsed.checkInDate(),
+                        parsed.checkOutDate()
+                ).stream()
                 .sorted(Comparator
                         .comparing((MainAccomDto item) -> item.getGrade() != null ? item.getGrade().getNum() : 0, Comparator.reverseOrder())
                         .thenComparing(MainAccomDto::getAvgRating, Comparator.nullsLast(Comparator.reverseOrder()))
@@ -709,6 +863,11 @@ public class ChatbotAiService {
             return firstIsoDate;
         }
 
+        LocalDate firstMonthDayDate = parseMonthDayDateByIndex(message, 0, null);
+        if (firstMonthDayDate != null) {
+            return firstMonthDayDate;
+        }
+
         return parseCheckInDate(message);
     }
 
@@ -721,6 +880,16 @@ public class ChatbotAiService {
         LocalDate secondIsoDate = parseIsoDateByIndex(message, 1);
         if (secondIsoDate != null) {
             return secondIsoDate;
+        }
+
+        LocalDate secondMonthDayDate = parseMonthDayDateByIndex(message, 1, checkInDate);
+        if (secondMonthDayDate != null) {
+            return secondMonthDayDate;
+        }
+
+        LocalDate untilMonthDayDate = parseUntilMonthDayDate(message, checkInDate);
+        if (untilMonthDayDate != null) {
+            return untilMonthDayDate;
         }
 
         Integer nights = parseFlexibleNights(message);
@@ -778,12 +947,52 @@ public class ChatbotAiService {
         }
     }
 
+    private LocalDate parseMonthDayDateByIndex(String message, int index, LocalDate baseDate) {
+        Matcher matcher = Pattern.compile("(\\d{1,2})\\s*월\\s*(\\d{1,2})\\s*일").matcher(message);
+        int currentIndex = 0;
+        while (matcher.find()) {
+            if (currentIndex == index) {
+                int month = Integer.parseInt(matcher.group(1));
+                int day = Integer.parseInt(matcher.group(2));
+                return resolveMonthDayDate(month, day, baseDate);
+            }
+            currentIndex += 1;
+        }
+        return null;
+    }
+
+    private LocalDate parseUntilMonthDayDate(String message, LocalDate checkInDate) {
+        if (checkInDate == null) {
+            return null;
+        }
+
+        Matcher matcher = Pattern.compile("(?:(\\d{1,2})\\s*월\\s*)?(\\d{1,2})\\s*일?\\s*까지").matcher(message);
+        LocalDate parsed = null;
+        while (matcher.find()) {
+            int month = matcher.group(1) != null
+                    ? Integer.parseInt(matcher.group(1))
+                    : checkInDate.getMonthValue();
+            int day = Integer.parseInt(matcher.group(2));
+            parsed = resolveMonthDayDate(month, day, checkInDate);
+        }
+        return parsed;
+    }
+
+    private LocalDate resolveMonthDayDate(int month, int day, LocalDate baseDate) {
+        LocalDate anchorDate = baseDate != null ? baseDate : LocalDate.now();
+        try {
+            LocalDate parsed = LocalDate.of(anchorDate.getYear(), month, day);
+            if (baseDate != null) {
+                return parsed.isBefore(baseDate) ? parsed.plusYears(1) : parsed;
+            }
+            return parsed.isBefore(anchorDate) ? parsed.plusYears(1) : parsed;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private String parseLocationKeyword(String message) {
-        List<String> supportedLocations = List.of("서울", "부산", "제주", "강릉", "경주");
-        return supportedLocations.stream()
-                .filter(message::contains)
-                .findFirst()
-                .orElse(null);
+        return accomService.extractLocationKeyword(message).orElse(null);
     }
 
     private AccomType parseAccomType(String message) {
@@ -821,6 +1030,28 @@ public class ChatbotAiService {
 
     private boolean containsAny(String message, String... keywords) {
         return Arrays.stream(keywords).anyMatch(message::contains);
+    }
+
+    private String extractReservationTargetName(String message) {
+        String cleaned = message == null ? "" : message;
+        cleaned = cleaned.replace("예약해줘", "")
+                .replace("예약 해줘", "")
+                .replace("예약해주세요", "")
+                .replace("예약 부탁해", "")
+                .replace("예약", "")
+                .trim();
+        return cleaned.isBlank() ? "입력한 업소명" : cleaned;
+    }
+
+    private boolean containsNormalized(String source, String keyword) {
+        if (source == null || keyword == null || keyword.isBlank()) {
+            return false;
+        }
+        return normalizeForMatch(source).contains(normalizeForMatch(keyword));
+    }
+
+    private String normalizeForMatch(String value) {
+        return value == null ? "" : value.replaceAll("\\s+", "");
     }
 
     private int parseCount(String message, String regex, int groupIndex, int defaultValue) {
@@ -886,7 +1117,7 @@ public class ChatbotAiService {
 
     private CartListItemDto findCartTarget(List<CartListItemDto> items, String message) {
         for (CartListItemDto item : items) {
-            if (message.contains(item.getAccomName())) {
+            if (containsNormalized(message, item.getAccomName())) {
                 return item;
             }
         }
@@ -895,7 +1126,7 @@ public class ChatbotAiService {
 
     private WishListDto findWishTarget(List<WishListDto> items, String message) {
         for (WishListDto item : items) {
-            if (message.contains(item.getAccomName())) {
+            if (containsNormalized(message, item.getAccomName())) {
                 return item;
             }
         }
@@ -904,7 +1135,7 @@ public class ChatbotAiService {
 
     private MainAccomDto findAccomTargetFromMessage(String message, List<ChatbotRecommendationItemDto> recommendations) {
         for (ChatbotRecommendationItemDto item : recommendations) {
-            if (item.getAccomName() != null && message.contains(item.getAccomName())) {
+            if (containsNormalized(message, item.getAccomName())) {
                 return accomService.getMainAccomPage(new AccomSearchDto(), PageRequest.of(0, 200)).getContent().stream()
                         .filter(accom -> item.getAccomId().equals(accom.getId()))
                         .findFirst()
@@ -1194,9 +1425,7 @@ public class ChatbotAiService {
                 .map(ChatbotRecommendationItemDto::getAccomName)
                 .toList();
 
-        return "AI API 연결 정보가 없거나 응답에 실패해서 내부 추천 결과로 안내합니다. "
-                + String.join(", ", names)
-                + " 순으로 먼저 확인해 보세요.";
+        return "상세보기를 클릭하면 자세한 정보를 확인할 수 있습니다.";
     }
 
     private String joinReasons(List<String> reasons) {

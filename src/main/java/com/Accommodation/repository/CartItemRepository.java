@@ -17,6 +17,8 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     /** 특정 회원의 특정 장바구니 항목 (권한 검증용) */
     Optional<CartItem> findByIdAndMemberEmail(Long id, String email);
 
+    void deleteByMemberEmail(String email);
+
     /**
      * 예약 확정 후 만실 알림 대상 조회
      * – 나(confirmerEmail) 외의 회원 중, 해당 숙소의 해당 날짜가 체크인~체크아웃 사이인 장바구니 항목

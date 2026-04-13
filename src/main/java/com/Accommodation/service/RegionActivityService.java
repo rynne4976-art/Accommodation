@@ -609,6 +609,10 @@ public class RegionActivityService {
     );
 
     public List<ChatbotActivityItemDto> getChatbotActivities(String keyword, String region) {
+        return getChatbotActivities(keyword, region, null, null);
+    }
+
+    public List<ChatbotActivityItemDto> getChatbotActivities(String keyword, String region, LocalDate startDate, LocalDate endDate) {
         String safeRegion = (region == null || region.isBlank()) ? "서울" : region;
         String safeKeyword = (keyword == null) ? "" : keyword;
 
@@ -627,6 +631,7 @@ public class RegionActivityService {
             boolean isFestival = "행사/축제".equals(item.getCategory())
                     && item.getPeriod() != null && !item.getPeriod().isBlank();
             boolean ongoing = isFestival && isCurrentlyOngoing(item.getPeriod(), today);
+            boolean overlapsSchedule = !isFestival || isWithinSchedule(item.getPeriod(), startDate, endDate);
             int score = scoreItem(item, terms, preferredCategory);
 
             ChatbotActivityItemDto dto = new ChatbotActivityItemDto(
@@ -640,9 +645,9 @@ public class RegionActivityService {
                     score
             );
 
-            if (isFestival) {
+            if (isFestival && overlapsSchedule) {
                 festivals.add(dto);
-            } else {
+            } else if (!isFestival) {
                 others.add(dto);
             }
         }
@@ -688,6 +693,22 @@ public class RegionActivityService {
             return !today.isBefore(start) && !today.isAfter(end);
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    private boolean isWithinSchedule(String period, LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null || period == null || period.isBlank()) {
+            return true;
+        }
+        try {
+            String[] parts = period.split("~");
+            if (parts.length < 2) return true;
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+            LocalDate eventStart = LocalDate.parse(parts[0].trim(), fmt);
+            LocalDate eventEnd = LocalDate.parse(parts[1].trim(), fmt);
+            return !eventEnd.isBefore(startDate) && !eventStart.isAfter(endDate);
+        } catch (Exception e) {
+            return true;
         }
     }
 }

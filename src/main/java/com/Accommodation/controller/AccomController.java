@@ -176,7 +176,7 @@ public class AccomController {
     public String accomManage(AccomSearchDto accomSearchDto,
                               @RequestParam(value = "page", defaultValue = "0") int page,
                               Model model) {
-        PageRequest pageRequest = PageRequest.of(page, 10);
+        PageRequest pageRequest = PageRequest.of(page, 5);
         Page<Accom> accomPage = accomService.getAdminAccomPage(accomSearchDto, pageRequest);
 
         model.addAttribute("accomPage", accomPage);
