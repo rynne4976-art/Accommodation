@@ -10,19 +10,15 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.*;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -30,17 +26,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Controller
 @RequiredArgsConstructor
@@ -55,56 +42,12 @@ public class TransportController {
             "https://overpass.kumi.systems/api/interpreter"
     );
 
-    private static final List<String> SESSION_USER_KEYS = List.of(
-            "loginMember",
-            "member",
-            "loginUser",
-            "user",
-            "sessionUser",
-            "authenticatedUser",
-            "principal",
-            "SPRING_SECURITY_CONTEXT"
-    );
-
-    private static final List<String> ADDRESS_METHOD_NAMES = List.of(
-            "getAddress",
-            "getAddr",
-            "getRoadAddress",
-            "getMemberAddr",
-            "getUserAddress",
-            "getAddress1",
-            "getAddress2"
-    );
-
-    private static final List<String> ADDRESS_FIELD_NAMES = List.of(
-            "address",
-            "addr",
-            "roadAddress",
-            "memberAddr",
-            "userAddress",
-            "address1",
-            "address2"
-    );
-
-    private static final List<String> NESTED_METHOD_NAMES = List.of(
-            "getMember",
-            "getUser",
-            "getPrincipal",
-            "getDetails",
-            "getAccount"
-    );
-
-    private static final List<String> NESTED_FIELD_NAMES = List.of(
-            "member",
-            "user",
-            "principal",
-            "details",
-            "account"
-    );
-
     private final AccomService accomService;
     private final OrderService orderService;
     private final ObjectMapper objectMapper;
+
+    @Value("${tmap.api.key:}")
+    private String tmapApiKey;
 
     @Value("${odsay.api.key:}")
     private String odsayApiKey;
@@ -116,126 +59,33 @@ public class TransportController {
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    private static final class TransitCandidate {
-        private final String type;
-        private final String title;
-        private final int totalTime;
-        private final int payment;
-        private final int busTransitCount;
-        private final int subwayTransitCount;
-        private final int totalWalk;
-        private final double distanceKm;
-        private final int pathType;
-        private final String detail;
-        private final String firstStartStation;
-        private final String lastEndStation;
-        private final List<Map<String, Object>> steps;
-
-        private TransitCandidate(
-                String type,
-                String title,
-                int totalTime,
-                int payment,
-                int busTransitCount,
-                int subwayTransitCount,
-                int totalWalk,
-                double distanceKm,
-                int pathType,
-                String detail,
-                String firstStartStation,
-                String lastEndStation,
-                List<Map<String, Object>> steps
-        ) {
-            this.type = type;
-            this.title = title;
-            this.totalTime = totalTime;
-            this.payment = payment;
-            this.busTransitCount = busTransitCount;
-            this.subwayTransitCount = subwayTransitCount;
-            this.totalWalk = totalWalk;
-            this.distanceKm = distanceKm;
-            this.pathType = pathType;
-            this.detail = detail;
-            this.firstStartStation = firstStartStation;
-            this.lastEndStation = lastEndStation;
-            this.steps = steps;
-        }
-
-        private Map<String, Object> toMap() {
-            Map<String, Object> data = new LinkedHashMap<>();
-            data.put("type", type);
-            data.put("title", title);
-            data.put("totalTime", totalTime);
-            data.put("minutes", totalTime);
-            data.put("payment", payment);
-            data.put("paymentAmount", payment);
-            data.put("busTransitCount", busTransitCount);
-            data.put("subwayTransitCount", subwayTransitCount);
-            data.put("totalWalk", totalWalk);
-            data.put("distanceKm", distanceKm);
-            data.put("pathType", pathType);
-            data.put("detail", detail);
-            data.put("firstStartStation", firstStartStation);
-            data.put("lastEndStation", lastEndStation);
-            data.put("steps", steps);
-            return data;
-        }
-    }
-
     @GetMapping("/transport")
     public String transportPage(
             @RequestParam(value = "accomId", required = false) Long accomId,
-            @RequestParam(value = "myAddress", required = false) String myAddress,
             HttpSession session,
             Model model
     ) {
-        Accom accom = accomId != null ? accomService.getAccomDtl(accomId) : null;
-        String resolvedMyPageAddress = resolveMyPageAddress(myAddress, session);
+        Accom accom = null;
+        if (accomId != null) {
+            try {
+                accom = accomService.getAccomDtl(accomId);
+            } catch (EntityNotFoundException ignored) {
+            }
+        }
 
         model.addAttribute("accom", accom);
-        model.addAttribute("selectableAccomList", accomService.getTransportSelectableAccomList());
-        model.addAttribute("odsayWebKey", odsayWebKey);
-        model.addAttribute("myPageAddress", resolvedMyPageAddress);
-
-        return "transport/transport";
-    }
-
-    @GetMapping(value = "/api/transport/accommodation", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public ResponseEntity<?> accommodation(@RequestParam("id") Long accomId) {
         try {
-            Accom accom = accomService.getAccomDtl(accomId);
-            return ResponseEntity.ok(Map.of(
-                    "id", accom.getId(),
-                    "name", safeText(accom.getAccomName(), "숙소"),
-                    "location", safeText(accom.getLocation(), ""),
-                    "imageUrl", resolvePrimaryImage(accom),
-                    "detail", safeText(accom.getAccomDetail(), "숙소 설명이 없습니다."),
-                    "pricePerNight", accom.getPricePerNight() != null ? accom.getPricePerNight() : 0,
-                    "grade", accom.getGrade() != null ? accom.getGrade().getNum() : 0,
-                    "avgRating", accom.getAvgRating() != null ? accom.getAvgRating() : 0.0,
-                    "reviewCount", accom.getReviewCount() != null ? accom.getReviewCount() : 0
-            ));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "숙소 정보를 찾지 못했습니다."));
+            model.addAttribute("selectableAccomList", accomService.getTransportSelectableAccomList());
+        } catch (Exception ignored) {
+            model.addAttribute("selectableAccomList", List.of());
         }
-    }
-
-    @GetMapping(value = "/api/transport/my-address", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public ResponseEntity<?> myAddress(HttpSession session) {
-        String address = resolveMyPageAddress(null, session);
-        if (!isMeaningfulAddress(address)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "마이페이지에 등록된 주소가 없습니다."));
-        }
-        return ResponseEntity.ok(Map.of("address", address));
+        model.addAttribute("odsayWebKey", odsayWebKey);
+        return "transport/transport";
     }
 
     @GetMapping(value = "/api/transport/reserved-accommodation", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public ResponseEntity<?> reservedAccommodation(Principal principal) {
+    public ResponseEntity<?> reservedAccommodation(java.security.Principal principal) {
         if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "로그인이 필요합니다."));
@@ -268,203 +118,41 @@ public class TransportController {
     ) {
         int safePage = Math.max(page, 0);
 
-        com.Accommodation.dto.AccomSearchDto searchDto = new com.Accommodation.dto.AccomSearchDto();
-        searchDto.setSearchQuery(keyword);
-        searchDto.setMinPrice(minPrice);
-        searchDto.setMaxPrice(maxPrice);
-        searchDto.setMinRating(minRating);
-        searchDto.setGrade(parseGrade(grade));
-
-        Page<com.Accommodation.dto.MainAccomDto> accomPage =
-                accomService.getMainAccomPage(searchDto, PageRequest.of(safePage, 5));
-
-        List<Map<String, Object>> items = accomPage.getContent().stream()
-                .map(item -> Map.<String, Object>of(
-                        "id", item.getId(),
-                        "name", safeText(item.getAccomName(), "숙소"),
-                        "location", safeText(item.getLocation(), ""),
-                        "imageUrl", safeText(item.getImgUrl(), ""),
-                        "grade", item.getGrade() != null ? item.getGrade().getNum() : 0,
-                        "pricePerNight", item.getPricePerNight() != null ? item.getPricePerNight() : 0,
-                        "avgRating", item.getAvgRating() != null ? item.getAvgRating() : 0.0,
-                        "reviewCount", item.getReviewCount() != null ? item.getReviewCount() : 0
-                ))
-                .toList();
-
-        return ResponseEntity.ok(Map.of(
-                "items", items,
-                "page", accomPage.getNumber(),
-                "size", accomPage.getSize(),
-                "totalPages", accomPage.getTotalPages(),
-                "totalElements", accomPage.getTotalElements()
-        ));
-    }
-
-    private String resolveMyPageAddress(String requestAddress, HttpSession session) {
-        if (isMeaningfulAddress(requestAddress)) {
-            return requestAddress.trim();
-        }
-
-        if (session == null) {
-            return "";
-        }
-
-        for (String sessionKey : SESSION_USER_KEYS) {
-            Object sessionValue = session.getAttribute(sessionKey);
-            String extracted = extractAddressDeep(sessionValue, new IdentityHashMap<>());
-            if (isMeaningfulAddress(extracted)) {
-                return extracted.trim();
-            }
-        }
-
-        return "";
-    }
-
-    private com.Accommodation.constant.AccomGrade parseGrade(String grade) {
-        if (grade == null || grade.isBlank()) {
-            return null;
-        }
-
-        String normalized = grade.trim().toUpperCase();
         try {
-            return com.Accommodation.constant.AccomGrade.valueOf(normalized);
-        } catch (IllegalArgumentException ignored) {
+            com.Accommodation.dto.AccomSearchDto searchDto = new com.Accommodation.dto.AccomSearchDto();
+            searchDto.setSearchQuery(keyword);
+            searchDto.setMinPrice(minPrice);
+            searchDto.setMaxPrice(maxPrice);
+            searchDto.setMinRating(minRating);
+            applyGradeReflectively(searchDto, grade);
+
+            Page<com.Accommodation.dto.MainAccomDto> accomPage =
+                    accomService.getMainAccomPage(searchDto, PageRequest.of(safePage, 5));
+
+            List<Map<String, Object>> items = accomPage.getContent().stream()
+                    .map(item -> Map.<String, Object>of(
+                            "id", item.getId(),
+                            "name", safeText(item.getAccomName(), "숙소"),
+                            "location", safeText(item.getLocation(), ""),
+                            "imageUrl", safeText(item.getImgUrl(), ""),
+                            "grade", item.getGrade() != null ? item.getGrade().getNum() : 0,
+                            "pricePerNight", item.getPricePerNight() != null ? item.getPricePerNight() : 0,
+                            "avgRating", item.getAvgRating() != null ? item.getAvgRating() : 0.0,
+                            "reviewCount", item.getReviewCount() != null ? item.getReviewCount() : 0
+                    ))
+                    .toList();
+
+            return ResponseEntity.ok(Map.of(
+                    "items", items,
+                    "page", accomPage.getNumber(),
+                    "size", accomPage.getSize(),
+                    "totalPages", accomPage.getTotalPages(),
+                    "totalElements", accomPage.getTotalElements()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "숙소 검색에 실패했습니다."));
         }
-
-        return switch (normalized) {
-            case "1", "ONE" -> com.Accommodation.constant.AccomGrade.ONE;
-            case "2", "TWO" -> com.Accommodation.constant.AccomGrade.TWO;
-            case "3", "THREE" -> com.Accommodation.constant.AccomGrade.THREE;
-            case "4", "FOUR" -> com.Accommodation.constant.AccomGrade.FOUR;
-            case "5", "FIVE" -> com.Accommodation.constant.AccomGrade.FIVE;
-            default -> null;
-        };
-    }
-
-    private String extractAddressDeep(Object target, IdentityHashMap<Object, Boolean> visited) {
-        if (target == null) {
-            return "";
-        }
-
-        if (visited.containsKey(target)) {
-            return "";
-        }
-        visited.put(target, Boolean.TRUE);
-
-        if (target instanceof String str) {
-            return isMeaningfulAddress(str) ? str.trim() : "";
-        }
-
-        if (target instanceof Map<?, ?> map) {
-            for (Object value : map.values()) {
-                String extracted = extractAddressDeep(value, visited);
-                if (isMeaningfulAddress(extracted)) {
-                    return extracted;
-                }
-            }
-        }
-
-        if (target instanceof Iterable<?> iterable) {
-            for (Object value : iterable) {
-                String extracted = extractAddressDeep(value, visited);
-                if (isMeaningfulAddress(extracted)) {
-                    return extracted;
-                }
-            }
-        }
-
-        String directAddress = extractAddressFromObject(target);
-        if (isMeaningfulAddress(directAddress)) {
-            return directAddress;
-        }
-
-        for (String methodName : NESTED_METHOD_NAMES) {
-            try {
-                Method method = target.getClass().getMethod(methodName);
-                Object nested = method.invoke(target);
-                String extracted = extractAddressDeep(nested, visited);
-                if (isMeaningfulAddress(extracted)) {
-                    return extracted;
-                }
-            } catch (Exception ignored) {
-            }
-        }
-
-        for (String fieldName : NESTED_FIELD_NAMES) {
-            try {
-                Field field = target.getClass().getDeclaredField(fieldName);
-                field.setAccessible(true);
-                Object nested = field.get(target);
-                String extracted = extractAddressDeep(nested, visited);
-                if (isMeaningfulAddress(extracted)) {
-                    return extracted;
-                }
-            } catch (Exception ignored) {
-            }
-        }
-
-        return "";
-    }
-
-    private String extractAddressFromObject(Object target) {
-        if (target == null) {
-            return "";
-        }
-
-        for (String methodName : ADDRESS_METHOD_NAMES) {
-            try {
-                Method method = target.getClass().getMethod(methodName);
-                Object value = method.invoke(target);
-                if (value instanceof String str && isMeaningfulAddress(str)) {
-                    return str.trim();
-                }
-            } catch (Exception ignored) {
-            }
-        }
-
-        for (String fieldName : ADDRESS_FIELD_NAMES) {
-            try {
-                Field field = target.getClass().getDeclaredField(fieldName);
-                field.setAccessible(true);
-                Object value = field.get(target);
-                if (value instanceof String str && isMeaningfulAddress(str)) {
-                    return str.trim();
-                }
-            } catch (Exception ignored) {
-            }
-        }
-
-        return "";
-    }
-
-    private boolean isMeaningfulAddress(String value) {
-        String text = value == null ? "" : value.trim();
-        if (text.isBlank()) {
-            return false;
-        }
-
-        String normalized = text.replace(" ", "");
-        if (normalized.equalsIgnoreCase("null")
-                || normalized.equals("주소")
-                || normalized.equals("도로명주소")
-                || normalized.equals("지번주소")
-                || normalized.contains("입력된정보없음")
-                || normalized.length() < 5) {
-            return false;
-        }
-
-        return text.contains("로")
-                || text.contains("길")
-                || text.contains("동")
-                || text.contains("읍")
-                || text.contains("면")
-                || text.contains("리")
-                || text.contains("구")
-                || text.contains("군")
-                || text.contains("시")
-                || text.contains("도")
-                || text.contains("로")
-                || text.matches(".*\\d{2,}.*");
     }
 
     @GetMapping(value = "/api/transport/geocode", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -491,11 +179,7 @@ public class TransportController {
                     "lng", first.path("lon").asDouble(),
                     "address", first.path("display_name").asText(address)
             ));
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(Map.of("message", "주소 조회에 실패했습니다."));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                     .body(Map.of("message", "주소 조회에 실패했습니다."));
         }
@@ -528,13 +212,7 @@ public class TransportController {
 
             List<Map<String, Object>> items = mapTransportItems(response.path("elements"), lat, lng);
             return ResponseEntity.ok(Map.of("items", items));
-        } catch (IOException e) {
-            return ResponseEntity.ok(Map.of(
-                    "items", List.of(),
-                    "message", "주변 교통 정보를 불러오지 못했습니다."
-            ));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (Exception e) {
             return ResponseEntity.ok(Map.of(
                     "items", List.of(),
                     "message", "주변 교통 정보를 불러오지 못했습니다."
@@ -551,36 +229,164 @@ public class TransportController {
             @RequestParam("ex") double endLng,
             @RequestParam("ey") double endLat
     ) {
-        String normalizedProfile = "foot".equalsIgnoreCase(profile) ? "foot" : "driving";
-        String baseUrl = "foot".equals(normalizedProfile)
-                ? "https://routing.openstreetmap.de/routed-foot/route/v1/foot"
-                : "https://routing.openstreetmap.de/routed-car/route/v1/driving";
+        if (!"driving".equalsIgnoreCase(profile)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "자동차 경로만 지원합니다."));
+        }
 
-        String url = baseUrl
-                + "/" + startLng + "," + startLat + ";" + endLng + "," + endLat
-                + "?overview=full&geometries=geojson";
+        if (tmapApiKey == null || tmapApiKey.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "TMAP API key is not configured."));
+        }
 
         try {
-            JsonNode response = requestJson(url);
-            JsonNode routes = response.path("routes");
-            if (!routes.isArray() || routes.isEmpty()) {
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("startX", String.valueOf(startLng));
+            payload.put("startY", String.valueOf(startLat));
+            payload.put("endX", String.valueOf(endLng));
+            payload.put("endY", String.valueOf(endLat));
+            payload.put("reqCoordType", "WGS84GEO");
+            payload.put("resCoordType", "WGS84GEO");
+            payload.put("searchOption", "0");
+            payload.put("trafficInfo", "Y");
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://apis.openapi.sk.com/tmap/routes?version=1&format=json"))
+                    .timeout(Duration.ofSeconds(20))
+                    .header("accept", "application/json")
+                    .header("content-type", "application/json")
+                    .header("appKey", tmapApiKey)
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(payload)))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(
+                        "message", "TMAP driving route lookup failed",
+                        "status", response.statusCode(),
+                        "body", response.body() == null ? "" : response.body()
+                ));
+            }
+
+            JsonNode root = objectMapper.readTree(response.body());
+            JsonNode features = root.path("features");
+            if (!features.isArray() || features.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("message", "경로를 찾지 못했습니다."));
             }
-            return ResponseEntity.ok(routes.get(0));
-        } catch (IOException e) {
+
+            JsonNode properties = features.get(0).path("properties");
+            Map<String, Object> route = new LinkedHashMap<>();
+            route.put("distance", properties.path("totalDistance").asInt(0));
+            route.put("duration", properties.path("totalTime").asInt(0));
+            route.put("geometry", buildTmapRouteGeometry(features));
+            route.put("source", "tmap");
+            return ResponseEntity.ok(route);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                     .body(Map.of("message", "경로를 불러오지 못했습니다."));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(Map.of("message", "경로를 불러오지 못했습니다."));
+        }
+    }
+
+    @PostMapping(value = "/api/transport/tmap-transit-route", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> tmapTransitRoute(@RequestBody Map<String, Object> request) {
+        try {
+            String startX = String.valueOf(request.get("startX"));
+            String startY = String.valueOf(request.get("startY"));
+            String endX = String.valueOf(request.get("endX"));
+            String endY = String.valueOf(request.get("endY"));
+
+            RestTemplate restTemplate = new RestTemplate();
+
+            String url = "https://apis.openapi.sk.com/transit/routes";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("appKey", tmapApiKey);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("startX", startX);
+            body.put("startY", startY);
+            body.put("endX", endX);
+            body.put("endY", endY);
+            body.put("count", 5);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    entity,
+                    Map.class
+            );
+
+            Map<String, Object> result = response.getBody();
+
+            if (result == null || !result.containsKey("metaData")) {
+                return ResponseEntity.ok(Map.of(
+                        "available", false,
+                        "message", "TMAP 응답 없음"
+                ));
+            }
+
+            Map<String, Object> metaData = (Map<String, Object>) result.get("metaData");
+            Map<String, Object> plan = (Map<String, Object>) metaData.get("plan");
+            List<Map<String, Object>> itineraries =
+                    plan != null ? (List<Map<String, Object>>) plan.get("itineraries") : null;
+
+            if (itineraries == null || itineraries.isEmpty()) {
+                return ResponseEntity.ok(Map.of(
+                        "available", false,
+                        "message", "경로 없음"
+                ));
+            }
+
+            Map<String, Object> best = itineraries.get(0);
+
+            int totalTime = toMinutes(best.get("totalTime"));
+            int totalWalk = toMinutes(best.get("totalWalkTime"));
+            int transferCount = toInt(best.get("transferCount"));
+            int payment = extractFare(best.get("fare"));
+
+            List<Map<String, Object>> legs = (List<Map<String, Object>>) best.get("legs");
+            List<Map<String, Object>> steps = new ArrayList<>();
+
+            if (legs != null) {
+                for (Map<String, Object> leg : legs) {
+                    String mode = String.valueOf(leg.get("mode"));
+
+                    Map<String, Object> step = new LinkedHashMap<>();
+                    step.put("type", mode);
+                    step.put("title", leg.get("route") != null ? String.valueOf(leg.get("route")) : mode);
+                    step.put("summary", buildLegSummary(leg));
+                    step.put("minutes", toMinutes(leg.get("sectionTime")));
+                    steps.add(step);
+                }
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "available", true,
+                    "totalTime", totalTime,
+                    "totalWalk", totalWalk,
+                    "transferCount", transferCount,
+                    "payment", payment,
+                    "steps", steps,
+                    "title", "추천 경로"
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(Map.of(
+                    "available", false,
+                    "message", e.getMessage() == null ? "TMAP 대중교통 조회 실패" : e.getMessage()
+            ));
         }
     }
 
     @GetMapping(value = "/api/transport/transit-route", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public ResponseEntity<?> transitRoute(
+    public ResponseEntity<?> odsayTransitRoute(
             @RequestParam("sx") double startLng,
             @RequestParam("sy") double startLat,
             @RequestParam("ex") double endLng,
@@ -589,342 +395,455 @@ public class TransportController {
         if (odsayApiKey == null || odsayApiKey.isBlank()) {
             return ResponseEntity.ok(Map.of(
                     "available", false,
-                    "message", "대중교통 API 키가 설정되지 않았습니다.",
-                    "alternatives", List.of()
+                    "message", "ODsay API key is not configured."
             ));
         }
 
         try {
-            List<TransitCandidate> candidates = loadTransitCandidates(startLng, startLat, endLng, endLat);
-            if (candidates.isEmpty()) {
-                return ResponseEntity.ok(Map.of(
-                        "available", false,
-                        "message", "대중교통 경로를 찾지 못했습니다.",
-                        "alternatives", List.of()
+            List<JsonNode> paths = new ArrayList<>();
+            String lastOdsayError = "";
+            for (String url : buildOdsayTransitUrls(startLng, startLat, endLng, endLat)) {
+                try {
+                    JsonNode root = requestJson(url);
+                    String odsayError = extractOdsayError(root);
+                    if (!odsayError.isBlank()) {
+                        lastOdsayError = odsayError;
+                        continue;
+                    }
+                    JsonNode pathNode = root.path("result").path("path");
+                    if (pathNode.isArray()) {
+                        pathNode.forEach(paths::add);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+
+            JsonNode bestPath = paths.stream()
+                    .filter(path -> path.path("info").path("totalTime").asInt(0) > 0)
+                    .min(Comparator.comparingInt(path -> path.path("info").path("totalTime").asInt(Integer.MAX_VALUE)))
+                    .orElse(null);
+
+            if (bestPath == null) {
+                return ResponseEntity.ok(buildEstimatedTransitPayload(
+                        startLng,
+                        startLat,
+                        endLng,
+                        endLat,
+                        lastOdsayError.isBlank() ? "ODsay transit route not found." : lastOdsayError
                 ));
             }
 
-            TransitCandidate best = candidates.get(0);
-            Map<String, Object> payload = new LinkedHashMap<>(best.toMap());
-            payload.put("available", true);
-            payload.put("alternatives", buildAlternativeMaps(candidates));
-            return ResponseEntity.ok(payload);
-        } catch (IOException e) {
+            return ResponseEntity.ok(toOdsayTransitPayload(bestPath, paths));
+        } catch (Exception e) {
             return ResponseEntity.ok(Map.of(
                     "available", false,
-                    "message", "대중교통 경로를 불러오지 못했습니다.",
-                    "alternatives", List.of()
-            ));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return ResponseEntity.ok(Map.of(
-                    "available", false,
-                    "message", "대중교통 경로를 불러오지 못했습니다.",
-                    "alternatives", List.of()
+                    "message", e.getMessage() == null ? "ODsay transit lookup failed." : e.getMessage()
             ));
         }
     }
 
-    @GetMapping(value = "/api/transport/intercity-recommend", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public ResponseEntity<?> intercityRecommend(
-            @RequestParam("sx") double startLng,
-            @RequestParam("sy") double startLat,
-            @RequestParam("ex") double endLng,
-            @RequestParam("ey") double endLat
-    ) {
-        if (odsayApiKey == null || odsayApiKey.isBlank()) {
-            return ResponseEntity.ok(Map.of("items", List.of()));
+    private String extractOdsayError(JsonNode root) {
+        JsonNode error = root.path("error");
+        if (error.isArray() && !error.isEmpty()) {
+            JsonNode first = error.get(0);
+            String code = first.path("code").asText("");
+            String message = first.path("message").asText("");
+            return ("ODsay " + code + " " + message).trim();
         }
-
-        try {
-            List<Map<String, Object>> items = buildAlternativeMaps(
-                    loadTransitCandidates(startLng, startLat, endLng, endLat).stream()
-                            .filter(candidate -> Set.of("train", "express", "intercity").contains(candidate.type))
-                            .toList()
-            );
-            return ResponseEntity.ok(Map.of("items", items));
-        } catch (IOException e) {
-            return ResponseEntity.ok(Map.of(
-                    "items", List.of(),
-                    "message", "장거리 대중교통 추천 정보를 불러오지 못했습니다."
-            ));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return ResponseEntity.ok(Map.of(
-                    "items", List.of(),
-                    "message", "장거리 대중교통 추천 정보를 불러오지 못했습니다."
-            ));
+        if (error.isObject()) {
+            String code = error.path("code").asText("");
+            String message = error.path("message").asText(error.path("msg").asText(""));
+            return ("ODsay " + code + " " + message).trim();
         }
+        return "";
     }
 
-    private List<TransitCandidate> loadTransitCandidates(
-            double startLng,
-            double startLat,
-            double endLng,
-            double endLat
-    ) throws IOException, InterruptedException {
-        List<String> urls = List.of(
-                buildTransitSearchUrl("searchPubTransPathT", startLng, startLat, endLng, endLat, null),
-                buildTransitSearchUrl("searchPubTransPathR", startLng, startLat, endLng, endLat, "0"),
-                buildTransitSearchUrl("searchPubTransPathR", startLng, startLat, endLng, endLat, "1")
+    private List<String> buildOdsayTransitUrls(double startLng, double startLat, double endLng, double endLat) {
+        String base = "https://api.odsay.com/v1/api/%s?apiKey=%s&SX=%s&SY=%s&EX=%s&EY=%s&OPT=0&lang=0";
+        String apiKey = URLEncoder.encode(odsayApiKey, StandardCharsets.UTF_8);
+        String common = String.format(
+                base,
+                "%s",
+                apiKey,
+                startLng,
+                startLat,
+                endLng,
+                endLat
         );
+        return List.of(
+                common.formatted("searchPubTransPathT"),
+                common.formatted("searchPubTransPathR") + "&SearchType=0",
+                common.formatted("searchPubTransPathR") + "&SearchType=1"
+        );
+    }
 
-        List<TransitCandidate> candidates = new ArrayList<>();
-        for (String url : urls) {
-            try {
-                JsonNode response = requestJson(url);
-                if (hasOdsayError(response)) {
-                    continue;
-                }
+    private Map<String, Object> toOdsayTransitPayload(JsonNode path, List<JsonNode> paths) {
+        JsonNode info = path.path("info");
+        List<Map<String, Object>> steps = buildOdsayTransitSteps(path.path("subPath"), info);
+        int pathType = path.path("pathType").asInt(0);
 
-                JsonNode paths = response.path("result").path("path");
-                if (!paths.isArray()) {
-                    continue;
-                }
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("available", true);
+        payload.put("totalTime", info.path("totalTime").asInt(0));
+        payload.put("minutes", info.path("totalTime").asInt(0));
+        payload.put("payment", info.path("payment").asInt(0));
+        payload.put("paymentAmount", info.path("payment").asInt(0));
+        payload.put("busTransitCount", info.path("busTransitCount").asInt(0));
+        payload.put("subwayTransitCount", info.path("subwayTransitCount").asInt(0));
+        payload.put("totalWalk", info.path("totalWalk").asInt(0));
+        payload.put("distanceKm", info.path("totalDistance").asDouble(0.0) / 1000.0);
+        payload.put("pathType", pathType);
+        payload.put("firstStartStation", info.path("firstStartStation").asText(""));
+        payload.put("lastEndStation", info.path("lastEndStation").asText(""));
+        payload.put("steps", steps);
+        payload.put("title", resolveOdsayTransitTitle(pathType, steps));
+        payload.put("detail", buildOdsayTransitDetail(info));
+        payload.put("alternatives", buildOdsayTransitAlternatives(paths));
+        payload.put("geometry", null);
+        payload.put("source", "odsay");
+        return payload;
+    }
 
-                for (JsonNode path : paths) {
-                    TransitCandidate candidate = toTransitCandidate(path);
-                    if (candidate != null) {
-                        candidates.add(candidate);
-                    }
-                }
-            } catch (IOException e) {
-                // Try the next API variant.
+    private List<Map<String, Object>> buildOdsayTransitAlternatives(List<JsonNode> paths) {
+        List<JsonNode> sortedPaths = paths.stream()
+                .filter(path -> path.path("info").path("totalTime").asInt(0) > 0)
+                .sorted(Comparator.comparingInt(path -> path.path("info").path("totalTime").asInt(Integer.MAX_VALUE)))
+                .limit(5)
+                .toList();
+
+        List<Map<String, Object>> alternatives = new ArrayList<>();
+        for (int index = 0; index < sortedPaths.size(); index++) {
+            JsonNode path = sortedPaths.get(index);
+            JsonNode info = path.path("info");
+            List<Map<String, Object>> steps = buildOdsayTransitSteps(path.path("subPath"), info);
+            int pathType = path.path("pathType").asInt(0);
+
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("title", resolveOdsayTransitTitle(pathType, steps));
+            item.put("totalTime", info.path("totalTime").asInt(0));
+            item.put("payment", info.path("payment").asInt(0));
+            item.put("pathType", pathType);
+            item.put("detail", buildOdsayTransitDetail(info));
+            item.put("firstStartStation", info.path("firstStartStation").asText(""));
+            item.put("lastEndStation", info.path("lastEndStation").asText(""));
+            item.put("steps", steps);
+            item.put("fastest", index == 0);
+            alternatives.add(item);
+        }
+        return alternatives;
+    }
+
+    private List<Map<String, Object>> buildOdsayTransitSteps(JsonNode subPaths, JsonNode info) {
+        if (!subPaths.isArray() || subPaths.isEmpty()) {
+            return List.of(Map.of(
+                    "type", "transit",
+                    "title", "대중교통",
+                    "summary", info.path("firstStartStation").asText("출발") + " -> " + info.path("lastEndStation").asText("도착"),
+                    "minutes", info.path("totalTime").asInt(0),
+                    "durationText", info.path("totalTime").asInt(0) + "분"
+            ));
+        }
+
+        List<Map<String, Object>> steps = new ArrayList<>();
+        for (JsonNode subPath : subPaths) {
+            int trafficType = subPath.path("trafficType").asInt(0);
+            int minutes = Math.max(1, subPath.path("sectionTime").asInt(0));
+            String start = subPath.path("startName").asText("출발");
+            String end = subPath.path("endName").asText("도착");
+            JsonNode lane = subPath.path("lane").isArray() && !subPath.path("lane").isEmpty()
+                    ? subPath.path("lane").get(0)
+                    : objectMapper.createObjectNode();
+
+            String type = resolveOdsayStepType(trafficType, lane);
+            String title = resolveOdsayStepTitle(type, lane, trafficType);
+            String instruction = buildOdsayStepInstruction(type, title, start, end);
+
+            Map<String, Object> step = new LinkedHashMap<>();
+            step.put("type", type);
+            step.put("title", title);
+            step.put("summary", start + " -> " + end);
+            step.put("instruction", instruction);
+            step.put("startName", start);
+            step.put("endName", end);
+            step.put("minutes", minutes);
+            step.put("durationText", minutes + "분");
+            if (subPath.path("stationCount").asInt(0) > 0) {
+                step.put("stationCount", subPath.path("stationCount").asInt(0));
+            }
+            steps.add(step);
+        }
+        return steps;
+    }
+
+    private String buildOdsayStepInstruction(String type, String title, String start, String end) {
+        if ("walk".equals(type)) {
+            return start + "에서 " + end + "까지 도보 이동";
+        }
+        String vehicle = title == null || title.isBlank() ? "대중교통" : title;
+        return start + "에서 " + vehicle + " 승차 후 " + end + "에서 하차";
+    }
+
+    private String resolveOdsayStepType(int trafficType, JsonNode lane) {
+        String laneName = lane.path("name").asText("").toLowerCase(Locale.ROOT);
+        if (trafficType == 3 || lane.has("trainClass") || laneName.contains("ktx") || laneName.contains("itx") || laneName.contains("srt")) {
+            return "train";
+        }
+        if (trafficType == 1) return "subway";
+        if (trafficType == 2 || trafficType == 4 || trafficType == 6) return "bus";
+        return "walk";
+    }
+
+    private String resolveOdsayStepTitle(String type, JsonNode lane, int trafficType) {
+        String busNo = firstText(lane, "busNo", "busNoList", "routeNo", "busNumber");
+        String name = firstText(lane, "name", "routeNm", "routeName", "busRouteNm");
+        if ("bus".equals(type) && !busNo.isBlank()) {
+            return normalizeBusRouteName(busNo, trafficType);
+        }
+        if (!name.isBlank()) return normalizeTransitVehicleName(name);
+        if ("train".equals(type)) return "열차";
+        if ("subway".equals(type)) return "지하철";
+        if ("bus".equals(type)) return trafficType == 4 || trafficType == 6 ? "고속버스" : "버스";
+        return "도보";
+    }
+
+    private String normalizeBusRouteName(String value, int trafficType) {
+        String text = value == null ? "" : value.trim()
+                .replaceAll("\\s+", " ")
+                .replaceFirst("^버스\\s*버스\\s*", "버스 ");
+        if (text.isBlank()) {
+            return trafficType == 4 || trafficType == 6 ? "고속버스" : "버스";
+        }
+        if (text.startsWith("버스")
+                || text.startsWith("간선버스")
+                || text.startsWith("지선버스")
+                || text.startsWith("광역버스")
+                || text.startsWith("마을버스")
+                || text.startsWith("공항버스")
+                || text.startsWith("고속버스")
+                || text.startsWith("시외버스")
+                || text.contains("버스")) {
+            return text;
+        }
+        return (trafficType == 4 || trafficType == 6 ? "고속버스 " : "버스 ") + text;
+    }
+
+    private String firstText(JsonNode node, String... fieldNames) {
+        for (String fieldName : fieldNames) {
+            JsonNode value = node.path(fieldName);
+            String text = extractFirstText(value);
+            if (!text.isBlank()) {
+                return text;
             }
         }
-
-        return dedupeCandidates(candidates);
+        return "";
     }
 
-    private String buildTransitSearchUrl(
-            String apiName,
+    private String extractFirstText(JsonNode node) {
+        if (node == null || node.isMissingNode() || node.isNull()) {
+            return "";
+        }
+        if (node.isArray()) {
+            for (JsonNode item : node) {
+                String text = extractFirstText(item);
+                if (!text.isBlank()) {
+                    return text;
+                }
+            }
+            return "";
+        }
+        if (node.isObject()) {
+            return firstText(node, "busNo", "name", "routeNo", "routeNm", "routeName");
+        }
+        return node.asText("").trim();
+    }
+
+    private String resolveOdsayTransitTitle(int pathType, List<Map<String, Object>> steps) {
+        for (Map<String, Object> step : steps) {
+            if ("train".equals(step.get("type"))) {
+                return String.valueOf(step.getOrDefault("title", "열차"));
+            }
+        }
+        return switch (pathType) {
+            case 11 -> "KTX/열차";
+            case 12 -> "고속버스";
+            case 14 -> "시외버스";
+            default -> steps.stream()
+                    .filter(step -> !"walk".equals(step.get("type")))
+                    .map(step -> String.valueOf(step.get("title")))
+                    .findFirst()
+                    .orElse("대중교통");
+        };
+    }
+
+    private String normalizeTransitVehicleName(String name) {
+        String lower = name.toLowerCase(Locale.ROOT);
+        if (lower.contains("ktx")) return "KTX";
+        if (lower.contains("srt")) return "SRT";
+        if (lower.contains("itx")) return "ITX";
+        if (name.contains("무궁화")) return "무궁화호";
+        if (name.contains("새마을")) return "새마을호";
+        return name;
+    }
+
+    private String buildOdsayTransitDetail(JsonNode info) {
+        List<String> details = new ArrayList<>();
+        int busCount = info.path("busTransitCount").asInt(0);
+        int subwayCount = info.path("subwayTransitCount").asInt(0);
+        int walk = info.path("totalWalk").asInt(0);
+        if (busCount > 0) details.add("버스 " + busCount + "회");
+        if (subwayCount > 0) details.add("지하철 " + subwayCount + "회");
+        if (walk > 0) details.add("도보 " + walk + "m");
+        return String.join(" / ", details);
+    }
+
+    private Map<String, Object> buildEstimatedTransitPayload(
             double startLng,
             double startLat,
             double endLng,
             double endLat,
-            String searchType
+            String reason
     ) {
-        StringBuilder url = new StringBuilder("https://api.odsay.com/v1/api/")
-                .append(apiName)
-                .append("?apiKey=").append(URLEncoder.encode(odsayApiKey, StandardCharsets.UTF_8))
-                .append("&SX=").append(startLng)
-                .append("&SY=").append(startLat)
-                .append("&EX=").append(endLng)
-                .append("&EY=").append(endLat)
-                .append("&OPT=0&lang=0");
+        double distanceKm = calculateDistanceMeters(startLat, startLng, endLat, endLng) / 1000.0;
+        EstimatedTransitMain main = resolveEstimatedTransitMain(distanceKm);
+        boolean intercity = main.intercity();
+        int accessWalkMinutes = distanceKm >= 10.0 ? 12 : 8;
+        int egressWalkMinutes = distanceKm >= 10.0 ? 10 : 6;
+        int transferMinutes = main.transferMinutes();
+        int mainMinutes = Math.max(main.minMinutes(), (int) Math.round((distanceKm / main.speedKmh()) * 60.0));
+        int totalMinutes = accessWalkMinutes + mainMinutes + transferMinutes + egressWalkMinutes;
 
-        if (searchType != null) {
-            url.append("&SearchType=").append(searchType);
-        }
-
-        return url.toString();
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("available", true);
+        payload.put("estimated", true);
+        payload.put("source", "estimated");
+        payload.put("reason", reason);
+        payload.put("totalTime", totalMinutes);
+        payload.put("minutes", totalMinutes);
+        payload.put("payment", 0);
+        payload.put("paymentAmount", 0);
+        payload.put("busTransitCount", "bus".equals(main.type()) ? 1 : 0);
+        payload.put("subwayTransitCount", "subway".equals(main.type()) ? 1 : 0);
+        payload.put("totalWalk", (accessWalkMinutes + egressWalkMinutes) * 70);
+        payload.put("distanceKm", distanceKm);
+        payload.put("pathType", main.pathType());
+        payload.put("firstStartStation", "");
+        payload.put("lastEndStation", "");
+        payload.put("steps", List.of());
+        payload.put("title", main.title());
+        payload.put("detail", buildEstimatedTransitDetail(reason));
+        payload.put("alternatives", List.of());
+        payload.put("geometry", null);
+        return payload;
     }
 
-    private List<TransitCandidate> dedupeCandidates(List<TransitCandidate> candidates) {
-        Map<String, TransitCandidate> unique = new LinkedHashMap<>();
-        candidates.stream()
-                .sorted(Comparator
-                        .comparingInt((TransitCandidate item) -> item.totalTime)
-                        .thenComparingInt(item -> transportTypePriority(item.type))
-                        .thenComparing(item -> item.title))
-                .forEach(candidate -> unique.putIfAbsent(candidate.type + "::" + candidate.title, candidate));
-
-        return new ArrayList<>(unique.values());
+    private String buildEstimatedTransitDetail(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return "ODsay 조회 실패로 거리 기반 예상값 표시";
+        }
+        if (reason.contains("ApiKeyAuthFailed")) {
+            return "ODsay API 키 인증 실패로 거리 기반 예상값 표시";
+        }
+        if (reason.toLowerCase(Locale.ROOT).contains("limit") || reason.contains("한도")) {
+            return "ODsay API 사용량 제한으로 거리 기반 예상값 표시";
+        }
+        return "ODsay 조회 실패로 거리 기반 예상값 표시";
     }
 
-    private TransitCandidate toTransitCandidate(JsonNode path) {
-        JsonNode info = path.path("info");
-        if (!info.isObject()) {
-            return null;
+    private EstimatedTransitMain resolveEstimatedTransitMain(double distanceKm) {
+        if (distanceKm >= 100.0) {
+            return new EstimatedTransitMain("train", "장거리 대중교통 예상", 11, true, 190.0, 35, 12, "출발지 주변 주요역/터미널", "도착지 주변 주요역/터미널", "실제 KTX/ITX/고속버스 배차 확인 필요");
         }
-
-        int totalTime = info.path("totalTime").asInt(0);
-        if (totalTime <= 0) {
-            return null;
+        if (distanceKm >= 70.0) {
+            return new EstimatedTransitMain("train", "장거리 대중교통 예상", 11, true, 120.0, 30, 14, "출발지 주변 주요역/터미널", "도착지 주변 주요역/터미널", "실제 열차/고속버스 배차 확인 필요");
         }
-
-        int pathType = path.path("pathType").asInt(0);
-        int payment = info.path("payment").asInt(0);
-        int busCount = info.path("busTransitCount").asInt(0);
-        int subwayCount = info.path("subwayTransitCount").asInt(0);
-        int totalWalk = info.path("totalWalk").asInt(0);
-        double distanceKm = info.path("totalDistance").asDouble(0.0) / 1000.0;
-        String firstStartStation = info.path("firstStartStation").asText("");
-        String lastEndStation = info.path("lastEndStation").asText("");
-        List<Map<String, Object>> steps = buildTransitSteps(path);
-        String title = resolveTransitTitle(pathType, steps, busCount, subwayCount);
-        String type = resolveTransitType(pathType, title, busCount, subwayCount);
-        String detail = buildTransitDetail(busCount, subwayCount, totalWalk, firstStartStation, lastEndStation);
-
-        return new TransitCandidate(
-                type,
-                title,
-                totalTime,
-                payment,
-                busCount,
-                subwayCount,
-                totalWalk,
-                distanceKm,
-                pathType,
-                detail,
-                firstStartStation,
-                lastEndStation,
-                steps
-        );
+        if (distanceKm >= 45.0) {
+            return new EstimatedTransitMain("bus", "장거리 대중교통 예상", 12, true, 75.0, 35, 16, "출발지 주변 터미널/역", "도착지 주변 터미널/역", "실제 고속버스/철도 배차 확인 필요");
+        }
+        if (distanceKm >= 12.0) {
+            return new EstimatedTransitMain("subway", "지역 대중교통 예상", 3, false, 32.0, 12, 8, "출발지 주변 정류장/역", "도착지 주변 정류장/역", "실제 버스/지하철 노선 확인 필요");
+        }
+        return new EstimatedTransitMain("bus", "지역 대중교통 예상", 2, false, 24.0, 8, 6, "출발지 주변 정류장", "도착지 주변 정류장", "실제 버스 노선 확인 필요");
     }
 
-    private List<Map<String, Object>> buildAlternativeMaps(List<TransitCandidate> candidates) {
-        Set<String> seenTypes = new LinkedHashSet<>();
-        List<Map<String, Object>> items = new ArrayList<>();
+    private record EstimatedTransitMain(
+            String type,
+            String title,
+            int pathType,
+            boolean intercity,
+            double speedKmh,
+            int minMinutes,
+            int transferMinutes,
+            String startHub,
+            String endHub,
+            String transferSummary
+    ) {
+    }
 
-        for (TransitCandidate candidate : candidates) {
-            String group = normalizeAlternativeGroup(candidate);
-            if (!seenTypes.add(group)) {
-                continue;
+    private Map<String, Object> buildEstimatedStep(String type, String title, String summary, int minutes) {
+        Map<String, Object> step = new LinkedHashMap<>();
+        step.put("type", type);
+        step.put("title", title);
+        step.put("summary", summary);
+        step.put("minutes", minutes);
+        step.put("durationText", minutes + "분");
+        return step;
+    }
+
+    private String buildLegSummary(Map<String, Object> leg) {
+        String start = extractNamedLocation(leg.get("start"), "출발");
+        String end = extractNamedLocation(leg.get("end"), "도착");
+        return start + " → " + end;
+    }
+
+    private String extractNamedLocation(Object raw, String fallback) {
+        if (raw instanceof Map<?, ?> map) {
+            Object name = map.get("name");
+            return name != null ? String.valueOf(name) : fallback;
+        }
+        return fallback;
+    }
+
+    private int extractFare(Object fareObj) {
+        if (fareObj instanceof Number n) {
+            return n.intValue();
+        }
+        if (fareObj instanceof Map<?, ?> fareMap) {
+            Object regular = fareMap.get("regular");
+            if (regular instanceof Map<?, ?> regularMap) {
+                Object totalFare = regularMap.get("totalFare");
+                return toInt(totalFare);
             }
-            items.add(candidate.toMap());
-            if (items.size() >= 5) {
-                break;
-            }
         }
-
-        return items;
+        return 0;
     }
 
-    private String normalizeAlternativeGroup(TransitCandidate candidate) {
-        if ("train".equals(candidate.type)) {
-            String title = candidate.title.toLowerCase();
-            if (title.contains("ktx") || title.contains("srt")) return "train-ktx";
-            if (title.contains("itx")) return "train-itx";
-            if (candidate.title.contains("무궁화")) return "train-mugunghwa";
-            return "train";
+    private int toMinutes(Object value) {
+        int raw = toInt(value);
+        if (raw <= 0) return 0;
+        return raw > 1000 ? Math.max(1, Math.round(raw / 60f)) : raw;
+    }
+
+    private int toInt(Object value) {
+        if (value instanceof Number n) return n.intValue();
+        if (value == null) return 0;
+        try {
+            return (int) Math.round(Double.parseDouble(String.valueOf(value)));
+        } catch (Exception ignored) {
+            return 0;
         }
-        return candidate.type;
     }
 
-    private String resolveTransitType(int pathType, String title, int busCount, int subwayCount) {
-        if (pathType == 11) return "train";
-        if (pathType == 12) return "express";
-        if (pathType == 14) return "intercity";
+    private void applyGradeReflectively(Object searchDto, String grade) {
+        if (grade == null || grade.isBlank()) return;
 
-        String lower = title.toLowerCase();
-        if (lower.contains("ktx") || lower.contains("srt") || lower.contains("itx") || title.contains("무궁화")) {
-            return "train";
+        try {
+            Class<?> gradeClass = Class.forName("com.Accommodation.constant.Grade");
+            @SuppressWarnings("unchecked")
+            Object enumValue = Enum.valueOf((Class<? extends Enum>) gradeClass.asSubclass(Enum.class), grade);
+            Method method = searchDto.getClass().getMethod("setGrade", gradeClass);
+            method.invoke(searchDto, enumValue);
+        } catch (Exception ignored) {
         }
-        if (subwayCount > 0 && busCount == 0) return "subway";
-        if (busCount > 0 && subwayCount == 0) return "bus";
-        return subwayCount >= busCount ? "subway" : "bus";
-    }
-
-    private String resolveTransitTitle(int pathType, List<Map<String, Object>> steps, int busCount, int subwayCount) {
-        if (pathType == 11) {
-            for (Map<String, Object> step : steps) {
-                if ("train".equals(step.get("type"))) {
-                    return String.valueOf(step.getOrDefault("title", "열차"));
-                }
-            }
-            return "열차";
-        }
-        if (pathType == 12) return "고속버스";
-        if (pathType == 14) return "시외버스";
-        if (subwayCount > 0 && busCount > 0) return "버스 + 지하철";
-        if (subwayCount > 0) return "지하철";
-        if (busCount > 0) return "버스";
-        return "대중교통";
-    }
-
-    private String buildTransitDetail(int busCount, int subwayCount, int totalWalk, String firstStartStation, String lastEndStation) {
-        List<String> parts = new ArrayList<>();
-        if (busCount > 0) parts.add("버스 " + busCount + "회");
-        if (subwayCount > 0) parts.add("지하철 " + subwayCount + "회");
-        if (totalWalk > 0) parts.add("도보 " + totalWalk + "m");
-        if (!firstStartStation.isBlank() && !lastEndStation.isBlank()) {
-            parts.add(firstStartStation + " -> " + lastEndStation);
-        }
-        return String.join(" / ", parts);
-    }
-
-    private List<Map<String, Object>> buildTransitSteps(JsonNode path) {
-        JsonNode subPath = path.path("subPath");
-        if (!subPath.isArray() || subPath.isEmpty()) {
-            return List.of();
-        }
-
-        List<Map<String, Object>> steps = new ArrayList<>();
-        for (JsonNode step : subPath) {
-            int trafficType = step.path("trafficType").asInt(0);
-            int sectionTime = Math.max(1, step.path("sectionTime").asInt(0));
-            int distance = step.path("distance").asInt(0);
-            int stationCount = step.path("stationCount").asInt(0);
-            String startName = step.path("startName").asText("출발");
-            String endName = step.path("endName").asText("도착");
-            JsonNode lane = step.path("lane").isArray() && !step.path("lane").isEmpty() ? step.path("lane").get(0) : step.path("lane");
-
-            Map<String, Object> item = new LinkedHashMap<>();
-            if (trafficType == 3 && lane.isMissingNode()) {
-                item.put("type", "walk");
-                item.put("title", "도보 이동");
-                item.put("summary", startName + " -> " + endName);
-                item.put("minutes", sectionTime);
-                item.put("durationText", distance > 0 ? distance + "m / " + formatMinutes(sectionTime) : formatMinutes(sectionTime));
-            } else if (trafficType == 2) {
-                String title = lane.path("busNo").asText(lane.path("name").asText("버스"));
-                item.put("type", "bus");
-                item.put("title", "버스 " + title);
-                item.put("summary", startName + " -> " + endName);
-                item.put("minutes", sectionTime);
-                item.put("durationText", stationCount > 0 ? stationCount + "정거장 / " + formatMinutes(sectionTime) : formatMinutes(sectionTime));
-            } else if (trafficType == 1) {
-                String title = lane.path("name").asText("지하철");
-                item.put("type", "subway");
-                item.put("title", title);
-                item.put("summary", startName + " -> " + endName);
-                item.put("minutes", sectionTime);
-                item.put("durationText", stationCount > 0 ? stationCount + "개 역 / " + formatMinutes(sectionTime) : formatMinutes(sectionTime));
-            } else {
-                String rawTitle = lane.path("name").asText(lane.path("trainClass").asText("열차"));
-                item.put("type", "train");
-                item.put("title", normalizeTrainTitle(rawTitle));
-                item.put("summary", startName + " -> " + endName);
-                item.put("minutes", sectionTime);
-                item.put("durationText", stationCount > 0 ? stationCount + "개 역 / " + formatMinutes(sectionTime) : formatMinutes(sectionTime));
-            }
-            steps.add(item);
-        }
-
-        return steps;
-    }
-
-    private String normalizeTrainTitle(String rawTitle) {
-        String value = safeText(rawTitle, "열차");
-        String lower = value.toLowerCase();
-        if (lower.contains("ktx") || lower.contains("srt")) return "KTX/SRT";
-        if (lower.contains("itx")) return "ITX";
-        if (value.contains("무궁화")) return "무궁화호";
-        if (value.contains("새마을")) return "새마을호";
-        if (value.contains("누리로")) return "누리로";
-        return value;
-    }
-
-    private int transportTypePriority(String type) {
-        return switch (type) {
-            case "train" -> 0;
-            case "express" -> 1;
-            case "intercity" -> 2;
-            case "subway" -> 3;
-            case "bus" -> 4;
-            default -> 9;
-        };
-    }
-
-    private boolean hasOdsayError(JsonNode response) {
-        JsonNode errorNode = response.path("error");
-        return !(errorNode.isMissingNode() || errorNode.isNull());
-    }
-
-    private String safeText(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value.trim();
     }
 
     private String resolvePrimaryImage(Accom accom) {
@@ -932,129 +851,138 @@ public class TransportController {
             return "";
         }
 
-        for (AccomImg accomImg : accom.getAccomImgList()) {
-            if (accomImg != null && accomImg.getImgUrl() != null && !accomImg.getImgUrl().isBlank()) {
-                return accomImg.getImgUrl();
-            }
-        }
-
-        return "";
+        AccomImg first = accom.getAccomImgList().get(0);
+        return first != null && first.getImgUrl() != null ? first.getImgUrl() : "";
     }
 
-    private String formatMinutes(int minutes) {
-        if (minutes <= 0) {
-            return "0분";
-        }
-
-        int hour = minutes / 60;
-        int minute = minutes % 60;
-        if (hour > 0) {
-            return minute > 0 ? hour + "시간 " + minute + "분" : hour + "시간";
-        }
-        return minute + "분";
+    private String safeText(String value, String fallback) {
+        return (value == null || value.isBlank()) ? fallback : value;
     }
 
     private JsonNode requestJson(String url) throws IOException, InterruptedException {
-        return requestJson(url, "GET", null, null);
-    }
-
-    private JsonNode requestJsonWithFallback(List<String> urls, String body, String contentType)
-            throws IOException, InterruptedException {
-        IOException lastException = null;
-
-        for (String url : urls) {
-            try {
-                return requestJson(url, "POST", body, contentType);
-            } catch (IOException e) {
-                lastException = e;
-            }
-        }
-
-        if (lastException != null) {
-            throw lastException;
-        }
-
-        throw new IOException("No available upstream endpoint.");
-    }
-
-    private JsonNode requestJson(String url, String method, String body, String contentType)
-            throws IOException, InterruptedException {
-        HttpRequest.Builder builder = HttpRequest.newBuilder()
+        HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(20))
                 .header("User-Agent", USER_AGENT)
-                .header("Accept", MediaType.APPLICATION_JSON_VALUE);
+                .header("Accept", "application/json")
+                .GET()
+                .build();
 
-        if ("POST".equalsIgnoreCase(method)) {
-            builder.header("Content-Type", contentType != null ? contentType : MediaType.TEXT_PLAIN_VALUE);
-            builder.POST(HttpRequest.BodyPublishers.ofString(body != null ? body : ""));
-        } else {
-            builder.GET();
-        }
-
-        HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw new IOException("Request failed with status " + response.statusCode());
-        }
-
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         return objectMapper.readTree(response.body());
+    }
+
+    private JsonNode requestJsonWithFallback(List<String> endpoints, String body, String contentType) throws IOException, InterruptedException {
+        IOException lastIo = null;
+        InterruptedException lastInterrupted = null;
+
+        for (String endpoint : endpoints) {
+            try {
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(endpoint))
+                        .timeout(Duration.ofSeconds(20))
+                        .header("User-Agent", USER_AGENT)
+                        .header("Accept", "application/json")
+                        .header("Content-Type", contentType)
+                        .POST(HttpRequest.BodyPublishers.ofString(body))
+                        .build();
+
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                return objectMapper.readTree(response.body());
+            } catch (IOException e) {
+                lastIo = e;
+            } catch (InterruptedException e) {
+                lastInterrupted = e;
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        if (lastInterrupted != null) throw lastInterrupted;
+        if (lastIo != null) throw lastIo;
+        throw new IOException("요청 실패");
     }
 
     private List<Map<String, Object>> mapTransportItems(JsonNode elements, double baseLat, double baseLng) {
         List<Map<String, Object>> items = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
+        if (!elements.isArray()) return items;
 
-        for (JsonNode element : elements) {
-            JsonNode tags = element.path("tags");
-            boolean isBusStop = "bus_stop".equals(tags.path("highway").asText());
-            boolean isStation = "station".equals(tags.path("railway").asText());
+        for (JsonNode node : elements) {
+            double lat = node.path("lat").asDouble();
+            double lng = node.path("lon").asDouble();
+            String railway = node.path("tags").path("railway").asText("");
+            String highway = node.path("tags").path("highway").asText("");
+            String name = node.path("tags").path("name").asText("");
 
-            if (!isBusStop && !isStation) {
-                continue;
-            }
+            String type = "";
+            if ("station".equals(railway)) type = "subway";
+            if ("bus_stop".equals(highway)) type = "bus";
+            if (type.isBlank()) continue;
 
-            double lat = element.path("lat").asDouble(Double.NaN);
-            double lng = element.path("lon").asDouble(Double.NaN);
-            if (Double.isNaN(lat) || Double.isNaN(lng)) {
-                continue;
-            }
+            double distance = calculateDistanceMeters(baseLat, baseLng, lat, lng);
+            int walkMinutes = Math.max(1, (int) Math.round(distance / 70.0));
 
-            String type = isBusStop ? "bus" : "subway";
-            String name = tags.path("name").asText("").isBlank() ? "이름 없음" : tags.path("name").asText();
-            String dedupeKey = type + ":" + name;
-            if (!seen.add(dedupeKey)) {
-                continue;
-            }
-
-            double distance = getDistance(baseLat, baseLng, lat, lng);
-            int walkMinutes = Math.max(1, (int) Math.round(distance / 80.0));
-
-            items.add(Map.of(
-                    "name", name,
-                    "type", type,
-                    "lat", lat,
-                    "lng", lng,
-                    "distance", Math.round(distance),
-                    "walkMinutes", walkMinutes
-            ));
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("type", type);
+            item.put("name", name == null || name.isBlank() ? ("bus".equals(type) ? "버스 정류장" : "지하철역") : name);
+            item.put("lat", lat);
+            item.put("lng", lng);
+            item.put("distance", (int) Math.round(distance));
+            item.put("walkMinutes", walkMinutes);
+            items.add(item);
         }
 
-        items.sort(Comparator.comparingDouble(item -> ((Number) item.get("distance")).doubleValue()));
+        items.sort(Comparator.comparingInt(item -> ((Number) item.get("distance")).intValue()));
         return items;
     }
 
-    private double getDistance(double lat1, double lng1, double lat2, double lng2) {
-        double earthRadius = 6371e3;
-        double phi1 = Math.toRadians(lat1);
-        double phi2 = Math.toRadians(lat2);
-        double deltaPhi = Math.toRadians(lat2 - lat1);
-        double deltaLambda = Math.toRadians(lng2 - lng1);
-
-        double a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2)
-                + Math.cos(phi1) * Math.cos(phi2)
-                * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+    private double calculateDistanceMeters(double lat1, double lng1, double lat2, double lng2) {
+        double earthRadiusKm = 6371.0;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                        Math.cos(Math.toRadians(lat1)) *
+                                Math.cos(Math.toRadians(lat2)) *
+                                Math.sin(dLng / 2) *
+                                Math.sin(dLng / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadiusKm * c * 1000.0;
+    }
 
-        return earthRadius * c;
+    private Map<String, Object> buildTmapRouteGeometry(JsonNode features) {
+        List<List<Double>> coordinates = new ArrayList<>();
+
+        for (JsonNode feature : features) {
+            JsonNode geometry = feature.path("geometry");
+            String type = geometry.path("type").asText("");
+            JsonNode geometryCoordinates = geometry.path("coordinates");
+
+            if ("LineString".equals(type) && geometryCoordinates.isArray()) {
+                appendTmapLineCoordinates(coordinates, geometryCoordinates);
+            } else if ("MultiLineString".equals(type) && geometryCoordinates.isArray()) {
+                for (JsonNode line : geometryCoordinates) {
+                    appendTmapLineCoordinates(coordinates, line);
+                }
+            }
+        }
+
+        Map<String, Object> geometry = new LinkedHashMap<>();
+        geometry.put("type", "LineString");
+        geometry.put("coordinates", coordinates);
+        return geometry;
+    }
+
+    private void appendTmapLineCoordinates(List<List<Double>> coordinates, JsonNode line) {
+        if (!line.isArray()) return;
+
+        for (JsonNode coordinate : line) {
+            if (!coordinate.isArray() || coordinate.size() < 2) continue;
+
+            List<Double> point = List.of(coordinate.get(0).asDouble(), coordinate.get(1).asDouble());
+            if (coordinates.isEmpty() || !coordinates.get(coordinates.size() - 1).equals(point)) {
+                coordinates.add(point);
+            }
+        }
     }
 }

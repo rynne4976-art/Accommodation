@@ -8,6 +8,7 @@ let transportMarkers = [];
 let selectedRouteMode = null;
 let lastRouteContext = null;
 let lastRouteMetrics = null;
+let routeRequestSeq = 0;
 let accomSearchPage = 0;
 let accomSearchTotalPages = 0;
 
@@ -793,6 +794,7 @@ async function searchRoute() {
   await ensureResolvedDestination();
 
   const start = getElement("startLocation")?.value?.trim() || "";
+  const requestSeq = ++routeRequestSeq;
 
   if (!start) {
     alert("출발지를 선택해주세요.");
@@ -804,13 +806,22 @@ async function searchRoute() {
   }
 
   try {
+    lastRouteContext = { lat: null, lng: null, label: start };
+    lastRouteMetrics = null;
+    resetModeTimeLabels();
+    renderTransitDetail(null);
+    clearRouteLine();
+
     const location = await geocodeAddress(start);
+    if (requestSeq !== routeRequestSeq) return;
+
     setStartMarker(location.lat, location.lng, start);
     updateRouteSummary(start, "-", "-");
     map.flyTo([location.lat, location.lng], Math.max(map.getZoom(), 14), { duration: 0.6 });
     refreshMapSize();
-    await calculateAndRenderRoutes({ lat: location.lat, lng: location.lng, label: start });
+    await calculateAndRenderRoutes({ lat: location.lat, lng: location.lng, label: start }, requestSeq);
   } catch (error) {
+    if (requestSeq !== routeRequestSeq) return;
     console.error("길찾기 실패", error);
     alert("출발지를 찾을 수 없습니다.");
   }
@@ -833,8 +844,12 @@ async function ensureResolvedDestination() {
   );
 }
 
-async function calculateAndRenderRoutes(startContext) {
+async function calculateAndRenderRoutes(startContext, requestSeq = ++routeRequestSeq) {
   lastRouteContext = startContext;
+  lastRouteMetrics = null;
+  resetModeTimeLabels();
+  renderTransitDetail(null);
+  clearRouteLine();
 
   const straightDistanceKm = calculateStraightDistanceKm(
       startContext.lat,
@@ -859,12 +874,15 @@ async function calculateAndRenderRoutes(startContext) {
       straightDistanceKm
   );
 
+  if (requestSeq !== routeRequestSeq) {
+    return;
+  }
+
   if (!metrics) {
     renderTransitDetail(null);
     updateRouteSummary(startContext.label, "-", "-");
     resetModeTimeLabels();
     setDistanceInfo("경로를 찾지 못했습니다. 출발지 또는 도착지를 다시 확인해 주세요.");
-    alert("경로를 찾지 못했습니다. 출발지 또는 도착지를 다시 확인해 주세요.");
     return;
   }
 
@@ -883,17 +901,14 @@ function buildRouteMetrics(startContext, carResult, walkResult, transitResult, s
   const walkRoute = walkResult.status === "fulfilled" ? walkResult.value : null;
   const transitRoute = transitResult.status === "fulfilled" ? transitResult.value : null;
 
-  if (!carRoute && !walkRoute && !transitRoute) {
-    return null;
-  }
-
   const baseDistanceKm = resolveDistanceKm(carRoute, walkRoute, transitRoute);
+  const fallbackDistanceKm = baseDistanceKm > 0 ? baseDistanceKm : Number(straightDistanceKm.toFixed(2));
 
   return {
     startLabel: startContext.label,
-    car: buildRoadMetrics(carRoute, baseDistanceKm),
-    walk: buildWalkMetrics(walkRoute, baseDistanceKm, straightDistanceKm),
-    transit: buildTransitMetrics(baseDistanceKm, transitRoute)
+    car: buildRoadMetrics(carRoute, fallbackDistanceKm) || buildEstimatedCarMetrics(fallbackDistanceKm),
+    walk: buildWalkMetrics(walkRoute, fallbackDistanceKm, straightDistanceKm),
+    transit: buildTransitMetrics(fallbackDistanceKm, transitRoute)
   };
 }
 
@@ -906,17 +921,23 @@ function resolveDistanceKm(carRoute, walkRoute, transitRoute) {
 
 function buildRoadMetrics(route, fallbackDistanceKm) {
   if (!route) {
-    return {
-      minutes: null,
-      distanceKm: fallbackDistanceKm,
-      geometry: null
-    };
+    return null;
   }
 
   return {
     minutes: toRoundedMinutes(route.duration),
     distanceKm: Number((route.distance / 1000).toFixed(2)),
     geometry: route.geometry
+  };
+}
+
+function buildEstimatedCarMetrics(distanceKm) {
+  return {
+    minutes: Math.max(3, Math.round((Math.max(distanceKm, 0.2) / 45) * 60)),
+    distanceKm,
+    geometry: null,
+    estimated: true,
+    message: "자동차 경로 API 응답이 없어 거리 기반 예상값을 표시합니다."
   };
 }
 
@@ -955,6 +976,11 @@ async function fetchTransitRoute(startLat, startLng) {
     }
   }
 
+  const tmapTransitRoute = await fetchTmapTransitRoute(startLat, startLng);
+  if (tmapTransitRoute) {
+    return tmapTransitRoute;
+  }
+
   const webKey = getElement("odsayWebKey")?.value?.trim();
   if (webKey) {
     try {
@@ -976,6 +1002,30 @@ async function fetchTransitRoute(startLat, startLng) {
   }
 
   return normalizeServerTransitRoute(body);
+}
+
+async function fetchTmapTransitRoute(startLat, startLng) {
+  try {
+    const { ok, body } = await fetchJsonOrRedirect("/api/transport/tmap-transit-route", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        startX: startLng,
+        startY: startLat,
+        endX: accomLng,
+        endY: accomLat
+      })
+    });
+
+    if (!ok || !body || body.available === false) return null;
+    return normalizeServerTransitRoute({ ...body, source: "tmap" });
+  } catch (error) {
+    console.error("TMAP 대중교통 조회 실패", error);
+    return null;
+  }
 }
 
 async function fetchIntercityRecommendation(startLat, startLng) {
@@ -1043,6 +1093,10 @@ function normalizeIntercityItem(item) {
           type: normalizeStepType(step?.type, step?.title),
           title: normalizeStepTitle(step?.type, step?.title),
           summary: step?.summary || "",
+          instruction: step?.instruction || "",
+          startName: step?.startName || "",
+          endName: step?.endName || "",
+          stationCount: Number(step?.stationCount || 0),
           minutes,
           durationText: formatStepDuration(minutes)
         };
@@ -1124,7 +1178,25 @@ function normalizeStepType(type, title) {
 }
 
 function normalizeStepTitle(type, title) {
+  if (normalizeStepType(type, title) === "bus") {
+    return normalizeBusRouteName(title);
+  }
   return normalizeIntercityTitle(type, title, "");
+}
+
+function normalizeBusRouteName(value) {
+  const raw = String(value || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .replace(/^버스\s*버스\s*/, "버스 ");
+  if (!raw) return "버스";
+  if (/^(버스|간선버스|지선버스|광역버스|마을버스|공항버스|고속버스|시외버스)\b/.test(raw)) {
+    return raw;
+  }
+  if (raw.includes("버스")) {
+    return raw;
+  }
+  return `버스 ${raw}`;
 }
 
 function parseFareAmount(value) {
@@ -1259,17 +1331,25 @@ function normalizeTransitSteps(path, info) {
         type,
         title: "도보 이동",
         summary: `${startName} -> ${endName}`,
+        instruction: `${startName}에서 ${endName}까지 도보 이동`,
+        startName,
+        endName,
+        stationCount: 0,
         minutes,
         durationText: `${distance}m · ${formatStepDuration(minutes)}`
       };
     }
 
     if (type === "bus") {
-      const busNo = lane.busNo || lane.name || "버스";
+      const busNo = normalizeBusRouteName(lane.busNo || lane.name || "버스");
       return {
         type,
-        title: `버스 ${busNo}`,
+        title: busNo,
         summary: `${startName} -> ${endName}`,
+        instruction: `${startName}에서 ${busNo} 승차 후 ${endName}에서 하차`,
+        startName,
+        endName,
+        stationCount,
         minutes: Math.max(1, sectionTime),
         durationText: `${stationCount}정거장 · ${formatStepDuration(sectionTime)}`
       };
@@ -1281,6 +1361,10 @@ function normalizeTransitSteps(path, info) {
         type,
         title: normalizeStepTitle("train", trainName),
         summary: `${startName} -> ${endName}`,
+        instruction: `${startName}에서 ${normalizeStepTitle("train", trainName)} 승차 후 ${endName}에서 하차`,
+        startName,
+        endName,
+        stationCount,
         minutes: Math.max(1, sectionTime),
         durationText: `${stationCount > 0 ? `${stationCount}개 역 · ` : ""}${formatStepDuration(sectionTime)}`
       };
@@ -1289,11 +1373,15 @@ function normalizeTransitSteps(path, info) {
     const subwayName = lane.name || "지하철";
     return {
       type: "subway",
-      title: subwayName,
-      summary: `${startName} -> ${endName}`,
-      minutes: Math.max(1, sectionTime),
-      durationText: `${stationCount}개 역 · ${formatStepDuration(sectionTime)}`
-    };
+    title: subwayName,
+    summary: `${startName} -> ${endName}`,
+    instruction: `${startName}에서 ${subwayName} 승차 후 ${endName}에서 하차`,
+    startName,
+    endName,
+    stationCount,
+    minutes: Math.max(1, sectionTime),
+    durationText: `${stationCount}개 역 · ${formatStepDuration(sectionTime)}`
+  };
   });
 }
 
@@ -1334,6 +1422,10 @@ function buildFallbackTransitSteps(path, info) {
     type: pathType >= 11 ? "train" : "bus",
     title,
     summary: `${startName} -> ${endName}`,
+    instruction: `${startName}에서 ${title} 승차 후 ${endName}에서 하차`,
+    startName,
+    endName,
+    stationCount: 0,
     minutes: Math.max(1, totalTime),
     durationText: formatStepDuration(totalTime)
   }];
@@ -1349,16 +1441,7 @@ function buildFallbackTransitTitle(pathType, info) {
 
 function buildTransitMetrics(distanceKm, transitRoute) {
   if (!transitRoute || !Number.isFinite(Number(transitRoute.totalTime))) {
-    return {
-      minutes: null,
-      distanceKm,
-      geometry: null,
-      detail: "ODsay route unavailable",
-      title: "",
-      steps: [],
-      payment: 0,
-      alternatives: []
-    };
+    return buildEstimatedTransitMetrics(distanceKm, "ODsay API 응답이 없어 거리 기반 예상값을 표시합니다.");
   }
 
   const detailParts = [];
@@ -1371,14 +1454,75 @@ function buildTransitMetrics(distanceKm, transitRoute) {
   return {
     minutes: Math.max(1, Number(transitRoute.totalTime)),
     distanceKm: transitRoute.distanceKm > 0 ? Number(transitRoute.distanceKm.toFixed(2)) : distanceKm,
-    geometry: null,
+    geometry: transitRoute.geometry || null,
     detail: detailParts.join(" / "),
     title: transitRoute.title || buildTransitTitle(transitRoute.steps),
+    pathType: Number(transitRoute.pathType || 0),
     firstStartStation: transitRoute.firstStartStation || "",
     steps: transitRoute.steps,
     payment: transitRoute.payment,
-    alternatives: Array.isArray(transitRoute.alternatives) ? transitRoute.alternatives : []
+    alternatives: Array.isArray(transitRoute.alternatives) ? transitRoute.alternatives : [],
+    lookupTimeText: formatCurrentLookupTime(),
+    estimated: Boolean(transitRoute.estimated)
   };
+}
+
+function buildEstimatedTransitMetrics(distanceKm, detail) {
+  const main = resolveEstimatedTransitMain(distanceKm);
+  const accessMinutes = distanceKm >= 10 ? 12 : 8;
+  const egressMinutes = distanceKm >= 10 ? 10 : 6;
+  const mainMinutes = Math.max(main.minMinutes, Math.round((Math.max(distanceKm, 0.2) / main.speedKmh) * 60));
+  const totalMinutes = accessMinutes + mainMinutes + main.transferMinutes + egressMinutes;
+
+  return {
+    minutes: totalMinutes,
+    distanceKm,
+    geometry: null,
+    detail,
+    title: main.title,
+    pathType: main.pathType || 0,
+    firstStartStation: "",
+    steps: [],
+    payment: 0,
+    alternatives: [],
+    lookupTimeText: formatCurrentLookupTime(),
+    estimated: true
+  };
+}
+
+function resolveEstimatedTransitMain(distanceKm) {
+  if (distanceKm >= 100) {
+    return { type: "train", title: "장거리 대중교통 예상", pathType: 11, speedKmh: 190, minMinutes: 35, transferMinutes: 12, startHub: "출발지 주변 주요역/터미널", endHub: "도착지 주변 주요역/터미널", transferSummary: "실제 KTX/ITX/고속버스 배차 확인 필요" };
+  }
+  if (distanceKm >= 70) {
+    return { type: "train", title: "장거리 대중교통 예상", pathType: 11, speedKmh: 120, minMinutes: 30, transferMinutes: 14, startHub: "출발지 주변 주요역/터미널", endHub: "도착지 주변 주요역/터미널", transferSummary: "실제 열차/고속버스 배차 확인 필요" };
+  }
+  if (distanceKm >= 45) {
+    return { type: "bus", title: "장거리 대중교통 예상", pathType: 12, speedKmh: 75, minMinutes: 35, transferMinutes: 16, startHub: "출발지 주변 터미널/역", endHub: "도착지 주변 터미널/역", transferSummary: "실제 고속버스/철도 배차 확인 필요" };
+  }
+  if (distanceKm >= 12) {
+    return { type: "subway", title: "지역 대중교통 예상", pathType: 3, speedKmh: 32, minMinutes: 12, transferMinutes: 8, startHub: "출발지 주변 정류장/역", endHub: "도착지 주변 정류장/역", transferSummary: "실제 버스/지하철 노선 확인 필요" };
+  }
+  return { type: "bus", title: "지역 대중교통 예상", pathType: 2, speedKmh: 24, minMinutes: 8, transferMinutes: 6, startHub: "출발지 주변 정류장", endHub: "도착지 주변 정류장", transferSummary: "실제 버스 노선 확인 필요" };
+}
+
+function buildEstimatedTransitStep(type, title, instruction, minutes) {
+  return {
+    type,
+    title,
+    summary: instruction,
+    instruction,
+    minutes,
+    durationText: formatStepDuration(minutes)
+  };
+}
+
+function formatCurrentLookupTime() {
+  return new Intl.DateTimeFormat("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(new Date());
 }
 
 function toRoundedMinutes(seconds) {
@@ -1467,7 +1611,9 @@ function renderTransitDetail(mode, metrics) {
 
   eyebrow.innerText = `${MODE_META[mode].label} 상세`;
   title.innerText = buildRouteDetailTitle(mode, metrics);
-  meta.innerText = formatTransitHeadline(metrics.minutes);
+  meta.innerText = mode === "transit" && metrics.lookupTimeText
+      ? `${formatTransitHeadline(metrics.minutes)} · ${metrics.lookupTimeText} 조회`
+      : formatTransitHeadline(metrics.minutes);
   summary.innerHTML = escapeHtml(buildRouteDetailSummary(mode, metrics)) + renderRouteDetailExtras(mode, metrics);
 }
 
@@ -1490,13 +1636,22 @@ function buildTransitTitle(steps) {
 
 function buildRouteDetailTitle(mode, metrics) {
   if (mode === "transit") {
-    return metrics.title || "대중교통 경로";
+    if (metrics.estimated) {
+      return `예상 경로 · ${metrics.title || "대중교통"}`;
+    }
+    return `가장 빠른 경로 · ${metrics.title || "대중교통 경로"}`;
   }
   return `${MODE_META[mode].label} 경로`;
 }
 
 function buildRouteDetailSummary(mode, metrics) {
   if (mode === "transit") {
+    if (isLongDistanceTransit(metrics) && metrics.estimated) {
+      return "";
+    }
+    if (metrics.estimated) {
+      return metrics.detail || "정확한 대중교통 경로를 불러오지 못해 예상 시간만 표시합니다.";
+    }
     if (metrics.firstStartStation) return `${metrics.firstStartStation} 출발`;
     if (lastRouteContext?.label) return `${lastRouteContext.label} 출발`;
     return "최적 출발지";
@@ -1507,7 +1662,45 @@ function buildRouteDetailSummary(mode, metrics) {
 
 function renderRouteDetailExtras(mode, metrics) {
   if (mode !== "transit") return "";
-  return renderTransitAlternatives(metrics.alternatives);
+  if (isLongDistanceTransit(metrics) && metrics.estimated) return renderLongDistanceTransitResult(metrics);
+  if (metrics.estimated) return "";
+  const alternatives = isLongDistanceTransit(metrics) ? [] : metrics.alternatives;
+  return renderTransitSteps(metrics.steps) + renderTransitAlternatives(alternatives);
+}
+
+function renderLongDistanceTransitResult(metrics) {
+  const start = lastRouteContext?.label || "출발지";
+  const destination = resolveDestinationLabel();
+  const routeText = `${start} → ${destination}`;
+  const accuracyText = metrics.estimated
+      ? "네이버 길찾기 수치에 맞춘 장거리 대중교통 예상 시간"
+      : "장거리 대중교통 최종 선택 경로";
+
+  return `
+    <article class="long-transit-result">
+      <span class="long-transit-result__badge">${escapeHtml(metrics.title || "장거리 대중교통")}</span>
+      <strong class="long-transit-result__time">${escapeHtml(formatTransitHeadline(metrics.minutes))}</strong>
+      <span class="long-transit-result__route">${escapeHtml(routeText)}</span>
+      <span class="long-transit-result__note">${escapeHtml(accuracyText)}</span>
+    </article>
+  `;
+}
+
+function resolveDestinationLabel() {
+  const name = getElement("accomName")?.value?.trim();
+  const address = getElement("accomLocation")?.value?.trim();
+  const summary = getElement("destinationSummaryCard")?.innerText?.trim();
+  return name || summary || address || "도착지";
+}
+
+function isLongDistanceTransit(metrics) {
+  return Number(metrics?.distanceKm || 0) >= INTERCITY_LIMIT_KM
+      || Number(metrics?.pathType || 0) >= 11
+      || String(metrics?.title || "").includes("KTX")
+      || String(metrics?.title || "").includes("ITX")
+      || String(metrics?.title || "").includes("SRT")
+      || String(metrics?.title || "").includes("고속버스")
+      || String(metrics?.title || "").includes("시외버스");
 }
 
 function extractStepMinutes(text) {
@@ -1527,7 +1720,7 @@ function formatStepDuration(minutes) {
 function drawSelectedRouteLine(geometry, mode) {
   clearRouteLine();
 
-  const lineGeometry = mode === "transit" ? lastRouteMetrics?.car?.geometry : geometry;
+  const lineGeometry = geometry;
   if (!lineGeometry) return;
 
   routeLine = L.geoJSON(lineGeometry, {
@@ -1621,19 +1814,31 @@ function escapeHtml(value) {
       .replaceAll("'", "&#39;");
 }
 
-async function fetchJsonOrRedirect(url) {
+async function fetchJsonOrRedirect(url, options = {}) {
+  const headers = {
+    Accept: "application/json",
+    ...(options.headers || {})
+  };
   const response = await fetch(url, {
+    ...options,
     credentials: "same-origin",
-    headers: { Accept: "application/json" }
+    headers
   });
 
   const contentType = response.headers.get("content-type") || "";
   if (response.redirected || contentType.includes("text/html")) {
-    window.location.href = `${LOGIN_URL}?redirectUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`;
-    throw new Error("로그인이 필요합니다.");
+    return {
+      ok: false,
+      body: { message: "로그인 또는 서버 응답 문제로 기본 예상값을 표시합니다." }
+    };
   }
 
-  const body = await response.json();
+  let body = {};
+  try {
+    body = await response.json();
+  } catch (error) {
+    body = { message: "응답을 읽지 못해 기본 예상값을 표시합니다." };
+  }
   return { ok: response.ok, body };
 }
 
@@ -1654,8 +1859,10 @@ function normalizeServerTransitRoute(data) {
     pathType: Number(data.pathType || 0),
     title: data.title || "",
     detail: data.detail || "",
+    geometry: data.geometry || null,
     steps: Array.isArray(data.steps) ? data.steps : [],
-    alternatives: dedupeTransitAlternatives(Array.isArray(data.alternatives) ? data.alternatives : [])
+    alternatives: dedupeTransitAlternatives(Array.isArray(data.alternatives) ? data.alternatives : []),
+    estimated: Boolean(data.estimated)
   };
 }
 
@@ -1695,36 +1902,127 @@ function dedupeTransitAlternatives(alternatives) {
   const seen = new Set();
   return alternatives
       .map(item => ({
-        type: item?.type || "bus",
+        type: normalizeStepType(item?.type, item?.title),
         title: item?.title || "대중교통",
         totalTime: Number(item?.totalTime || item?.minutes || 0),
         payment: Number(item?.payment || item?.paymentAmount || 0),
         pathType: Number(item?.pathType || 0),
         detail: item?.detail || "",
-        steps: Array.isArray(item?.steps) ? item.steps : []
+        firstStartStation: item?.firstStartStation || "",
+        lastEndStation: item?.lastEndStation || "",
+        steps: normalizeTransitStepList(item?.steps)
       }))
       .filter(item => Number.isFinite(item.totalTime) && item.totalTime > 0)
       .sort((a, b) => a.totalTime - b.totalTime)
       .filter(item => {
-        const key = `${item.type}:${item.title}`;
+        const routeText = item.steps
+            .map(step => `${step.title}:${step.startName || step.summary}:${step.endName || ""}`)
+            .join("|");
+        const key = `${item.type}:${item.title}:${item.totalTime}:${routeText}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
       })
-      .slice(0, 5);
+      .slice(0, 5)
+      .map((item, index) => ({ ...item, fastest: index === 0 }));
+}
+
+function renderTransitSteps(steps) {
+  if (!Array.isArray(steps) || !steps.length) return "";
+
+  return `
+    <ol class="transit-step-list">
+      ${steps.map((step, index) => {
+        const stepType = normalizeStepType(step.type, step.title);
+        return `
+          <li class="transit-step transit-step--${escapeHtml(stepType)}">
+            <span class="transit-step__index">${index + 1}</span>
+            <span class="transit-step__body">
+              <strong class="transit-step__title">${escapeHtml(step.title || step.type || "이동")}</strong>
+              <span class="transit-step__summary">${escapeHtml(step.instruction || step.summary || "")}</span>
+              <span class="transit-step__time">${escapeHtml(step.durationText || formatStepDuration(Number(step.minutes || 0)))}</span>
+              ${Number(step.stationCount || 0) > 0 ? `<span class="transit-step__station">${escapeHtml(`${Number(step.stationCount)}개 정류장/역 이동`)}</span>` : ""}
+            </span>
+          </li>
+        `;
+      }).join("")}
+    </ol>
+  `;
 }
 
 function renderTransitAlternatives(alternatives) {
   if (!Array.isArray(alternatives) || !alternatives.length) return "";
 
   return `
-    <div class="transit-alt-grid">
+    <div class="transit-alt-section">
+      <div class="transit-alt-section__head">
+        <strong>경로 후보</strong>
+        <span>빠른 순</span>
+      </div>
+      <div class="transit-alt-grid">
       ${alternatives.map(item => `
-        <article class="transit-alt-card">
-          <span class="transit-alt-card__type">${escapeHtml(item.title || "대중교통")}</span>
+        <article class="transit-alt-card${item.fastest ? " is-fastest" : ""}">
+          <span class="transit-alt-card__type">
+            ${item.fastest ? '<span class="transit-alt-card__badge">가장 빠름</span>' : ""}
+            ${escapeHtml(item.title || "대중교통")}
+          </span>
           <strong class="transit-alt-card__time">${escapeHtml(formatStepDuration(Number(item.totalTime || 0)))}</strong>
+          <span class="transit-alt-card__detail">${escapeHtml(item.detail || buildTransitTitle(item.steps))}</span>
+          <span class="transit-alt-card__route">${escapeHtml(buildAlternativeStationText(item))}</span>
+          ${renderAlternativeStepPreview(item.steps)}
         </article>
       `).join("")}
+      </div>
     </div>
+  `;
+}
+
+function buildAlternativeStationText(item) {
+  if (item?.firstStartStation && item?.lastEndStation) {
+    return `${item.firstStartStation} → ${item.lastEndStation}`;
+  }
+  if (Array.isArray(item?.steps) && item.steps.length) {
+    const first = item.steps[0]?.summary || "";
+    return first || "";
+  }
+  return "";
+}
+
+function normalizeTransitStepList(steps) {
+  if (!Array.isArray(steps)) return [];
+  return steps.map(step => {
+    const minutes = Number(step?.minutes || extractStepMinutes(step?.durationText));
+    return {
+      type: normalizeStepType(step?.type, step?.title),
+      title: normalizeStepTitle(step?.type, step?.title),
+      summary: step?.summary || "",
+      instruction: step?.instruction || "",
+      startName: step?.startName || "",
+      endName: step?.endName || "",
+      stationCount: Number(step?.stationCount || 0),
+      minutes,
+      durationText: step?.durationText || formatStepDuration(minutes)
+    };
+  });
+}
+
+function renderAlternativeStepPreview(steps) {
+  if (!Array.isArray(steps) || !steps.length) return "";
+  return `
+    <ol class="transit-alt-steps">
+      ${steps.map((step, index) => {
+        const stepType = normalizeStepType(step.type, step.title);
+        const instruction = step.instruction || step.summary || "";
+        return `
+          <li class="transit-alt-step transit-alt-step--${escapeHtml(stepType)}">
+            <span class="transit-alt-step__dot">${index + 1}</span>
+            <span class="transit-alt-step__text">
+              <strong>${escapeHtml(step.title || "이동")}</strong>
+              <span>${escapeHtml(instruction)}</span>
+            </span>
+          </li>
+        `;
+      }).join("")}
+    </ol>
   `;
 }
