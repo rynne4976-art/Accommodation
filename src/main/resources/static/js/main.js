@@ -24,11 +24,14 @@ const syncInputValue = (input, nextValue) => {
 
 if ($("dateTrigger")) {
     const ui = {
+        form: document.querySelector(".booking-bar"),
         dateTrigger: $("dateTrigger"),
         guestTrigger: $("guestTrigger"),
         dateLabel: $("dateRangeLabel"),
         checkInInput: $("checkInDateInput"),
         checkOutInput: $("checkOutDateInput"),
+        searchInput: document.querySelector('.booking-bar input[name="searchQuery"]'),
+        resetButton: document.querySelector(".booking-bar [data-booking-reset]"),
         guestLabel: $("guestDisplay"),
         calendar: $("calendarPopup"),
         guest: $("guestPopup"),
@@ -113,6 +116,20 @@ if ($("dateTrigger")) {
         syncInputValue(ui.adultInput, String(state.adult));
         syncInputValue(ui.childInput, String(state.child));
         syncInputValue(ui.roomInput, String(state.room));
+    }
+
+    function resetBookingState() {
+        state.start = null;
+        state.end = null;
+        state.adult = 0;
+        state.child = 0;
+        state.room = 1;
+        state.month = new Date(baseToday.getFullYear(), baseToday.getMonth(), 1);
+        syncInputValue(ui.searchInput, "");
+        closePopups();
+        renderDate();
+        renderGuest();
+        renderCalendar();
     }
 
     function buildMonth(container, title, month) {
@@ -230,6 +247,15 @@ if ($("dateTrigger")) {
     ui.guestConfirm?.addEventListener("click", () => {
         renderGuest();
         ui.guest.classList.remove("open");
+    });
+
+    ui.resetButton?.addEventListener("click", () => {
+        resetBookingState();
+        document.dispatchEvent(new CustomEvent("bookingBar:reset", {
+            detail: {
+                form: ui.form
+            }
+        }));
     });
 
     document.addEventListener("click", (e) => {

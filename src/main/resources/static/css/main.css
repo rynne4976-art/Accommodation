@@ -48,8 +48,8 @@ img { display: block; max-width: 100%; }
     border-radius: 22px;
     background: rgba(255, 255, 255, 0.97);
 }
-.booking-bar { display: grid; grid-template-columns: 1.7fr 1.25fr 1.25fr 120px; gap: 12px; }
-.booking-field, .booking-action, .booking-search { min-height: 54px; border-radius: 14px; }
+.booking-bar { display: grid; grid-template-columns: 1.7fr 1.25fr 1.25fr 120px 120px; gap: 12px; }
+.booking-field, .booking-action, .booking-search, .booking-reset { min-height: 54px; border-radius: 14px; }
 .booking-field, .booking-action, .calendar-header, .calendar-footer, .guest-option, .accom-section__head, .card-bottom {
     display: flex;
     align-items: center;
@@ -67,7 +67,19 @@ img { display: block; max-width: 100%; }
 .booking-input::placeholder, .booking-action.is-placeholder { color: #9ca3af; }
 .booking-action { color: #2a2f36; font-size: 0.98rem; font-weight: 700; text-align: left; cursor: pointer; }
 .booking-action.active { border-color: #111827; background: #fff; }
-.booking-search { border: 0; background: linear-gradient(135deg, var(--blue), #9563ff); color: #fff; font-size: 1rem; font-weight: 800; cursor: pointer; }
+.booking-search,
+.booking-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: linear-gradient(135deg, var(--blue), #9563ff);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
 
 .popup-panel {
     position: absolute;

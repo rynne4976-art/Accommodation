@@ -4,6 +4,8 @@ import com.Accommodation.constant.AccomType;
 import com.Accommodation.dto.AccomSearchDto;
 import com.Accommodation.dto.MainAccomDto;
 import com.Accommodation.service.AccomService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,7 +27,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MainController {
 
+    private static final String RECENT_VIEWED_COOKIE_NAME = "recentViewedAccoms";
     private static final String RECENT_VIEWED_COOKIE_DELIMITER_PATTERN = "[,-]";
+    private static final String RECENT_VIEWED_COOKIE_DELIMITER = "-";
     private static final int RECENT_VIEWED_LIMIT = 8;
 
     private final AccomService accomService;
@@ -176,9 +180,11 @@ public class MainController {
 
     @GetMapping("/recent-viewed")
     public String recentViewed(@CookieValue(value = "recentViewedAccoms", required = false) String recentViewedCookie,
+                               HttpServletResponse response,
                                Model model) {
         List<Long> recentViewedIds = parseRecentViewedIds(recentViewedCookie);
         List<MainAccomDto> recentViewedList = accomService.getRecentViewedAccomList(recentViewedIds);
+        syncRecentViewedCookie(recentViewedList, response);
 
         model.addAttribute("recentViewedList", recentViewedList);
         model.addAttribute("recentViewedCount", recentViewedList.size());
@@ -205,5 +211,19 @@ public class MainController {
                 .stream()
                 .limit(RECENT_VIEWED_LIMIT)
                 .collect(Collectors.toList());
+    }
+
+    private void syncRecentViewedCookie(List<MainAccomDto> recentViewedList, HttpServletResponse response) {
+        String cookieValue = recentViewedList.stream()
+                .map(MainAccomDto::getId)
+                .filter(id -> id != null)
+                .limit(RECENT_VIEWED_LIMIT)
+                .map(String::valueOf)
+                .collect(Collectors.joining(RECENT_VIEWED_COOKIE_DELIMITER));
+
+        Cookie cookie = new Cookie(RECENT_VIEWED_COOKIE_NAME, cookieValue);
+        cookie.setPath("/");
+        cookie.setMaxAge(cookieValue.isBlank() ? 0 : 60 * 60 * 24 * 30);
+        response.addCookie(cookie);
     }
 }

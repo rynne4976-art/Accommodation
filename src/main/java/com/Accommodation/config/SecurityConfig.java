@@ -89,6 +89,7 @@ public class SecurityConfig {
 
                 .logout(logout -> logout
                         .logoutUrl("/members/logout")
+                        .deleteCookies("JSESSIONID", "recentViewedAccoms")
                         .logoutSuccessUrl("/main?logout")
                         .permitAll()
                 );
