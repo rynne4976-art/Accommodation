@@ -236,30 +236,35 @@ erDiagram
 회원의 찜, 장바구니, 리뷰, 알림 기능을 중심으로 구성했습니다.
 
 ```text
-           REVIEW
-             |
-WISH ---- MEMBER ---- CART_ITEM
-             |
-      NOTIFICATION
-
-ACCOM
- ├─ REVIEW
- ├─ WISH
- └─ CART_ITEM
+              ACCOM
+         /      |      \
+     REVIEW    WISH   CART_ITEM
+         \       |       /
+               MEMBER
+                  |
+            NOTIFICATION
 ```
 
 ```mermaid
-erDiagram
-    MEMBER ||--o{ WISH : saves
-    MEMBER ||--o{ CART_ITEM : owns
-    MEMBER ||--o{ REVIEW : writes
-    MEMBER ||--o{ NOTIFICATION : receives
+flowchart TD
+    ACCOM[ACCOM]
 
-    ACCOM ||--o{ WISH : targets
-    ACCOM ||--o{ CART_ITEM : added_to
-    ACCOM ||--o{ REVIEW : reviewed_in
+    REVIEW[REVIEW]
+    WISH[WISH]
+    CART_ITEM[CART_ITEM]
+    MEMBER[MEMBER]
+    NOTIFICATION[NOTIFICATION]
+    REVIEW_IMG[REVIEW_IMG]
 
-    REVIEW ||--o{ REVIEW_IMG : has
+    ACCOM --> REVIEW
+    ACCOM --> WISH
+    ACCOM --> CART_ITEM
+
+    REVIEW --> MEMBER
+    WISH --> MEMBER
+    CART_ITEM --> MEMBER
+    MEMBER --> NOTIFICATION
+    REVIEW --> REVIEW_IMG
 ```
 
 ### 3. 숙소 상세 정보 관련 ERD
