@@ -20,8 +20,6 @@ const DEFAULT_MAP_ZOOM = 12;
 const LOGIN_URL = "/members/login";
 const INTERCITY_LIMIT_KM = 45;
 const DEFAULT_TIME_LABEL = "예상 시간";
-const CSRF_TOKEN = document.querySelector('meta[name="_csrf"]')?.getAttribute("content") || "";
-const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.getAttribute("content") || "";
 
 const MODE_META = {
   transit: { label: "대중교통", color: "#2563eb", dashArray: "8 10" },
@@ -30,6 +28,7 @@ const MODE_META = {
 
 document.addEventListener("DOMContentLoaded", init);
 
+// 초기화와 이벤트 바인딩
 async function init() {
   bindRouteModeButtons();
   bindDestinationInput();
@@ -67,6 +66,7 @@ function getElement(id) {
   return document.getElementById(id);
 }
 
+// 지도 초기화
 function initMap() {
   map = L.map("map", { zoomControl: false }).setView(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM);
   L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -421,6 +421,7 @@ function syncRouteModeButtons() {
   });
 }
 
+// 숙소 검색과 도착지 관리
 async function geocodeAddress(address) {
   const cacheKey = address.trim();
   if (geocodeCache.has(cacheKey)) {
@@ -669,6 +670,7 @@ function updateAccommodationMarker() {
   accomMarker.bindPopup("숙소 위치");
 }
 
+// 숙소 주변 교통 표시
 async function loadNearbyTransport() {
   if (accomLat == null || accomLng == null) {
     renderTransportGroups([], []);
@@ -795,6 +797,7 @@ function clearTransportMarkers() {
   transportMarkers = [];
 }
 
+// 길찾기 요청과 경로 데이터 조회
 async function searchRoute() {
   await ensureResolvedDestination();
 
@@ -961,11 +964,6 @@ async function fetchTransitRoute(startLat, startLng) {
     }
   }
 
-  const tmapTransitRoute = await fetchTmapTransitRoute(startLat, startLng);
-  if (tmapTransitRoute) {
-    return tmapTransitRoute;
-  }
-
   const webKey = getElement("odsayWebKey")?.value?.trim();
   if (webKey) {
     try {
@@ -987,31 +985,6 @@ async function fetchTransitRoute(startLat, startLng) {
   }
 
   return normalizeServerTransitRoute(body);
-}
-
-async function fetchTmapTransitRoute(startLat, startLng) {
-  try {
-    const { ok, body } = await fetchJsonOrRedirect("/api/transport/tmap-transit-route", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        ...(CSRF_TOKEN && CSRF_HEADER ? { [CSRF_HEADER]: CSRF_TOKEN } : {})
-      },
-      body: JSON.stringify({
-        startX: startLng,
-        startY: startLat,
-        endX: accomLng,
-        endY: accomLat
-      })
-    });
-
-    if (!ok || !body || body.available === false) return null;
-    return normalizeServerTransitRoute({ ...body, source: "tmap" });
-  } catch (error) {
-    console.error("TMAP 대중교통 조회 실패", error);
-    return null;
-  }
 }
 
 async function fetchIntercityRecommendation(startLat, startLng) {
@@ -1141,6 +1114,7 @@ function normalizeBusRouteName(value) {
   return `버스 ${raw}`;
 }
 
+// ODsay 직접 응답 정규화
 function parseFareAmount(value) {
   const digits = String(value || "").replace(/[^0-9]/g, "");
   return digits ? Number(digits) : 0;
@@ -1381,6 +1355,7 @@ function buildFallbackTransitTitle(pathType, info) {
   return info?.firstStartStation ? `${info.firstStartStation} 출발` : "대중교통 경로";
 }
 
+// 경로 지표 계산
 function buildTransitMetrics(distanceKm, transitRoute) {
   if (!transitRoute || !Number.isFinite(Number(transitRoute.totalTime))) {
     return buildEstimatedTransitMetrics(distanceKm, "ODsay API 응답이 없어 거리 기반 예상값을 표시합니다.");
@@ -1492,6 +1467,7 @@ function resetModeTimeLabels() {
   setModeTimeLabel("transitTimeLabel", null);
 }
 
+// 경로 상세 렌더링
 function renderSelectedMode() {
   syncRouteModeButtons();
 
@@ -1729,6 +1705,7 @@ function setDistanceInfo(text) {
   }
 }
 
+// 공통 유틸리티와 서버 응답 정규화
 function calculateStraightDistanceKm(startLat, startLng, endLat, endLng) {
   const earthRadiusKm = 6371;
   const dLat = toRadians(endLat - startLat);
