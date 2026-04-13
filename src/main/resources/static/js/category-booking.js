@@ -171,6 +171,19 @@
         window.location.href = `${loginUrl}?redirectUrl=${encodeURIComponent(redirectUrl)}`;
     }
 
+    function moveToMyPageEditForReservationInfo() {
+        window.location.href = '/members/mypage/edit?reservationInfoRequired=true';
+    }
+
+    function handleReservationInfoRequiredMessage(message) {
+        if (message && message.includes('예약을 위해 연락처와 주소를 먼저 입력해주세요.')) {
+            moveToMyPageEditForReservationInfo();
+            return true;
+        }
+
+        return false;
+    }
+
     function getHeaders() {
         const headers = {
             'Content-Type': 'application/json',
@@ -798,6 +811,9 @@
             }
 
             const message = await response.text();
+            if (handleReservationInfoRequiredMessage(message)) {
+                return;
+            }
             alert(`장바구니에 담지 못했습니다.\n이유: ${message}`);
         } catch (error) {
             alert(`장바구니에 담지 못했습니다.\n이유: ${error.message}`);
@@ -839,6 +855,9 @@
             }
 
             const message = await response.text();
+            if (handleReservationInfoRequiredMessage(message)) {
+                return;
+            }
             alert(`예약에 실패했습니다: ${message}`);
         } catch (error) {
             alert(`오류가 발생했습니다: ${error.message}`);

@@ -198,6 +198,18 @@
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
+        function moveToMyPageEditForReservationInfo() {
+            window.location.href = '/members/mypage/edit?reservationInfoRequired=true';
+        }
+
+        function handleReservationInfoRequiredMessage(message) {
+            if (message && message.includes('예약을 위해 연락처와 주소를 먼저 입력해주세요.')) {
+                moveToMyPageEditForReservationInfo();
+                return true;
+            }
+            return false;
+        }
+
         function buildHeaders() {
             const headers = { 'Content-Type': 'application/json' };
             if (csrfToken && csrfHeader) {
@@ -334,7 +346,11 @@
                 } else {
                     btn.disabled = false;
                     btn.textContent = '예약 확정';
-                    alert('예약 실패: ' + await res.text());
+                    const message = await res.text();
+                    if (handleReservationInfoRequiredMessage(message)) {
+                        return;
+                    }
+                    alert('예약 실패: ' + message);
                 }
             } catch (e) {
                 btn.disabled = false;
@@ -370,7 +386,11 @@
                 } else {
                     btn.querySelector('span:first-child').textContent = '예약 확정';
                     updateSelectionSummary();
-                    alert('예약 실패: ' + await res.text());
+                    const message = await res.text();
+                    if (handleReservationInfoRequiredMessage(message)) {
+                        return;
+                    }
+                    alert('예약 실패: ' + message);
                 }
             } catch (e) {
                 btn.querySelector('span:first-child').textContent = '예약 확정';
