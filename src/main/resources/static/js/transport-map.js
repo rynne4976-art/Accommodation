@@ -18,14 +18,14 @@ const nearbyTransportCache = new Map();
 const DEFAULT_MAP_CENTER = [37.5665, 126.9780];
 const DEFAULT_MAP_ZOOM = 12;
 const LOGIN_URL = "/members/login";
-const WALK_LIMIT_KM = 12;
 const INTERCITY_LIMIT_KM = 45;
 const DEFAULT_TIME_LABEL = "예상 시간";
+const CSRF_TOKEN = document.querySelector('meta[name="_csrf"]')?.getAttribute("content") || "";
+const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.getAttribute("content") || "";
 
 const MODE_META = {
   transit: { label: "대중교통", color: "#2563eb", dashArray: "8 10" },
-  car: { label: "자동차", color: "#7b3ff2", dashArray: null },
-  walk: { label: "도보", color: "#16a34a", dashArray: "10 8" }
+  car: { label: "자동차", color: "#7b3ff2", dashArray: null }
 };
 
 document.addEventListener("DOMContentLoaded", init);
@@ -461,7 +461,12 @@ async function applyAccommodationDestination(name, address, imageUrl = "", accom
 
   if (trimmedAddress === currentAddress && accomLat != null && accomLng != null) {
     lastRouteContext = null;
+    lastRouteMetrics = null;
+    clearRouteLine();
+    updateRouteSummary("-", "-", "-");
+    renderTransitDetail(null);
     resetModeTimeLabels();
+    setDistanceInfo("선택한 숙소 기준으로 주변 교통 정보를 표시합니다.");
     refreshMapSize();
     return;
   }
@@ -858,18 +863,14 @@ async function calculateAndRenderRoutes(startContext, requestSeq = ++routeReques
       accomLng
   );
 
-  const [carResult, walkResult, transitResult] = await Promise.allSettled([
+  const [carResult, transitResult] = await Promise.allSettled([
     fetchOsrmRoute(startContext.lat, startContext.lng, "driving"),
-    straightDistanceKm > WALK_LIMIT_KM
-        ? Promise.reject(new Error("도보는 가까운 거리만 선택해 주세요."))
-        : fetchOsrmRoute(startContext.lat, startContext.lng, "foot"),
     fetchTransitRoute(startContext.lat, startContext.lng)
   ]);
 
   const metrics = buildRouteMetrics(
       startContext,
       carResult,
-      walkResult,
       transitResult,
       straightDistanceKm
   );
@@ -896,25 +897,22 @@ async function calculateAndRenderRoutes(startContext, requestSeq = ++routeReques
   renderSelectedMode();
 }
 
-function buildRouteMetrics(startContext, carResult, walkResult, transitResult, straightDistanceKm) {
+function buildRouteMetrics(startContext, carResult, transitResult, straightDistanceKm) {
   const carRoute = carResult.status === "fulfilled" ? carResult.value : null;
-  const walkRoute = walkResult.status === "fulfilled" ? walkResult.value : null;
   const transitRoute = transitResult.status === "fulfilled" ? transitResult.value : null;
 
-  const baseDistanceKm = resolveDistanceKm(carRoute, walkRoute, transitRoute);
+  const baseDistanceKm = resolveDistanceKm(carRoute, transitRoute);
   const fallbackDistanceKm = baseDistanceKm > 0 ? baseDistanceKm : Number(straightDistanceKm.toFixed(2));
 
   return {
     startLabel: startContext.label,
     car: buildRoadMetrics(carRoute, fallbackDistanceKm) || buildEstimatedCarMetrics(fallbackDistanceKm),
-    walk: buildWalkMetrics(walkRoute, fallbackDistanceKm, straightDistanceKm),
     transit: buildTransitMetrics(fallbackDistanceKm, transitRoute)
   };
 }
 
-function resolveDistanceKm(carRoute, walkRoute, transitRoute) {
+function resolveDistanceKm(carRoute, transitRoute) {
   if (carRoute?.distance) return Number((carRoute.distance / 1000).toFixed(2));
-  if (walkRoute?.distance) return Number((walkRoute.distance / 1000).toFixed(2));
   if (transitRoute?.distanceKm) return Number(Number(transitRoute.distanceKm).toFixed(2));
   return 0;
 }
@@ -941,26 +939,13 @@ function buildEstimatedCarMetrics(distanceKm) {
   };
 }
 
-function buildWalkMetrics(route, fallbackDistanceKm, straightDistanceKm) {
-  if (straightDistanceKm > WALK_LIMIT_KM) {
-    return {
-      minutes: null,
-      distanceKm: Number(straightDistanceKm.toFixed(2)),
-      geometry: null,
-      message: "가까운 거리만 선택해 주세요."
-    };
-  }
-
-  return buildRoadMetrics(route, fallbackDistanceKm);
-}
-
 async function fetchOsrmRoute(startLat, startLng, profile) {
   const { ok, body } = await fetchJsonOrRedirect(
       `/api/transport/road-route?profile=${encodeURIComponent(profile)}&sx=${startLng}&sy=${startLat}&ex=${accomLng}&ey=${accomLat}`
   );
 
-  if (!ok) {
-    throw new Error(body.message || "경로를 찾지 못했습니다.");
+  if (!ok || !body || body.available === false) {
+    return null;
   }
 
   return body;
@@ -1010,7 +995,8 @@ async function fetchTmapTransitRoute(startLat, startLng) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json"
+        Accept: "application/json",
+        ...(CSRF_TOKEN && CSRF_HEADER ? { [CSRF_HEADER]: CSRF_TOKEN } : {})
       },
       body: JSON.stringify({
         startX: startLng,
@@ -1029,51 +1015,7 @@ async function fetchTmapTransitRoute(startLat, startLng) {
 }
 
 async function fetchIntercityRecommendation(startLat, startLng) {
-  try {
-    const { ok, body } = await fetchJsonOrRedirect(
-        `/api/transport/intercity-recommend?sx=${startLng}&sy=${startLat}&ex=${accomLng}&ey=${accomLat}`
-    );
-
-    if (!ok) return null;
-
-    const items = Array.isArray(body.items) ? body.items : [];
-    if (!items.length) return null;
-
-    const candidates = items
-        .map(normalizeIntercityItem)
-        .filter(item => item && Number.isFinite(Number(item.totalTime)))
-        .filter(item => item.totalTime > 0)
-        .sort((a, b) => {
-          const diff = a.totalTime - b.totalTime;
-          if (Math.abs(diff) <= 20) {
-            const score = modePriority(a.type) - modePriority(b.type);
-            if (score !== 0) return score;
-          }
-          return diff;
-        });
-
-    if (!candidates.length) return null;
-
-    const best = candidates[0];
-
-    return {
-      totalTime: Number(best.totalTime || 0),
-      payment: Number(best.payment || 0),
-      busTransitCount: best.type === "train" ? 0 : best.type === "subway" ? 0 : 1,
-      subwayTransitCount: best.type === "subway" ? 1 : 0,
-      firstStartStation: best.firstStartStation || "",
-      lastEndStation: best.lastEndStation || "",
-      totalWalk: 0,
-      distanceKm: 0,
-      pathType: Number(best.pathType || (best.type === "train" ? 11 : best.type === "express" ? 12 : 14)),
-      title: best.title || buildTransitTitle(best.steps),
-      detail: best.detail || "",
-      steps: best.steps
-    };
-  } catch (error) {
-    console.error("intercity recommendation failed", error);
-    return null;
-  }
+  return null;
 }
 
 function modePriority(type) {
