@@ -25,10 +25,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -110,5 +112,58 @@ class MemberControllerFlowTest {
                         .param("confirmPassword", "NewPassword123!"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("현재 비밀번호가 일치하지 않습니다.")));
+    }
+
+    @Test
+    @DisplayName("회원정보 수정 시 현재 비밀번호가 틀리면 같은 화면에 에러 메시지를 남긴다")
+    void profileEditWithWrongCurrentPasswordShowsErrorMessage() throws Exception {
+        Member member = new Member();
+        member.setEmail("kim@test.com");
+        member.setName("김테스트");
+        member.setPassword("encoded");
+        member.setRole(Role.USER);
+
+        given(memberService.getMemberByEmail("kim@test.com")).willReturn(member);
+        willThrow(new MemberException(ErrorCode.INVALID_CURRENT_PASSWORD))
+                .given(memberService)
+                .updateMember(anyString(), any());
+
+        mockMvc.perform(post("/members/mypage/edit")
+                        .with(SecurityMockMvcRequestPostProcessors.user("kim@test.com").roles("USER"))
+                        .with(csrf())
+                        .param("name", "김테스트")
+                        .param("currentPassword", "Wrong123!")
+                        .param("number", "01012345678")
+                        .param("postcode", "12345")
+                        .param("address", "서울시 강남구")
+                        .param("detailAddress", "101호"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("현재 비밀번호가 일치하지 않습니다.")));
+    }
+
+    @Test
+    @DisplayName("회원정보 수정이 성공하면 마이페이지로 이동한다")
+    void profileEditRedirectsToMyPageOnSuccess() throws Exception {
+        Member member = new Member();
+        member.setEmail("kim@test.com");
+        member.setName("김테스트");
+        member.setPassword("encoded");
+        member.setRole(Role.USER);
+
+        given(memberService.getMemberByEmail("kim@test.com")).willReturn(member);
+
+        mockMvc.perform(post("/members/mypage/edit")
+                        .with(SecurityMockMvcRequestPostProcessors.user("kim@test.com").roles("USER"))
+                        .with(csrf())
+                        .param("name", "김테스트")
+                        .param("currentPassword", "Current123!")
+                        .param("number", "01012345678")
+                        .param("postcode", "12345")
+                        .param("address", "서울시 강남구")
+                        .param("detailAddress", "101호"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/members/mypage?profileUpdated=true"));
+
+        then(memberService).should().updateMember(anyString(), any());
     }
 }

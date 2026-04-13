@@ -83,6 +83,15 @@ public class MemberService {
 
     public void updateMember(String email, MemberUpdateDto memberUpdateDto) {
         Member member = getMemberByEmail(email);
+
+        if (!member.isSocialMember()) {
+            String currentPassword = memberUpdateDto.getCurrentPassword();
+            if (!StringUtils.hasText(currentPassword)
+                    || !passwordEncoder.matches(currentPassword, member.getPassword())) {
+                throw new MemberException(ErrorCode.INVALID_CURRENT_PASSWORD);
+            }
+        }
+
         member.updateProfile(memberUpdateDto);
     }
 

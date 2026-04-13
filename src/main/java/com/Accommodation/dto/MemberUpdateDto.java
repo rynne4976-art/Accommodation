@@ -15,6 +15,8 @@ public class MemberUpdateDto {
     @NotBlank(message = "이름은 필수 입력 값입니다.")
     private String name;
 
+    private String currentPassword;
+
     @NotBlank(message = "휴대폰 번호는 필수 입력 값입니다.")
     @Pattern(
             regexp = "^(01[016789])-?(\\d{3,4})-?(\\d{4})$",
