@@ -312,8 +312,8 @@ GitHub Actions workflow는 `main`, `develop` 브랜치의 `push` 및 `pull_reque
   <tr>
     <td>김용민</td>
     <td>부조장</td>
-    <td>숙소, 리뷰, 최근 본 상품,<br> 
-      즐길거리 기능 구현</td>
+    <td>숙소, 리뷰, 최근 본 상품, 즐길거리,<br>
+      AWS S3 이미지 관리 기능 구현</td>
   </tr>
   <tr>
     <td>서세민</td>
