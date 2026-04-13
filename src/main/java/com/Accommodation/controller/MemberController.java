@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -125,6 +126,7 @@ public class MemberController {
                              Model model) {
         Member member = memberService.getMemberByEmail(userDetails.getUsername());
         model.addAttribute("memberUpdateDto", MemberUpdateDto.from(member));
+        model.addAttribute("socialMember", member.isSocialMember());
         if (reservationInfoRequired != null) {
             model.addAttribute("reservationInfoRequiredMessage", "예약을 진행하려면 휴대폰 번호와 주소를 먼저 입력해주세요.");
         }
@@ -135,12 +137,26 @@ public class MemberController {
     public String editMyPage(@AuthenticationPrincipal UserDetails userDetails,
                              @Valid MemberUpdateDto memberUpdateDto,
                              BindingResult bindingResult,
+                             Model model,
                              RedirectAttributes redirectAttributes) {
+        Member member = memberService.getMemberByEmail(userDetails.getUsername());
+        model.addAttribute("socialMember", member.isSocialMember());
+
+        if (!member.isSocialMember() && !StringUtils.hasText(memberUpdateDto.getCurrentPassword())) {
+            bindingResult.rejectValue("currentPassword", "currentPassword.required", "정보를 수정하려면 현재 비밀번호를 입력해주세요.");
+        }
+
         if (bindingResult.hasErrors()) {
             return "member/mypageEdit";
         }
 
-        memberService.updateMember(userDetails.getUsername(), memberUpdateDto);
+        try {
+            memberService.updateMember(userDetails.getUsername(), memberUpdateDto);
+        } catch (MemberException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "member/mypageEdit";
+        }
+
         redirectAttributes.addAttribute("profileUpdated", "true");
         return "redirect:/members/mypage";
     }
