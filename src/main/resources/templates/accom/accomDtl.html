@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="ko"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/layouts}">
 <head>
     <meta charset="UTF-8">
-    <title>?숈냼 ?곸꽭</title>
+    <title>숙소 상세</title>
     <link rel="stylesheet" th:href="@{/css/accomDtl.css}">
     <link rel="stylesheet" th:href="@{/css/orderForm.css}">
     <meta name="_csrf" th:content="${_csrf.token}">
@@ -14,15 +14,15 @@
 
 <div layout:fragment="content">
     <main class="accom-detail-page">
-        <nav class="accom-detail-tab-nav" aria-label="?숈냼 ?곸꽭 硫붾돱">
-            <a href="#booking-info" class="tab-nav-link">?덉빟</a>
-            <a href="#detail-info" class="tab-nav-link">?곸꽭 ?뺣낫</a>
-            <a href="#location-info" class="tab-nav-link">?꾩튂 ?뺣낫</a>
-            <a href="#review-info" class="tab-nav-link">由щ럭</a>
-            <a href="#policy-info" class="tab-nav-link">?댁슜 ?섏튃</a>
-            <a href="#option-info" class="tab-nav-link">?듭뀡 ?뺣낫</a>
+        <nav class="accom-detail-tab-nav" aria-label="숙소 상세 메뉴">
+            <a href="#booking-info" class="tab-nav-link">예약</a>
+            <a href="#detail-info" class="tab-nav-link">상세 정보</a>
+            <a href="#location-info" class="tab-nav-link">위치 정보</a>
+            <a href="#review-info" class="tab-nav-link">리뷰</a>
+            <a href="#policy-info" class="tab-nav-link">이용 수칙</a>
+            <a href="#option-info" class="tab-nav-link">옵션 정보</a>
         </nav>
-        <button type="button" class="accom-detail-floating-top-button" data-scroll-top aria-label="?꾨줈媛湲?>
+        <button type="button" class="accom-detail-floating-top-button" data-scroll-top aria-label="위로 가기">
             <span class="accom-detail-floating-top-button__arrow" aria-hidden="true"></span>
         </button>
 
@@ -32,12 +32,12 @@
                      th:if="${accom.accomImgList != null and !#lists.isEmpty(accom.accomImgList)}">
                     <img th:src="${accom.accomImgList[0].imgUrl}"
                          class="accom-detail-main-image"
-                         alt="?숈냼 ????대?吏">
+                         alt="숙소 대표 이미지">
                 </div>
 
                 <div class="accom-detail-empty-image"
                      th:if="${accom.accomImgList == null or #lists.isEmpty(accom.accomImgList)}">
-                    ?깅줉???숈냼 ?대?吏媛 ?놁뒿?덈떎.
+                    등록된 숙소 이미지가 없습니다.
                 </div>
 
                 <div class="accom-detail-thumb-list"
@@ -46,44 +46,44 @@
                          th:if="${stat.index > 0}"
                          th:src="${img.imgUrl}"
                          class="accom-detail-thumb"
-                         alt="?숈냼 ?대?吏">
+                         alt="숙소 이미지">
                 </div>
             </div>
 
             <div class="accom-detail-summary">
-                <span class="accom-detail-label">Stay Detail</span>
-                <h1 class="accom-detail-title" th:text="${accom.accomName}">?숈냼紐?/h1>
-                <p class="accom-detail-description" th:text="${accom.accomDetail}">?숈냼 ?ㅻ챸</p>
+                <span class="accom-detail-label">숙소 상세</span>
+                <h1 class="accom-detail-title" th:text="${accom.accomName}">숙소명</h1>
+                <p class="accom-detail-description" th:text="${accom.accomDetail}">숙소 설명</p>
 
                 <div class="accom-detail-highlight">
                     <div class="accom-detail-highlight__main">
                         <div class="accom-detail-highlight__item">
                             <span class="accom-detail-highlight__icon accom-detail-highlight__icon--star" aria-hidden="true"></span>
                             <span class="accom-detail-highlight__text"
-                                  th:text="${accom.grade != null ? (accom.grade.name() == 'ONE' ? '1?깃툒' : accom.grade.name() == 'TWO' ? '2?깃툒' : accom.grade.name() == 'THREE' ? '3?깃툒' : accom.grade.name() == 'FOUR' ? '4?깃툒' : accom.grade.name() == 'FIVE' ? '5?깃툒' : accom.grade) : '?깃툒 ?뺣낫 ?놁쓬'}">3?깃툒</span>
+                                  th:text="${accom.grade != null ? (accom.grade.name() == 'ONE' ? '1성급' : accom.grade.name() == 'TWO' ? '2성급' : accom.grade.name() == 'THREE' ? '3성급' : accom.grade.name() == 'FOUR' ? '4성급' : accom.grade.name() == 'FIVE' ? '5성급' : accom.grade) : '등급 정보 없음'}">3성급</span>
                         </div>
                         <div class="accom-detail-highlight__item">
                             <span class="accom-detail-highlight__icon accom-detail-highlight__icon--pin" aria-hidden="true"></span>
-                            <span class="accom-detail-highlight__text" th:text="${accom.location}">??꾧킅??떆 ?쒓뎄 ?붿궛濡?100</span>
+                            <span class="accom-detail-highlight__text" th:text="${accom.location}">서울특별시 중구 을지로 100</span>
                         </div>
                         <div class="accom-detail-highlight__item" th:if="${accom.operationPolicy != null}">
                             <span class="accom-detail-highlight__icon accom-detail-highlight__icon--clock" aria-hidden="true"></span>
                             <span class="accom-detail-highlight__text"
-                                  th:text="${'泥댄겕??' + #temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / 泥댄겕?꾩썐 ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">泥댄겕??15:00 / 泥댄겕?꾩썐 11:10</span>
+                                  th:text="${'체크인 ' + #temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / 체크아웃 ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">체크인 15:00 / 체크아웃 11:10</span>
                         </div>
                         <div class="accom-detail-highlight__item">
                             <span class="accom-detail-highlight__icon accom-detail-highlight__icon--room" aria-hidden="true"></span>
-                            <span class="accom-detail-highlight__text" th:text="${'?댁쁺媛앹떎 ' + accom.roomCount + '媛?}">?댁쁺媛앹떎 30媛?/span>
+                            <span class="accom-detail-highlight__text" th:text="${'보유 객실 ' + accom.roomCount + '개'}">보유 객실 30개</span>
                         </div>
                     </div>
 
                     <div class="accom-detail-highlight__side">
                         <p class="accom-detail-highlight__review"
-                           th:text="${'由щ럭 ' + accom.reviewCount + '媛?쨌 ?됱젏 ' + #numbers.formatDecimal(accom.avgRating, 1, 1)}">由щ럭 10媛?쨌 ?됱젏 4.7</p>
+                           th:text="${'리뷰 ' + accom.reviewCount + '개 평점 ' + #numbers.formatDecimal(accom.avgRating, 1, 1)}">리뷰 10개 평점 4.7</p>
                         <div class="accom-detail-highlight__price-box">
-                            <span class="accom-detail-highlight__price-label">1諛?湲곗? ?붽툑</span>
+                            <span class="accom-detail-highlight__price-label">1박 기준 요금</span>
                             <strong class="accom-detail-highlight__price"
-                                    th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '??">90,000??/strong>
+                                    th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원'">90,000원</strong>
                         </div>
                     </div>
                 </div>
@@ -93,24 +93,24 @@
 
         <section id="booking-info" class="accom-detail-info-card">
             <div class="detail-section-header">
-                <span class="accom-detail-label subtle">Reservation</span>
-                <h2>?덉빟?섍린</h2>
+                <span class="accom-detail-label subtle">예약</span>
+                <h2>예약하기</h2>
             </div>
 
             <div class="booking-section-layout">
-                <!-- ?쇱そ: ?댁쁺 ?뺣낫 + ?щ젰 -->
+                <!-- 왼쪽: 운영 정보 + 달력 -->
                 <div class="booking-section-main">
                     <div class="order-form-card">
                         <div class="order-form-body">
                             <div class="order-info-grid" th:if="${accom.operationPolicy != null}">
                                 <div class="order-info-box">
-                                    <div class="order-info-box__label">?댁쁺湲곌컙</div>
+                                    <div class="order-info-box__label">운영기간</div>
                                     <div class="order-info-box__value"
                                          th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd') + ' ~ ' + #temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">
                                     </div>
                                 </div>
                                 <div class="order-info-box">
-                                    <div class="order-info-box__label">泥댄겕??/ 泥댄겕?꾩썐</div>
+                                    <div class="order-info-box__label">체크인 / 체크아웃</div>
                                     <div class="order-info-box__value"
                                          th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">
                                     </div>
@@ -119,7 +119,7 @@
 
                             <div class="calendar-card">
                                 <div class="calendar-header">
-                                    <div class="calendar-title">?덉빟 媛???좎쭨 ?좏깮</div>
+                                    <div class="calendar-title">예약 가능 날짜 선택</div>
                                     <div class="calendar-nav">
                                         <button type="button" onclick="moveMonth(-1)">&#8249;</button>
                                         <button type="button" onclick="moveMonth(1)">&#8250;</button>
@@ -127,88 +127,88 @@
                                 </div>
                                 <div id="calendarMonthLabel" class="calendar-month-label"></div>
                                 <div class="calendar-weekdays">
-                                    <div class="calendar-weekday">??/div>
-                                    <div class="calendar-weekday">??/div>
-                                    <div class="calendar-weekday">??/div>
-                                    <div class="calendar-weekday">??/div>
-                                    <div class="calendar-weekday">紐?/div>
-                                    <div class="calendar-weekday">湲?/div>
-                                    <div class="calendar-weekday">??/div>
+                                    <div class="calendar-weekday">일</div>
+                                    <div class="calendar-weekday">월</div>
+                                    <div class="calendar-weekday">화</div>
+                                    <div class="calendar-weekday">수</div>
+                                    <div class="calendar-weekday">목</div>
+                                    <div class="calendar-weekday">금</div>
+                                    <div class="calendar-weekday">토</div>
                                 </div>
                                 <div id="calendarGrid" class="calendar-grid"></div>
                                 <div class="calendar-legend">
                                     <span class="calendar-legend__item">
-                                        <span class="calendar-legend__chip chip--available">?댁쁺</span> ?덉빟媛??
+                                        <span class="calendar-legend__chip chip--available">운영</span> 예약 가능
                                     </span>
                                     <span class="calendar-legend__item">
-                                        <span class="calendar-legend__chip chip--nonop">鍮꾩슫??/span> 鍮꾩슫??
+                                        <span class="calendar-legend__chip chip--nonop">비운영</span> 비운영일
                                     </span>
                                     <span class="calendar-legend__item">
-                                        <span class="calendar-legend__chip chip--soldout">留덇컧</span> 留덇컧??
+                                        <span class="calendar-legend__chip chip--soldout">마감</span> 마감일
                                     </span>
                                 </div>
                                 <div class="selection-guide">
-                                    ?댁쁺?쇰쭔 ?좏깮?????덉뒿?덈떎.<br>
-                                    泥?踰덉㎏ ?대┃? 泥댄겕?? ??踰덉㎏ ?대┃? 泥댄겕?꾩썐?쇰줈 泥섎━?⑸땲??<br>
-                                    ?대? ?좏깮???좎쭨瑜??ㅼ떆 ?꾨Ⅴ硫??좏깮???댁젣?⑸땲??
+                                    운영일만 선택할 수 있습니다.<br>
+                                    첫 번째 클릭은 체크인, 두 번째 클릭은 체크아웃으로 처리됩니다.<br>
+                                    이미 선택한 날짜를 다시 누르면 선택이 해제됩니다.
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ?ㅻⅨ履? ?덉빟 ?붿빟 + ?몄썝 + 媛寃?+ 踰꾪듉 (sticky) -->
+                <!-- 오른쪽: 예약 요약 + 인원 + 가격 + 버튼 (sticky) -->
                 <aside class="order-summary-card booking-section-aside">
-                    <div class="order-summary-title">?덉빟 ?뺣낫</div>
+                    <div class="order-summary-title">예약 정보</div>
 
                     <div class="summary-row">
-                        <span class="summary-label">泥댄겕??/span>
-                        <span class="summary-value" id="summaryCheckIn">?좏깮 ??/span>
+                        <span class="summary-label">체크인</span>
+                        <span class="summary-value" id="summaryCheckIn">선택 전</span>
                     </div>
                     <div class="summary-row">
-                        <span class="summary-label">泥댄겕?꾩썐</span>
-                        <span class="summary-value" id="summaryCheckOut">?좏깮 ??/span>
+                        <span class="summary-label">체크아웃</span>
+                        <span class="summary-value" id="summaryCheckOut">선택 전</span>
                     </div>
                     <div class="summary-row">
-                        <span class="summary-label">?숇컯?쇱닔</span>
-                        <span class="summary-value" id="summaryNights">0諛?/span>
+                        <span class="summary-label">숙박일수</span>
+                        <span class="summary-value" id="summaryNights">0박</span>
                     </div>
                     <div class="summary-row">
-                        <span class="summary-label">泥댄겕???쒓컙</span>
+                        <span class="summary-label">체크인 시간</span>
                         <span class="summary-value"
-                              th:text="${accom.operationPolicy != null ? #temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') : '誘몃벑濡?}">
+                              th:text="${accom.operationPolicy != null ? #temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') : '미등록'}">
                             15:00
                         </span>
                     </div>
                     <div class="summary-row">
-                        <span class="summary-label">泥댄겕?꾩썐 ?쒓컙</span>
+                        <span class="summary-label">체크아웃 시간</span>
                         <span class="summary-value"
-                              th:text="${accom.operationPolicy != null ? #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm') : '誘몃벑濡?}">
+                              th:text="${accom.operationPolicy != null ? #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm') : '미등록'}">
                             11:00
                         </span>
                     </div>
                     <div class="summary-row">
-                        <span class="summary-label">?붿뿬 媛앹떎</span>
+                        <span class="summary-label">잔여 객실</span>
                         <span id="summaryRemaining"></span>
                     </div>
 
                     <div class="order-form-group">
-                        <label>?ъ닕 ?뺣낫</label>
+                        <label>투숙 정보</label>
                         <div class="guest-row">
                             <div class="guest-input-box">
-                                <span class="guest-label">?깆씤</span>
+                                <span class="guest-label">성인</span>
                                 <input type="number" id="adultCount" value="1" min="1" oninput="onGuestChange()">
                             </div>
                             <div class="guest-input-box">
-                                <span class="guest-label">?꾨룞</span>
+                                <span class="guest-label">아동</span>
                                 <input type="number" id="childCount" value="0" min="0" oninput="onGuestChange()">
                             </div>
                             <div class="guest-input-box">
-                                <span class="guest-label">媛앹떎 ??/span>
+                                <span class="guest-label">객실 수</span>
                                 <input type="number" id="roomCount" value="1" min="1" oninput="onGuestChange()">
                             </div>
                         </div>
-                        <p class="order-form-hint" id="guestHint">理쒕? <span id="guestHintMax"></span>紐낃퉴吏 媛?ν빀?덈떎.</p>
+                        <p class="order-form-hint" id="guestHint">최대 <span id="guestHintMax"></span>명까지 가능합니다.</p>
                     </div>
                     <div class="surcharge-guide" id="surchargeGuide"></div>
 
@@ -216,21 +216,21 @@
                     <input type="hidden" id="hiddenCheckOutDate">
 
                     <div class="order-form-total">
-                        <span>湲곕낯 ?숇컯鍮?/span>
-                        <span id="basePrice">0??/span>
+                        <span>기본 숙박비</span>
+                        <span id="basePrice">0원</span>
                     </div>
                     <div class="order-form-total" id="surchargeRow" style="display:none;">
-                        <span>?몄썝 異붽? ?붽툑</span>
-                        <span id="surchargePrice">0??/span>
+                        <span>인원 추가 요금</span>
+                        <span id="surchargePrice">0원</span>
                     </div>
                     <div class="order-form-total order-form-total--final">
                         <span>TOTAL</span>
-                        <span id="totalPrice">0??/span>
+                        <span id="totalPrice">0원</span>
                     </div>
 
                     <div class="order-form-actions">
-                        <button type="button" class="btn-order" style="width:100%;" onclick="submitToCart()">?λ컮援щ땲 ?닿린</button>
-                        <button type="button" class="btn-back" style="width:100%;" onclick="submitOrder()">?덉빟?섍린</button>
+                        <button type="button" class="btn-order" style="width:100%;" onclick="submitToCart()">장바구니 담기</button>
+                        <button type="button" class="btn-back" style="width:100%;" onclick="submitOrder()">예약하기</button>
                     </div>
                 </aside>
             </div>
@@ -238,65 +238,65 @@
 
         <section id="detail-info" class="accom-detail-info-card">
             <div class="detail-section-header">
-                <span class="accom-detail-label subtle">Overview</span>
-                <h2>?곸꽭 ?뺣낫</h2>
+                <span class="accom-detail-label subtle">상세</span>
+                <h2>상세 정보</h2>
             </div>
 
             <p class="section-copy" th:text="${accom.accomDetail}">
-                ?숈냼 ?곸꽭 ?ㅻ챸
+                숙소 상세 설명
             </p>
 
             <div class="detail-bullet-grid">
                 <div class="detail-bullet-item">
-                    <span>?숈냼 ?좏삎</span>
+                    <span>숙소 유형</span>
                     <strong th:text="${accom.accomType}">HOTEL</strong>
                 </div>
                 <div class="detail-bullet-item">
-                    <span>?숈냼 ?깃툒</span>
+                    <span>숙소 등급</span>
                     <strong th:text="${accom.grade}">FIVE</strong>
                 </div>
                 <div class="detail-bullet-item">
-                    <span>?꾩튂</span>
-                    <strong th:text="${accom.location}">?쒖슱?밸퀎??以묎뎄</strong>
+                    <span>위치</span>
+                    <strong th:text="${accom.location}">서울특별시 중구</strong>
                 </div>
                 <div class="detail-bullet-item">
-                    <span>媛앹떎 ??/span>
-                    <strong th:text="${accom.roomCount} + '媛?">0媛?/strong>
+                    <span>객실 수</span>
+                    <strong th:text="${accom.roomCount} + '개'">0개</strong>
                 </div>
                 <div class="detail-bullet-item">
-                    <span>?ъ닕 媛???몄썝</span>
-                    <strong th:text="${accom.guestCount} + '紐?">2紐?/strong>
+                    <span>최대 가능 인원</span>
+                    <strong th:text="${accom.guestCount} + '명'">2명</strong>
                 </div>
             </div>
 
             <div class="detail-section-card detail-section-card--operation" th:if="${accom.operationPolicy != null}">
                 <div class="detail-section-header">
-                    <span class="accom-detail-label subtle">Operation</span>
-                    <h3>?댁쁺 ?뺣낫</h3>
+                    <span class="accom-detail-label subtle">운영</span>
+                    <h3>운영 정보</h3>
                 </div>
 
                 <div class="detail-bullet-grid detail-bullet-grid--operation">
                     <div class="detail-bullet-item detail-bullet-item--operation detail-bullet-item--operation-inline">
                         <span class="detail-bullet-item__icon detail-bullet-item__icon--calendar" aria-hidden="true"></span>
-                        <strong th:text="${'?댁쁺 湲곌컙 ' + #temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd') + ' ~ ' + #temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">?댁쁺 湲곌컙 2026-04-01 ~ 2026-04-30</strong>
+                        <strong th:text="${'운영 기간 ' + #temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd') + ' ~ ' + #temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">운영 기간 2026-04-01 ~ 2026-04-30</strong>
                     </div>
                     <div class="detail-bullet-item detail-bullet-item--operation detail-bullet-item--operation-inline">
                         <span class="detail-bullet-item__icon detail-bullet-item__icon--clock" aria-hidden="true"></span>
-                        <strong th:text="${'泥댄겕??' + #temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / 泥댄겕?꾩썐 ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">泥댄겕??15:00 / 泥댄겕?꾩썐 11:00</strong>
+                        <strong th:text="${'체크인 ' + #temporals.format(accom.operationPolicy.checkInTime, 'HH:mm') + ' / 체크아웃 ' + #temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">체크인 15:00 / 체크아웃 11:00</strong>
                     </div>
                     <div class="detail-bullet-item detail-bullet-item--operation detail-bullet-item--operation-inline">
                         <span class="detail-bullet-item__icon detail-bullet-item__icon--room" aria-hidden="true"></span>
-                        <strong th:text="${'?좏깮???댁쁺????' + #lists.size(accom.operationDayList) + '??}">?좏깮???댁쁺????20??/strong>
+                        <strong th:text="${'선택 가능 운영일 ' + #lists.size(accom.operationDayList) + '일'}">선택 가능 운영일 20일</strong>
                     </div>
                 </div>
 
                 <div class="operation-day-wrap"
                      th:if="${accom.operationDayList != null and !#lists.isEmpty(accom.operationDayList)}">
                     <div class="operation-calendar-header">
-                        <p class="operation-day-title">?댁쁺???щ젰</p>
+                        <p class="operation-day-title">운영일 달력</p>
                         <span class="operation-calendar-legend">
                             <span class="operation-calendar-legend-dot"></span>
-                            ?댁쁺??
+                            운영일
                         </span>
                     </div>
                     <div id="operationCalendar" class="operation-calendar-wrap"></div>
@@ -307,17 +307,17 @@
         <section id="location-info" class="accom-detail-info-card">
             <div class="detail-section-header detail-section-header--location">
                 <div>
-                    <span class="accom-detail-label subtle">Location</span>
-                    <h2>?꾩튂 ?뺣낫</h2>
+                    <span class="accom-detail-label subtle">위치</span>
+                    <h2>위치 정보</h2>
                 </div>
-                <a th:href="@{/transport(accomId=${accom.id})}" class="location-transport-link">援먰넻 ?뺣낫 諛붾줈媛湲???/a>
+                <a th:href="@{/transport(accomId=${accom.id})}" class="location-transport-link">교통 정보 바로가기</a>
             </div>
 
             <div class="detail-section-card location-section-card">
                 <div class="location-address-box">
                     <span class="location-address-label">二쇱냼</span>
                     <strong class="location-address-value" th:text="${accom.location}">
-                        ?쒖슱?밸퀎??以묎뎄
+                        서울특별시 중구
                     </strong>
                 </div>
 
@@ -326,31 +326,31 @@
                 <div id="naverMap" class="naver-map-box"></div>
 
                 <p id="naverMapErrorMessage" class="naver-map-error" style="display:none;">
-                    吏???뺣낫瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??
+                    지도를 불러오지 못했습니다.
                 </p>
             </div>
         </section>
 
         <section id="review-info" class="accom-detail-info-card">
             <div class="detail-section-header">
-                <span class="accom-detail-label subtle">Review</span>
-                <h2>由щ럭</h2>
+                <span class="accom-detail-label subtle">리뷰</span>
+                <h2>리뷰</h2>
             </div>
 
             <div class="detail-section-card review-section-card">
                 <div class="review-score-box">
                     <strong>
-                        <span class="review-score-star">??/span>
+                        <span class="review-score-star">★</span>
                         <span th:text="${#numbers.formatDecimal(accom.avgRating, 1, 1)}">0.0</span>
-                        <small th:text="'(' + ${#numbers.formatInteger(accom.reviewCount, 1, 'COMMA')} + ')'">(0)</small>
+                        <small th:text="${'(' + #numbers.formatInteger(accom.reviewCount, 1, 'COMMA') + ')'}">(0)</small>
                     </strong>
                 </div>
 
                 <div class="review-summary-copy">
                     <p>
-                        珥?<strong th:text="${accom.reviewCount}">0</strong>媛쒖쓽 由щ럭媛 ?깅줉?섏뼱 ?덉뒿?덈떎.
+                        총 <strong th:text="${accom.reviewCount}">0</strong>개의 리뷰가 등록되어 있습니다.
                     </p>
-                    <p>?ㅼ젣 ?댁슜 ?꾧린瑜??뺤씤?섍퀬 吏곸젒 由щ럭瑜??묒꽦??蹂댁꽭??</p>
+                    <p>실제 이용 후기를 확인하고 직접 리뷰를 작성해 보세요.</p>
                 </div>
 
                 <div class="review-action-buttons">
@@ -359,19 +359,19 @@
                             th:if="${!hasMyReview}"
                             th:attr="data-logged-in=${isLoggedIn},data-has-review=${hasMyReview},data-can-write-review=${canWriteReview},data-deny-message=${reviewWriteDenyMessage}"
                             onclick="openReviewModal(this)">
-                        由щ럭 ?묒꽦
+                        리뷰 작성
                     </button>
 
                     <button type="button"
                             class="detail-action secondary action-button"
                             th:if="${myReview != null}"
                             onclick="openMyReviewModal()">
-                        ??由щ럭 蹂닿린
+                        내 리뷰 보기
                     </button>
 
                     <a class="detail-action secondary"
                        th:href="@{/reviews/accom/{accomId}(accomId=${accom.id})}">
-                        由щ럭 ?꾩껜蹂닿린
+                        리뷰 전체보기
                     </a>
                 </div>
             </div>
@@ -386,12 +386,12 @@
                     <article class="detail-section-card review-list-card" th:each="review : ${reviewList}">
                         <div class="review-card-top">
                             <div class="review-card-headline">
-                                <div class="review-card-stars" aria-label="?뚯썝 蹂꾩젏">
+                                <div class="review-card-stars" aria-label="회원 별점">
                                     <span class="review-star"
                                           th:each="i : ${#numbers.sequence(1,5)}"
-                                          th:classappend="${i <= review.rating} ? ' filled' : ''">??/span>
+                                          th:classappend="${i <= review.rating} ? ' filled' : ''">★</span>
                                 </div>
-                                <p class="review-card-author" th:text="${review.member.name}">?뚯썝紐?/p>
+                                <p class="review-card-author" th:text="${review.member.name}">회원명</p>
                             </div>
 
                             <p class="review-card-date"
@@ -401,16 +401,16 @@
                         <div class="review-card-body">
                             <div class="review-card-copy">
                                 <p class="review-card-content" th:text="${review.content}">
-                                    由щ럭 ?댁슜
+                                    리뷰 내용
                                 </p>
                             </div>
 
                             <div class="review-card-image-item"
                                  th:if="${review.reviewImgList != null and !#lists.isEmpty(review.reviewImgList)}">
-                                <img th:src="${review.reviewImgList[0].imgUrl}" alt="由щ럭 ?대?吏">
+                                <img th:src="${review.reviewImgList[0].imgUrl}" alt="리뷰 이미지">
                                 <span class="review-card-image-count"
                                       th:if="${#lists.size(review.reviewImgList) > 1}"
-                                      th:text="${#lists.size(review.reviewImgList)} + '??">2??/span>
+                                      th:text="${#lists.size(review.reviewImgList)} + '장'">2장</span>
                             </div>
                         </div>
                     </article>
@@ -419,74 +419,74 @@
 
             <div class="detail-section-card review-empty-card"
                  th:if="${reviewList == null or #lists.isEmpty(reviewList)}">
-                <p>?꾩쭅 ?깅줉??由щ럭媛 ?놁뒿?덈떎. 泥?由щ럭瑜??④꺼 蹂댁꽭??</p>
+                <p>아직 등록된 리뷰가 없습니다. 첫 리뷰를 남겨 보세요.</p>
             </div>
         </section>
 
         <section id="policy-info" class="accom-detail-info-card">
             <div class="detail-section-header">
-                <span class="accom-detail-label subtle">Policy</span>
-                <h2>?댁슜 ?섏튃</h2>
+                <span class="accom-detail-label subtle">정책</span>
+                <h2>이용 수칙</h2>
             </div>
 
             <div class="detail-section-card">
                 <ul class="detail-rule-list">
                     <li th:if="${accom.operationPolicy != null}">
-                        ?댁쁺 湲곌컙?
+                        운영 기간은
                         <strong th:text="${#temporals.format(accom.operationPolicy.operationStartDate, 'yyyy-MM-dd')}">2026-04-01</strong>
-                        遺??
+                        부터
                         <strong th:text="${#temporals.format(accom.operationPolicy.operationEndDate, 'yyyy-MM-dd')}">2026-04-30</strong>
-                        源뚯??낅땲??
+                        까지입니다.
                     </li>
                     <li th:if="${accom.operationPolicy != null}">
-                        泥댄겕???쒓컙?
+                        체크인 시간은
                         <strong th:text="${#temporals.format(accom.operationPolicy.checkInTime, 'HH:mm')}">15:00</strong>,
-                        泥댄겕?꾩썐 ?쒓컙?
+                        체크아웃 시간은
                         <strong th:text="${#temporals.format(accom.operationPolicy.checkOutTime, 'HH:mm')}">11:00</strong>
-                        ?낅땲??
+                        입니다.
                     </li>
-                    <li>媛앹떎蹂??댁슜 湲곗?怨?異붽? ?붽툑? ?덉빟 ?꾩뿉 ?뺤씤??二쇱꽭??</li>
-                    <li>諛섎젮?숇Ъ ?숇컲 媛???щ?? 異붽? ?몄썝 ?뺤콉? ?숈냼蹂꾨줈 ?ㅻ? ???덉뒿?덈떎.</li>
-                    <li>痍⑥냼 諛??섎텋 洹쒖젙? ?덉빟 ?④퀎?먯꽌 理쒖쥌 ?덈궡 湲곗????곕쫭?덈떎.</li>
+                    <li>객실별 이용 기준과 추가 요금은 예약 전에 확인해 주세요.</li>
+                    <li>반려동물 동반 가능 여부와 추가 인원 정책은 숙소별로 상이할 수 있습니다.</li>
+                    <li>취소 및 환불 규정은 예약 단계에서 최종 안내 기준을 따릅니다.</li>
                 </ul>
             </div>
         </section>
 
         <section id="option-info" class="accom-detail-info-card">
             <div class="detail-section-header">
-                <span class="accom-detail-label subtle">Option</span>
-                <h2>?듭뀡 ?뺣낫</h2>
+                <span class="accom-detail-label subtle">옵션</span>
+                <h2>옵션 정보</h2>
             </div>
 
             <div class="detail-section-card">
                 <div class="option-grid">
                     <div class="option-item">
-                        <span>湲곕낯 ?숇컯 ?붽툑</span>
-                        <strong th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '??/ 1諛?">0??/ 1諛?/strong>
+                        <span>기본 숙박 요금</span>
+                        <strong th:text="${#numbers.formatInteger(accom.pricePerNight, 0, 'COMMA')} + '원 / 1박'">0원 / 1박</strong>
                     </div>
                     <div class="option-item">
-                        <span>?댁쁺 ?곹깭</span>
+                        <span>운영 상태</span>
                         <strong th:text="${accom.status}">OPEN</strong>
                     </div>
                     <div class="option-item">
-                        <span>?숈냼 ?좏삎</span>
+                        <span>숙소 유형</span>
                         <strong th:text="${accom.accomType}">HOTEL</strong>
                     </div>
                     <div class="option-item">
-                        <span>蹂댁쑀 媛앹떎 ??/span>
-                        <strong th:text="${accom.roomCount} + '媛?">0媛?/strong>
+                        <span>보유 객실 수</span>
+                        <strong th:text="${accom.roomCount} + '개'">0개</strong>
                     </div>
                     <div class="option-item">
-                        <span>?ъ닕 媛???몄썝</span>
-                        <strong th:text="${accom.guestCount} + '紐?">2紐?/strong>
+                        <span>최대 가능 인원</span>
+                        <strong th:text="${accom.guestCount} + '명'">2명</strong>
                     </div>
                     <div class="option-item">
-                        <span>李멸퀬 由щ럭 ??/span>
-                        <strong th:text="${accom.reviewCount} + '嫄?">0嫄?/strong>
+                        <span>참고 리뷰 수</span>
+                        <strong th:text="${accom.reviewCount} + '건'">0건</strong>
                     </div>
                     <div class="option-item">
-                        <span>?덉빟 ???뺤씤</span>
-                        <strong>?꾩튂, 媛앹떎, 由щ럭, ?댁쁺 ?뺣낫瑜??④퍡 ?뺤씤??二쇱꽭??</strong>
+                        <span>예약 전 확인</span>
+                        <strong>위치, 객실, 리뷰, 운영 정보를 꼭 확인해 주세요.</strong>
                     </div>
                 </div>
             </div>
@@ -497,12 +497,12 @@
         <div class="review-modal-backdrop" onclick="closeReviewModal()"></div>
 
         <div class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
-            <button type="button" class="review-modal-close" onclick="closeReviewModal()">?リ린</button>
+            <button type="button" class="review-modal-close" onclick="closeReviewModal()">닫기</button>
 
             <div class="review-modal-header">
-                <span class="accom-detail-label subtle">Write Review</span>
-                <h2 id="reviewModalTitle">由щ럭 ?묒꽦</h2>
-                <p>蹂꾩젏怨??꾧린瑜??④린怨??꾩슂??寃쎌슦 ?ъ쭊???④퍡 ?깅줉?????덉뒿?덈떎.</p>
+                <span class="accom-detail-label subtle">리뷰 작성</span>
+                <h2 id="reviewModalTitle">리뷰 작성</h2>
+                <p>별점과 후기를 남기고, 필요할 경우 사진도 함께 등록할 수 있습니다.</p>
             </div>
 
             <form id="reviewModalForm"
@@ -513,26 +513,26 @@
                 <input type="hidden" th:field="*{rating}" id="modalReviewRating">
 
                 <div class="review-modal-group">
-                    <label>蹂꾩젏</label>
+                    <label>별점</label>
                     <div class="modal-star-rating" id="modalStarRating">
-                        <button type="button" onclick="setModalRating(1)">??/button>
-                        <button type="button" onclick="setModalRating(2)">??/button>
-                        <button type="button" onclick="setModalRating(3)">??/button>
-                        <button type="button" onclick="setModalRating(4)">??/button>
-                        <button type="button" onclick="setModalRating(5)">??/button>
+                        <button type="button" onclick="setModalRating(1)">★</button>
+                        <button type="button" onclick="setModalRating(2)">★</button>
+                        <button type="button" onclick="setModalRating(3)">★</button>
+                        <button type="button" onclick="setModalRating(4)">★</button>
+                        <button type="button" onclick="setModalRating(5)">★</button>
                     </div>
                 </div>
 
                 <div class="review-modal-group">
-                    <label for="modalReviewContent">由щ럭 ?댁슜</label>
+                    <label for="modalReviewContent">리뷰 내용</label>
                     <textarea th:field="*{content}"
                               id="modalReviewContent"
                               rows="6"
-                              placeholder="?숈냼 ?댁슜 ?꾧린瑜??묒꽦??二쇱꽭??"></textarea>
+                              placeholder="숙소 이용 후기를 작성해 주세요."></textarea>
                 </div>
 
                 <div class="review-modal-group">
-                    <label for="modalReviewImages">由щ럭 ?대?吏</label>
+                    <label for="modalReviewImages">리뷰 이미지</label>
                     <input type="file"
                            th:field="*{reviewImgFileList}"
                            id="modalReviewImages"
@@ -543,8 +543,8 @@
                 </div>
 
                 <div class="review-modal-actions">
-                    <button type="button" class="modal-action secondary" onclick="closeReviewModal()">痍⑥냼</button>
-                    <button type="button" class="modal-action primary" onclick="submitReviewAjax()">?깅줉?섍린</button>
+                    <button type="button" class="modal-action secondary" onclick="closeReviewModal()">취소</button>
+                    <button type="button" class="modal-action primary" onclick="submitReviewAjax()">등록하기</button>
                 </div>
             </form>
         </div>
@@ -557,12 +557,12 @@
              role="dialog"
              aria-modal="true"
              aria-labelledby="myReviewModalTitle">
-            <button type="button" class="review-modal-close" onclick="closeMyReviewModal()">?リ린</button>
+            <button type="button" class="review-modal-close" onclick="closeMyReviewModal()">닫기</button>
 
             <div class="review-modal-header">
-                <span class="accom-detail-label subtle">My Review</span>
-                <h2 id="myReviewModalTitle">??由щ럭 蹂닿린</h2>
-                <p>?묒꽦??由щ럭瑜??섏젙?섍굅????젣?????덉뒿?덈떎.</p>
+                <span class="accom-detail-label subtle">내 리뷰</span>
+                <h2 id="myReviewModalTitle">내 리뷰 보기</h2>
+                <p>작성한 리뷰를 수정하거나 삭제할 수 있습니다.</p>
             </div>
 
             <form id="myReviewForm"
@@ -578,22 +578,22 @@
                     <div class="my-review-layout">
                         <div class="my-review-main-column">
                             <div class="review-modal-group">
-                                <label>蹂꾩젏</label>
+                                <label>별점</label>
                                 <div class="modal-star-rating" id="editModalStarRating">
-                                    <button type="button" onclick="setEditModalRating(1)">??/button>
-                                    <button type="button" onclick="setEditModalRating(2)">??/button>
-                                    <button type="button" onclick="setEditModalRating(3)">??/button>
-                                    <button type="button" onclick="setEditModalRating(4)">??/button>
-                                    <button type="button" onclick="setEditModalRating(5)">??/button>
+                                    <button type="button" onclick="setEditModalRating(1)">★</button>
+                                    <button type="button" onclick="setEditModalRating(2)">★</button>
+                                    <button type="button" onclick="setEditModalRating(3)">★</button>
+                                    <button type="button" onclick="setEditModalRating(4)">★</button>
+                                    <button type="button" onclick="setEditModalRating(5)">★</button>
                                 </div>
                             </div>
 
                             <div class="review-modal-group">
-                                <label for="editModalReviewContent">由щ럭 ?댁슜</label>
+                                <label for="editModalReviewContent">리뷰 내용</label>
                                 <textarea name="content"
                                           id="editModalReviewContent"
                                           rows="5"
-                                          placeholder="由щ럭 ?댁슜???낅젰??二쇱꽭??"
+                                          placeholder="리뷰 내용을 입력해 주세요."
                                           th:text="${myReview.content}"></textarea>
                             </div>
 
@@ -601,37 +601,37 @@
                                 <button type="button"
                                         class="modal-action primary"
                                         th:onclick="|submitReviewUpdateAjax(${myReview.id}, ${accom.id})|">
-                                    ?섏젙?섍린
+                                    수정하기
                                 </button>
 
                                 <button type="button"
                                         class="modal-action secondary"
                                         th:onclick="|deleteReviewAjax(${myReview.id}, ${accom.id})|">
-                                    ??젣?섍린
+                                    삭제하기
                                 </button>
                             </div>
                         </div>
 
                         <div class="my-review-side-column">
                             <div class="review-modal-group">
-                                <label>湲곗〈 由щ럭 ?대?吏</label>
+                                <label>기존 리뷰 이미지</label>
 
                                 <div class="existing-review-image-actions"
                                      th:if="${myReview.reviewImgList != null and !#lists.isEmpty(myReview.reviewImgList)}">
                                     <button type="button"
                                             class="modal-action tertiary"
                                             onclick="toggleAllExistingReviewImages(true)">
-                                        ?꾩껜 ?좏깮
+                                        전체 선택
                                     </button>
                                     <button type="button"
                                             class="modal-action tertiary"
                                             onclick="toggleAllExistingReviewImages(false)">
-                                        ?꾩껜 ?댁젣
+                                        전체 해제
                                     </button>
                                     <button type="button"
                                             class="modal-action secondary"
                                             th:onclick="|deleteSelectedReviewImagesAjax(${myReview.id}, ${accom.id})|">
-                                        ?좏깮 ??젣
+                                        선택 삭제
                                     </button>
                                 </div>
 
@@ -644,22 +644,22 @@
                                             <input type="checkbox"
                                                    class="existing-review-image-checkbox"
                                                    th:value="${img.id}">
-                                            ?좏깮
+                                            선택
                                         </label>
-                                        <img th:src="${img.imgUrl}" alt="由щ럭 ?대?吏">
-                                        <span th:text="${img.oriImgName}">由щ럭 ?대?吏</span>
+                                        <img th:src="${img.imgUrl}" alt="리뷰 이미지">
+                                        <span th:text="${img.oriImgName}">리뷰 이미지</span>
                                     </div>
                                 </div>
 
                                 <div id="existingReviewImageEmptyState"
                                      class="review-empty-card review-empty-inline"
                                      th:if="${myReview.reviewImgList == null or #lists.isEmpty(myReview.reviewImgList)}">
-                                    <p>?깅줉??由щ럭 ?대?吏媛 ?놁뒿?덈떎.</p>
+                                    <p>등록된 리뷰 이미지가 없습니다.</p>
                                 </div>
                             </div>
 
                             <div class="review-modal-group">
-                                <label for="editModalReviewImages">由щ럭 ?대?吏 異붽?</label>
+                                <label for="editModalReviewImages">리뷰 이미지 추가</label>
                                 <input type="file"
                                        name="reviewImgFileList"
                                        id="editModalReviewImages"
@@ -673,7 +673,7 @@
                 </div>
 
                 <div th:if="${myReview == null}" class="detail-section-card review-empty-card">
-                    <p>??由щ럭 ?뺣낫瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??</p>
+                    <p>내 리뷰 정보를 불러오지 못했습니다.</p>
                 </div>
             </form>
         </div>
@@ -722,8 +722,8 @@
 
             const surchargeFromPerson = isSmallType ? 3 : 5;
             document.getElementById('surchargeGuide').innerHTML =
-                `<span class="surcharge-guide__icon">?뮕</span>` +
-                `<span><strong>${surchargeFromPerson}???댁긽</strong>遺???깆씤 1?몃떦 1諛??붽툑??<strong>10%</strong>, ?꾨룞 1?몃떦 <strong>5%</strong> 異붽? ?붽툑??遺怨쇰맗?덈떎.</span>`;
+                `<span class="surcharge-guide__icon">안내</span>` +
+                `<span><strong>${surchargeFromPerson}명 이상</strong>부터 성인 1인당 1박 추가 요금 <strong>10%</strong>, 아동 1인당 <strong>5%</strong> 추가 요금이 부과됩니다.</span>`;
 
             initCalendarMonth();
             renderCalendar();
@@ -776,7 +776,7 @@
 
             const year  = currentMonth.getFullYear();
             const month = currentMonth.getMonth();
-            label.textContent = `${year}??${month + 1}??;
+            label.textContent = `${year}년 ${month + 1}월`;
 
             const firstDate    = new Date(year, month, 1);
             const lastDate     = new Date(year, month + 1, 0);
@@ -825,25 +825,25 @@
                 const badge = document.createElement('div');
                 badge.className = 'calendar-day__badge';
                 if (isSoldOut) {
-                    badge.textContent = '留덇컧';
+                    badge.textContent = '마감';
                 } else if (isPastDate) {
-                    badge.textContent = '吏?쒕궇';
+                    badge.textContent = '지난 날짜';
                 } else if (isClosedByCheckInTime || !isOperationDay) {
-                    badge.textContent = '鍮꾩슫??;
+                    badge.textContent = '비운영';
                 } else if (selectedCheckIn === dateString) {
-                    badge.textContent = '泥댄겕??;
+                    badge.textContent = '체크인';
                 } else if (selectedCheckOut === dateString) {
-                    badge.textContent = '泥댄겕?꾩썐';
+                    badge.textContent = '체크아웃';
                 } else if (isBetweenSelectedRange(dateString)) {
-                    badge.textContent = '?좏깮';
+                    badge.textContent = '선택';
                 } else {
                     const remaining = dailyRooms[dateString];
                     if (typeof remaining === 'number') {
-                        badge.textContent = `${remaining}???⑥쓬`;
+                        badge.textContent = `${remaining}실 남음`;
                         badge.classList.add(remaining < 3 ? 'is-low-stock' : 'is-available');
                     } else {
                         badge.classList.add('is-available');
-                        badge.textContent = '?덉빟媛??;
+                        badge.textContent = '예약가능';
                     }
                 }
                 cell.appendChild(badge);
@@ -859,7 +859,7 @@
 
         function selectDate(dateString) {
             if (isDateClosedByCheckInTime(dateString)) {
-                alert('?뱀씪 泥댄겕??媛???쒓컙??吏???좏깮?????놁뒿?덈떎.');
+                alert('당일 체크인 가능 시간이 지나 선택할 수 없습니다.');
                 return;
             }
             if (selectedCheckIn === dateString && !selectedCheckOut) {
@@ -889,7 +889,7 @@
                 const stayDates    = buildStayDates(selectedCheckIn, dateString);
                 const invalidRange = stayDates.some(d => isDateUnavailable(d));
                 if (invalidRange) {
-                    alert('?좏깮??踰붿쐞 ?덉뿉 ?댁쁺?섏? ?딅뒗 ?좎쭨 ?먮뒗 ?덉빟 遺덇? ?좎쭨媛 ?ы븿?섏뼱 ?덉뒿?덈떎.');
+                    alert('선택한 범위 안에 운영하지 않는 날짜 또는 예약 불가 날짜가 포함되어 있습니다.');
                     return;
                 }
                 selectedCheckOut = dateString; previewCheckOut = null;
@@ -989,22 +989,22 @@
             const hint  = document.getElementById('guestHint');
             let error = false;
             if (adult < 1) {
-                hint.textContent = '?깆씤? 理쒖냼 1紐??댁긽?댁뼱???⑸땲??';
+                hint.textContent = '성인은 최소 1명 이상이어야 합니다.';
                 error = true;
             } else if (roomCount < 1) {
-                hint.textContent = '媛앹떎 ?섎뒗 理쒖냼 1???댁긽?댁뼱???⑸땲??';
+                hint.textContent = '객실 수는 최소 1개 이상이어야 합니다.';
                 error = true;
             } else if (total < typeMinGuests) {
-                hint.textContent = `???숈냼 ?좏삎? 理쒖냼 ${typeMinGuests}???댁긽?댁뼱???⑸땲??`;
+                hint.textContent = `이 숙소 유형은 최소 ${typeMinGuests}명 이상이어야 합니다.`;
                 error = true;
             } else if (total > effectiveMax) {
-                hint.textContent = `理쒕? ${effectiveMax}紐낃퉴吏 媛?ν빀?덈떎.`;
+                hint.textContent = `최대 ${effectiveMax}명까지 가능합니다.`;
                 error = true;
             } else if (latestRemainingRooms !== null && roomCount > latestRemainingRooms) {
-                hint.textContent = `?붿뿬 媛앹떎? ${latestRemainingRooms}?ㅼ엯?덈떎.`;
+                hint.textContent = `잔여 객실은 ${latestRemainingRooms}개입니다.`;
                 error = true;
             } else {
-                hint.textContent = `理쒕? ${effectiveMax}紐낃퉴吏 媛?ν빀?덈떎.`;
+                hint.textContent = `최대 ${effectiveMax}명까지 가능합니다.`;
             }
             hint.classList.toggle('error', error);
             updateSummary();
@@ -1028,8 +1028,8 @@
             if (selectedCheckOut && isDateUnavailable(selectedCheckOut)) { selectedCheckOut = null; }
             const selectionChanged = beforeCheckIn !== selectedCheckIn || beforeCheckOut !== selectedCheckOut;
 
-            checkInEl.textContent  = selectedCheckIn  || '?좏깮 ??;
-            checkOutEl.textContent = selectedCheckOut || '?좏깮 ??;
+            checkInEl.textContent  = selectedCheckIn  || '선택 전';
+            checkOutEl.textContent = selectedCheckOut || '선택 전';
             hiddenCheckIn.value    = selectedCheckIn  || '';
             hiddenCheckOut.value   = selectedCheckOut || '';
 
@@ -1039,7 +1039,7 @@
                 nights = 0;
             }
 
-            nightsEl.textContent = `${nights}諛?;
+            nightsEl.textContent = `${nights}박`;
 
             const adult          = getAdultCount();
             const child          = getChildCount();
@@ -1049,16 +1049,16 @@
             const surchargeTotal = surcharge * nights * roomCount;
             const grandTotal     = baseTotal + surchargeTotal;
 
-            basePriceEl.textContent = baseTotal.toLocaleString('ko-KR') + '??;
+            basePriceEl.textContent = baseTotal.toLocaleString('ko-KR') + '원';
 
             if (surchargeTotal > 0) {
-                surchargePriceEl.textContent = surchargeTotal.toLocaleString('ko-KR') + '??;
+                surchargePriceEl.textContent = surchargeTotal.toLocaleString('ko-KR') + '원';
                 surchargeRow.style.display = '';
             } else {
                 surchargeRow.style.display = 'none';
             }
 
-            totalEl.textContent = grandTotal.toLocaleString('ko-KR') + '??;
+            totalEl.textContent = grandTotal.toLocaleString('ko-KR') + '원';
             if (selectionChanged) {
                 renderCalendar();
             }
@@ -1204,11 +1204,11 @@
                 if (remaining === null) {
                     setAvailabilityBadge(remainingEl, '-');
                 } else if (remaining <= 0) {
-                    setAvailabilityBadge(remainingEl, '留덇컧', 'soldout');
+                    setAvailabilityBadge(remainingEl, '마감', 'soldout');
                 } else if (remaining < 15) {
-                    remainingEl.innerHTML = `<span class="availability-badge availability-badge--rooms-left">${remaining}???⑥쓬</span>`;
+                    remainingEl.innerHTML = `<span class="availability-badge availability-badge--rooms-left">${remaining}실 남음</span>`;
                 } else {
-                    setAvailabilityBadge(remainingEl, '?덉빟媛??, 'available');
+                    setAvailabilityBadge(remainingEl, '예약가능', 'available');
                 }
                 onGuestChange();
             } catch (error) {
@@ -1218,18 +1218,18 @@
         }
 
         function getBookingSelection() {
-            if (!selectedCheckIn || !selectedCheckOut) { alert('泥댄겕?멸낵 泥댄겕?꾩썐 ?좎쭨瑜??좏깮??二쇱꽭??'); return; }
-            if (nights <= 0) { alert('泥댄겕?꾩썐 ?좎쭨??泥댄겕???좎쭨蹂대떎 ?댄썑?ъ빞 ?⑸땲??'); return; }
+            if (!selectedCheckIn || !selectedCheckOut) { alert('체크인과 체크아웃 날짜를 선택해 주세요.'); return; }
+            if (nights <= 0) { alert('체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.'); return; }
             const adult = getAdultCount();
             const child = getChildCount();
             const roomCount = getRoomCount();
             const total = adult + child;
-            if (adult < 1) { alert('?깆씤? 理쒖냼 1紐??댁긽?댁뼱???⑸땲??'); return; }
-            if (roomCount < 1) { alert('媛앹떎 ?섎뒗 理쒖냼 1???댁긽?댁뼱???⑸땲??'); return; }
-            if (total < typeMinGuests) { alert(`???숈냼 ?좏삎? 理쒖냼 ${typeMinGuests}???댁긽?댁뼱???⑸땲??`); return; }
-            if (total > effectiveMax) { alert(`理쒕? ${effectiveMax}紐낃퉴吏 媛?ν빀?덈떎.`); return; }
+            if (adult < 1) { alert('성인은 최소 1명 이상이어야 합니다.'); return; }
+            if (roomCount < 1) { alert('객실 수는 최소 1개 이상이어야 합니다.'); return; }
+            if (total < typeMinGuests) { alert(`이 숙소 유형은 최소 ${typeMinGuests}명 이상이어야 합니다.`); return; }
+            if (total > effectiveMax) { alert(`최대 ${effectiveMax}명까지 가능합니다.`); return; }
             if (latestRemainingRooms !== null && roomCount > latestRemainingRooms) {
-                alert(`?덉빟 媛?ν븳 媛앹떎 ?섎? 珥덇낵?덉뒿?덈떎. ?붿뿬 媛앹떎? ${latestRemainingRooms}?ㅼ엯?덈떎.`);
+                alert(`예약 가능한 객실 수를 초과했습니다. 잔여 객실은 ${latestRemainingRooms}개입니다.`);
                 return;
             }
 
@@ -1248,7 +1248,7 @@
             try {
                 const remainingRooms = await fetchRemainingRooms();
                 if (remainingRooms !== null && selection.roomCount > remainingRooms) {
-                    alert(`?덉빟 媛?ν븳 媛앹떎 ?섎? 珥덇낵?덉뒿?덈떎. ?붿뿬 媛앹떎? ${remainingRooms}?ㅼ엯?덈떎.`);
+                    alert(`예약 가능한 객실 수를 초과했습니다. 잔여 객실은 ${remainingRooms}개입니다.`);
                     latestRemainingRooms = remainingRooms;
                     onGuestChange();
                     return;
@@ -1267,14 +1267,14 @@
                     window.location.href = `/orders/${orderId}`;
                 } else {
                     const message = await response.text();
-                    alert('?덉빟 ?ㅽ뙣: ' + message);
+                    alert('예약 실패: ' + message);
                 }
             } catch (error) {
                 if (error.message === 'LOGIN_REQUIRED') {
                     moveToLoginWithRedirect();
                     return;
                 }
-                alert('?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎: ' + error.message);
+                alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
@@ -1297,7 +1297,7 @@
             try {
                 const remainingRooms = await fetchRemainingRooms();
                 if (remainingRooms !== null && selection.roomCount > remainingRooms) {
-                    alert(`?덉빟 媛?ν븳 媛앹떎 ?섎? 珥덇낵?덉뒿?덈떎. ?붿뿬 媛앹떎? ${remainingRooms}?ㅼ엯?덈떎.`);
+                    alert(`예약 가능한 객실 수를 초과했습니다. 잔여 객실은 ${remainingRooms}개입니다.`);
                     latestRemainingRooms = remainingRooms;
                     onGuestChange();
                     return;
@@ -1328,7 +1328,7 @@
                     moveToLoginWithRedirect();
                     return;
                 }
-                alert('?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎: ' + error.message);
+                alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
@@ -1345,21 +1345,21 @@
             reviewUpdateUrlTemplate: "/reviews/{reviewId}/update/ajax",
             reviewDeleteUrlTemplate: "/reviews/{reviewId}/delete/ajax",
             reviewImageDeleteUrlTemplate: "/reviews/{reviewId}/images/{reviewImgId}/delete/ajax",
-            loginRequiredMessage: "由щ럭 ?묒꽦? ?뚯썝留?媛?ν빀?덈떎.",
-            reviewEligibilityMessage: "?대떦 ?숇컯 ?낆냼 ?댁슜 ?대젰???덈뒗 ?뚯썝留?由щ럭 ?묒꽦 媛?ν빀?덈떎.",
-            reviewRatingRequiredMessage: "蹂꾩젏???좏깮??二쇱꽭??",
-            reviewContentRequiredMessage: "由щ럭 ?댁슜???낅젰??二쇱꽭??",
-            reviewRequestFailedMessage: "由щ럭 ?붿껌??泥섎━?섏? 紐삵뻽?듬땲??",
-            reviewImageOnlyMessage: "?대?吏 ?뚯씪留??깅줉?????덉뒿?덈떎.",
-            reviewImageRemoveLabel: "?좏깮 痍⑥냼",
-            reviewImageSelectionRequiredMessage: "??젣???대?吏瑜??좏깮??二쇱꽭??",
-            reviewImageBulkDeleteConfirmMessage: "?좏깮??{count}媛쒖쓽 ?대?吏瑜???젣?섏떆寃좎뒿?덇퉴?",
-            reviewImageBulkDeleteResultMessage: "{count}媛쒖쓽 ?대?吏瑜???젣?덉뒿?덈떎.",
-            mapScriptLoadFailedMessage: "?ㅼ씠踰?吏???ㅽ겕由쏀듃瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??",
-            mapLocationMissingMessage: "?깅줉???숈냼 ?꾩튂 ?뺣낫媛 ?놁뒿?덈떎.",
-            mapResolveFailedMessage: "二쇱냼瑜?湲곕컲?쇰줈 吏?꾨? ?쒖떆?????놁뒿?덈떎.",
-            mapAuthFailedMessage: "?ㅼ씠踰?吏???몄쬆???ㅽ뙣?덉뒿?덈떎. Client ID? ?쒕퉬??URL ?ㅼ젙???뺤씤??二쇱꽭??",
-            mapInfoTitle: "?숈냼 ?꾩튂"
+            loginRequiredMessage: "리뷰 작성은 회원만 가능합니다.",
+            reviewEligibilityMessage: "해당 숙박 업소 이용 이력이 있는 회원만 리뷰 작성 가능합니다.",
+            reviewRatingRequiredMessage: "별점을 선택해 주세요.",
+            reviewContentRequiredMessage: "리뷰 내용을 입력해 주세요.",
+            reviewRequestFailedMessage: "리뷰 요청을 처리하지 못했습니다.",
+            reviewImageOnlyMessage: "이미지 파일만 등록할 수 있습니다.",
+            reviewImageRemoveLabel: "선택 취소",
+            reviewImageSelectionRequiredMessage: "삭제할 이미지를 선택해 주세요.",
+            reviewImageBulkDeleteConfirmMessage: "선택한 {count}개의 이미지를 삭제하시겠습니까?",
+            reviewImageBulkDeleteResultMessage: "{count}개의 이미지를 삭제했습니다.",
+            mapScriptLoadFailedMessage: "네이버 지도 스크립트를 불러오지 못했습니다.",
+            mapLocationMissingMessage: "등록된 숙소 위치 정보가 없습니다.",
+            mapResolveFailedMessage: "주소를 기반으로 지도를 표시할 수 없습니다.",
+            mapAuthFailedMessage: "네이버 지도 인증에 실패했습니다. Client ID와 서비스 URL 설정을 확인해 주세요.",
+            mapInfoTitle: "숙소 위치"
         };
     </script>
     <script th:inline="javascript">
