@@ -754,6 +754,10 @@
     gap: 14px;
 }
 
+.category-booking-guest-grid {
+    margin-top: 14px;
+}
+
 .category-booking-field {
     display: flex;
     flex-direction: column;
@@ -766,9 +770,21 @@
 
 .category-booking-field label,
 .category-booking-guest-box__title {
-    font-size: 0.94rem;
-    font-weight: 700;
     color: #334155;
+}
+
+.category-booking-guest-box__title {
+    display: block;
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+
+.category-booking-field label {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #475569;
 }
 
 .category-booking-field input {
@@ -776,7 +792,8 @@
     border: 1px solid #dbe3ee;
     border-radius: 12px;
     padding: 0 14px;
-    font-size: 0.98rem;
+    font-size: 1rem;
+    font-weight: 700;
     color: #0f172a;
     background: #ffffff;
 }
