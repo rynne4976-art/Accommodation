@@ -16,115 +16,204 @@
             padding: 0 16px;
         }
 
-        .order-section__header {
+        .order-section__title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 24px;
+        }
+
+        /* ── 필터 카드 ── */
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 22px 24px 0;
+            margin-bottom: 28px;
+        }
+
+        .filter-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-bottom: 20px;
         }
 
-        .order-section__title {
-            margin: 0;
-            font-size: 24px;
-            color: #111827;
+        .filter-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #334155;
+            white-space: nowrap;
         }
 
-        .order-section__sub {
+        .period-btns { display: flex; gap: 6px; }
+
+        .period-btn {
+            padding: 6px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            background: #fff;
             font-size: 13px;
-            color: #98a2b3;
-            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s;
         }
 
+        .period-btn:hover { border-color: #111827; color: #111827; }
+
+        .period-btn.active {
+            background: #111827;
+            border-color: #111827;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .date-range { display: flex; align-items: center; gap: 8px; }
+
+        .date-input {
+            padding: 7px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #334155;
+            background: #fff;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .date-input:focus { border-color: #111827; }
+
+        .date-sep { color: #94a3b8; }
+
+        .btn-search {
+            padding: 8px 24px;
+            background: #111827;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-search:hover { background: #1f2937; }
+
+        /* ── 상태 탭 ── */
+        .status-tabs {
+            display: flex;
+            border-top: 1px solid #e2e8f0;
+            padding: 0 2px;
+        }
+
+        .status-tab {
+            padding: 13px 18px;
+            font-size: 13px;
+            color: #64748b;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+
+        .status-tab:hover { color: #111827; }
+
+        .status-tab.active {
+            color: #111827;
+            font-weight: 700;
+            border-bottom-color: #111827;
+        }
+
+        .status-tab + .status-tab::before {
+            content: '|';
+            margin-right: 18px;
+            color: #e2e8f0;
+        }
+
+        /* ── 결과 카운트 ── */
+        .result-count {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 16px;
+        }
+
+        .result-count strong { color: #111827; }
+
+        /* ── 주문 카드 ── */
         .order-empty {
             background: #fff;
-            border-radius: 24px;
-            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
             text-align: center;
             padding: 64px 0;
-            color: #667085;
-            font-size: 15px;
+            color: #94a3b8;
+            font-size: 14px;
         }
 
-        /* 카드: mypage-card와 동일한 스타일 */
         .order-card {
             background: #fff;
-            border-radius: 24px;
-            padding: 28px 32px;
-            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
-            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            overflow: hidden;
             cursor: pointer;
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            transition: box-shadow 0.18s;
         }
 
-        .order-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 28px 66px rgba(15, 23, 42, 0.11);
-        }
+        .order-card:hover { box-shadow: 0 4px 20px rgba(15,23,42,0.08); }
 
         .order-card__top {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
-            padding-bottom: 18px;
-            border-bottom: 1px solid #eaecf0;
-        }
-
-        .order-card__date {
+            background: #f8fafc;
+            padding: 13px 20px;
             font-size: 13px;
-            color: #667085;
-            font-weight: 700;
+            color: #64748b;
         }
 
-        /* 상태 뱃지: mypage-role과 동일 계열 */
-        .order-card__badge {
+        .order-card__id { font-weight: 700; color: #334155; }
+
+        .status-badge {
             display: inline-block;
-            padding: 6px 14px;
-            border-radius: 999px;
-            font-size: 13px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
             font-weight: 700;
         }
 
-        .order-status-order {
-            background: #eff6ff;
-            color: #1d4ed8;
-        }
+        .status-badge--confirmed { background: #dbeafe; color: #1d4ed8; }
+        .status-badge--completed { background: #d1fae5; color: #065f46; }
+        .status-badge--cancel    { background: #fee2e2; color: #b91c1c; }
 
-        .order-status-cancel {
-            background: #fff1f0;
-            color: #cf1322;
-        }
-
-        /* 아이템: mypage-item과 동일한 스타일 */
         .order-item {
             display: flex;
             align-items: center;
-            gap: 18px;
-            padding: 18px 20px;
-            border: 1px solid #eaecf0;
-            border-radius: 18px;
-            background: #fcfcfd;
-            margin-bottom: 12px;
+            gap: 16px;
+            padding: 16px 20px;
+            border-top: 1px solid #f1f5f9;
         }
 
         .order-item:last-of-type { margin-bottom: 0; }
 
         .order-item__img {
-            width: 76px;
-            height: 76px;
+            width: 72px;
+            height: 72px;
             object-fit: cover;
-            border-radius: 14px;
-            background: #eef2ff;
+            border-radius: 10px;
+            background: #e2e8f0;
             flex-shrink: 0;
         }
 
         .order-item__info { flex: 1; min-width: 0; }
 
         .order-item__name {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             color: #101828;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -133,77 +222,101 @@
         .order-item__meta {
             font-size: 13px;
             color: #667085;
-            font-weight: 700;
             line-height: 1.7;
         }
 
         .order-item__price {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             color: #101828;
             white-space: nowrap;
         }
 
-        /* 액션 버튼: mypage-action-link와 동일 계열 */
         .order-card__footer {
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 18px;
-            border-top: 1px solid #eaecf0;
+            gap: 8px;
+            padding: 12px 20px;
+            border-top: 1px solid #f1f5f9;
         }
 
-        .btn-order-action {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 100px;
-            padding: 10px 20px;
-            border-radius: 999px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.18s, color 0.18s;
-            border: none;
+        .btn-detail {
+            padding: 7px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            color: #475569;
+            background: #fff;
+            font-size: 13px;
+            text-decoration: none;
+            transition: background 0.15s;
         }
+
+        .btn-detail:hover { background: #f1f5f9; }
 
         .btn-order-cancel {
+            padding: 7px 16px;
+            border: 1px solid #111827;
+            border-radius: 8px;
             background: #111827;
             color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
         }
 
         .btn-order-cancel:hover { background: #1f2937; }
 
-        .btn-order-action:disabled {
+        .btn-order-cancel:disabled {
             background: #f2f4f7;
+            border-color: #e2e8f0;
             color: #98a2b3;
-            border-color: #eaecf0;
             cursor: default;
         }
 
-        /* 취소 내역 카드 */
-        .order-card--cancelled {
-            border-left: 4px solid #fca5a5;
-            opacity: 0.85;
+        /* ── 페이지네이션 ── */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 28px;
         }
 
-        .order-card__cancel-date {
-            display: block;
-            font-size: 12px;
-            color: #cf1322;
-            margin-top: 3px;
+        .page-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #475569;
+            text-decoration: none;
+            background: #fff;
+            transition: all 0.15s;
         }
 
-        .order-item--cancelled {
-            background: #fafafa;
+        .page-btn:hover { border-color: #111827; color: #111827; }
+
+        .page-btn.active {
+            background: #111827;
+            border-color: #111827;
+            color: #fff;
+            font-weight: 700;
         }
 
-        .order-item__price--cancelled {
-            color: #98a2b3;
-            text-decoration: line-through;
+        .page-btn.disabled {
+            color: #cbd5e1;
+            pointer-events: none;
         }
 
+        @media (max-width: 640px) {
+            .date-range { width: 100%; }
+            .date-input { flex: 1; }
+            .btn-search { width: 100%; }
+            .status-tab { padding: 12px 10px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -264,22 +377,84 @@
 
     <!-- 예약 내역 -->
     <section class="order-section">
-        <div class="order-section__header">
-            <h3 class="order-section__title">예약 내역</h3>
+        <h3 class="order-section__title">예약 내역</h3>
+
+        <!-- 필터 카드 -->
+        <div class="filter-card">
+            <form id="filterForm" method="get" th:action="@{/members/mypage}">
+                <input type="hidden" name="status" th:value="${selectedStatus}">
+                <input type="hidden" name="page" value="0">
+
+                <div class="filter-row">
+                    <span class="filter-label">기간</span>
+
+                    <div class="period-btns">
+                        <button type="button" class="period-btn"
+                                th:classappend="${selectedPeriod == '1w'} ? ' active'"
+                                onclick="setPeriod('1w')">1주일</button>
+                        <button type="button" class="period-btn"
+                                th:classappend="${selectedPeriod == '1m'} ? ' active'"
+                                onclick="setPeriod('1m')">1개월</button>
+                        <button type="button" class="period-btn"
+                                th:classappend="${selectedPeriod == '3m'} ? ' active'"
+                                onclick="setPeriod('3m')">3개월</button>
+                        <button type="button" class="period-btn"
+                                th:classappend="${selectedPeriod == '12m'} ? ' active'"
+                                onclick="setPeriod('12m')">12개월</button>
+                    </div>
+
+                    <input type="hidden" id="periodInput" name="period" th:value="${selectedPeriod}">
+
+                    <div class="date-range">
+                        <input type="date" id="fromInput" name="from" class="date-input"
+                               th:value="${fromDate}" onchange="clearPeriod()">
+                        <span class="date-sep">–</span>
+                        <input type="date" id="toInput" name="to" class="date-input"
+                               th:value="${toDate}" onchange="clearPeriod()">
+                    </div>
+
+                    <button type="submit" class="btn-search">조회</button>
+                </div>
+            </form>
+
+            <!-- 상태 탭 -->
+            <div class="status-tabs">
+                <a class="status-tab"
+                   th:classappend="${selectedStatus == '예약완료'} ? ' active'"
+                   th:href="@{/members/mypage(period=${selectedPeriod}, from=${fromDate}, to=${toDate}, status='예약완료', page=0)}">예약완료</a>
+                <a class="status-tab"
+                   th:classappend="${selectedStatus == '이용완료'} ? ' active'"
+                   th:href="@{/members/mypage(period=${selectedPeriod}, from=${fromDate}, to=${toDate}, status='이용완료', page=0)}">이용완료</a>
+                <a class="status-tab"
+                   th:classappend="${selectedStatus == '취소완료'} ? ' active'"
+                   th:href="@{/members/mypage(period=${selectedPeriod}, from=${fromDate}, to=${toDate}, status='취소완료', page=0)}">취소완료</a>
+            </div>
         </div>
 
-        <div th:if="${orders == null or #lists.isEmpty(orders)}" class="order-empty">
-            <p>예약 내역이 없습니다.</p>
+        <!-- 결과 건수 -->
+        <p class="result-count">총 <strong th:text="${totalCount}">0</strong>건</p>
+
+        <!-- 빈 상태 -->
+        <div th:if="${#lists.isEmpty(orders)}" class="order-empty">
+            <p>해당 기간에 예약 내역이 없습니다.</p>
         </div>
 
+        <!-- 주문 카드 -->
         <div th:each="order : ${orders}"
              class="order-card"
              th:attr="data-order-id=${order.orderId}"
              onclick="goToOrderDetail(this)">
+
             <div class="order-card__top">
-                <span class="order-card__date"
-                      th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">날짜</span>
-                <span class="order-card__badge order-status-order">예약 완료</span>
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <span class="order-card__id" th:text="'예약번호 ' + ${order.orderId}"></span>
+                    <span th:text="${#temporals.format(order.orderDate, 'yyyy.MM.dd HH:mm')}"></span>
+                </div>
+                <span class="status-badge"
+                      th:classappend="${order.displayStatus == '예약완료'} ? ' status-badge--confirmed'
+                                    : (${order.displayStatus == '이용완료'} ? ' status-badge--completed'
+                                    : ' status-badge--cancel')"
+                      th:text="${order.displayStatus}"></span>
             </div>
 
             <div th:each="item : ${order.orderItemDtos}" class="order-item">
@@ -289,11 +464,12 @@
                 <div class="order-item__info">
                     <div class="order-item__name" th:text="${item.accomName}">숙소명</div>
                     <div class="order-item__meta">
-                        <span th:if="${item.checkInDate != null}"
-                              th:text="|${item.checkInDate} ~ ${item.checkOutDate} (${item.count}박)|"></span>
-                        <span th:if="${item.checkInDate == null}" th:text="${item.count} + '박'"></span>
-                        <br>
-                        <span th:if="${item.guestCount != null}" th:text="|투숙 ${item.guestCount}명|"></span>
+                        <div th:text="${#temporals.format(item.checkInDate, 'yyyy.MM.dd')}
+                                      + ' ~ '
+                                      + ${#temporals.format(item.checkOutDate, 'yyyy.MM.dd')}"></div>
+                        <div th:text="${item.count + '박 · 성인 ' + item.adultCount + '명'}
+                                      + ${item.childCount > 0 ? ' · 아동 ' + item.childCount + '명' : ''}
+                                      + ' · 객실 ' + item.roomCount + '실'"></div>
                     </div>
                 </div>
                 <div class="order-item__price"
@@ -301,58 +477,34 @@
             </div>
 
             <div class="order-card__footer">
-                <button class="btn-order-action btn-order-cancel"
+                <a th:href="@{/orders/{id}(id=${order.orderId})}"
+                   class="btn-detail"
+                   onclick="event.stopPropagation()">상세 보기</a>
+                <button class="btn-order-cancel"
+                        th:disabled="${order.displayStatus != '예약완료'}"
                         th:data-order-id="${order.orderId}"
-                        onclick="cancelOrder(this, event)">
-                    예약 취소
-                </button>
+                        onclick="cancelOrder(this, event)">예약 취소</button>
             </div>
         </div>
-    </section>
 
-    <!-- 예약 취소 내역 -->
-    <section class="order-section">
-        <div class="order-section__header">
-            <h3 class="order-section__title">예약 취소 내역</h3>
-            <span class="order-section__sub">최근 5건</span>
-        </div>
+        <!-- 페이지네이션 -->
+        <div class="pagination" th:if="${totalPages > 1}">
+            <a class="page-btn"
+               th:classappend="${currentPage == 0} ? ' disabled'"
+               th:href="@{/members/mypage(period=${selectedPeriod}, from=${fromDate}, to=${toDate}, status=${selectedStatus}, page=${currentPage - 1})}">&#8249;</a>
 
-        <div th:if="${cancelledOrders == null or #lists.isEmpty(cancelledOrders)}" class="order-empty">
-            <p>취소된 예약이 없습니다.</p>
-        </div>
+            <th:block th:with="startPage=${T(java.lang.Math).max(0, currentPage - 2)},
+                               endPage=${T(java.lang.Math).min(totalPages - 1, currentPage + 2)}">
+                <a th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                   class="page-btn"
+                   th:classappend="${i == currentPage} ? ' active'"
+                   th:text="${i + 1}"
+                   th:href="@{/members/mypage(period=${selectedPeriod}, from=${fromDate}, to=${toDate}, status=${selectedStatus}, page=${i})}"></a>
+            </th:block>
 
-        <div th:each="order : ${cancelledOrders}"
-             class="order-card order-card--cancelled"
-             th:attr="data-order-id=${order.orderId}"
-             onclick="goToOrderDetail(this)">
-            <div class="order-card__top">
-                <div>
-                    <span class="order-card__date"
-                          th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">예약일</span>
-                    <span class="order-card__cancel-date"
-                          th:if="${order.cancelDate != null}"
-                          th:text="'취소 ' + ${#temporals.format(order.cancelDate, 'yyyy-MM-dd HH:mm')}">취소일</span>
-                </div>
-                <span class="order-card__badge order-status-cancel">예약 취소</span>
-            </div>
-
-            <div th:each="item : ${order.orderItemDtos}" class="order-item order-item--cancelled">
-                <img class="order-item__img"
-                     th:src="${#strings.isEmpty(item.imgUrl) ? '/images/no-image.png' : item.imgUrl}"
-                     th:alt="${item.accomName}">
-                <div class="order-item__info">
-                    <div class="order-item__name" th:text="${item.accomName}">숙소명</div>
-                    <div class="order-item__meta">
-                        <span th:if="${item.checkInDate != null}"
-                              th:text="|${item.checkInDate} ~ ${item.checkOutDate} (${item.count}박)|"></span>
-                        <span th:if="${item.checkInDate == null}" th:text="${item.count} + '박'"></span>
-                        <br>
-                        <span th:if="${item.guestCount != null}" th:text="|투숙 ${item.guestCount}명|"></span>
-                    </div>
-                </div>
-                <div class="order-item__price order-item__price--cancelled"
-                     th:text="${#numbers.formatInteger(item.totalPrice, 3, 'COMMA')} + '원'">0원</div>
-            </div>
+            <a class="page-btn"
+               th:classappend="${currentPage >= totalPages - 1} ? ' disabled'"
+               th:href="@{/members/mypage(period=${selectedPeriod}, from=${fromDate}, to=${toDate}, status=${selectedStatus}, page=${currentPage + 1})}">&#8250;</a>
         </div>
     </section>
 
@@ -372,7 +524,18 @@
         window.location.href = '/orders/' + orderId;
     }
 
-    // ── 예약 취소 ──────────────────────────────────────────────────────────────
+    function setPeriod(p) {
+        document.getElementById('periodInput').value = p;
+        document.getElementById('fromInput').value = '';
+        document.getElementById('toInput').value = '';
+        document.getElementById('filterForm').submit();
+    }
+
+    function clearPeriod() {
+        document.getElementById('periodInput').value = '';
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    }
+
     function cancelOrder(btn, event) {
         if (event) event.stopPropagation();
         if (!confirm('예약을 취소하시겠습니까?')) return;

@@ -1,5 +1,6 @@
 package com.Accommodation.dto;
 
+import com.Accommodation.constant.BookingStatus;
 import com.Accommodation.constant.OrderStatus;
 import com.Accommodation.entity.Order;
 import lombok.Getter;
@@ -37,5 +38,17 @@ public class OrderHistDto {
 
     public void addOrderItemDto(OrderItemDto orderItemDto) {
         orderItemDtos.add(orderItemDto);
+    }
+
+    /** 취소완료 / 이용완료 / 예약완료 */
+    public String getDisplayStatus() {
+        if (orderStatus == OrderStatus.CANCEL) {
+            return "취소완료";
+        }
+        if (!orderItemDtos.isEmpty() &&
+                orderItemDtos.stream().allMatch(i -> i.getBookingStatus() == BookingStatus.COMPLETED)) {
+            return "이용완료";
+        }
+        return "예약완료";
     }
 }

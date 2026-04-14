@@ -2,6 +2,7 @@ package com.Accommodation.controller;
 
 import com.Accommodation.dto.MemberFormDto;
 import com.Accommodation.dto.MemberUpdateDto;
+import com.Accommodation.dto.OrderHistPage;
 import com.Accommodation.dto.PasswordChangeDto;
 import com.Accommodation.entity.Member;
 import com.Accommodation.exception.MemberException;
@@ -24,6 +25,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Map;
 
 /**
@@ -98,6 +104,11 @@ public class MemberController {
 
     @GetMapping("/members/mypage")
     public String myPage(@AuthenticationPrincipal UserDetails userDetails,
+                         @RequestParam(required = false) String period,
+                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+                         @RequestParam(defaultValue = "예약완료") String status,
+                         @RequestParam(defaultValue = "0") int page,
                          RedirectAttributes redirectAttributes,
                          Model model) {
         if (userDetails == null) {
@@ -112,11 +123,48 @@ public class MemberController {
             return "redirect:/members/login";
         }
 
+        LocalDate today = LocalDate.now();
+        LocalDate effectiveFrom;
+        LocalDate effectiveTo;
+        String effectivePeriod;
+
+        if (from != null && to != null) {
+            effectiveFrom   = from;
+            effectiveTo     = to;
+            effectivePeriod = "";
+        } else {
+            effectiveTo = today;
+            if ("1m".equals(period)) {
+                effectiveFrom   = today.minusMonths(1);
+                effectivePeriod = "1m";
+            } else if ("3m".equals(period)) {
+                effectiveFrom   = today.minusMonths(3);
+                effectivePeriod = "3m";
+            } else if ("12m".equals(period)) {
+                effectiveFrom   = today.minusMonths(12);
+                effectivePeriod = "12m";
+            } else {
+                effectiveFrom   = today.minusWeeks(1);
+                effectivePeriod = "1w";
+            }
+        }
+
+        OrderHistPage result = orderService.getOrderHistPage(
+                userDetails.getUsername(),
+                LocalDateTime.of(effectiveFrom, LocalTime.MIN),
+                LocalDateTime.of(effectiveTo, LocalTime.MAX),
+                status, page, 5
+        );
+
         model.addAttribute("member", member);
-        model.addAttribute("orders",
-                orderService.getOrderListByStatus(userDetails.getUsername(), com.Accommodation.constant.OrderStatus.ORDER, Pageable.unpaged()));
-        model.addAttribute("cancelledOrders",
-                orderService.getOrderListByStatus(userDetails.getUsername(), com.Accommodation.constant.OrderStatus.CANCEL, PageRequest.of(0, 5)));
+        model.addAttribute("orders",         result.orders());
+        model.addAttribute("totalPages",     result.totalPages());
+        model.addAttribute("currentPage",    result.currentPage());
+        model.addAttribute("totalCount",     result.totalCount());
+        model.addAttribute("selectedPeriod", effectivePeriod);
+        model.addAttribute("fromDate",       effectiveFrom.toString());
+        model.addAttribute("toDate",         effectiveTo.toString());
+        model.addAttribute("selectedStatus", status);
         return "member/mypage";
     }
 

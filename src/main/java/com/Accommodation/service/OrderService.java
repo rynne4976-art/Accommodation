@@ -4,6 +4,7 @@ import com.Accommodation.constant.BookingStatus;
 import com.Accommodation.constant.OrderStatus;
 import com.Accommodation.dto.OrderDto;
 import com.Accommodation.dto.OrderHistDto;
+import com.Accommodation.dto.OrderHistPage;
 import com.Accommodation.dto.OrderItemDto;
 import com.Accommodation.dto.OrderUpdateDto;
 import com.Accommodation.entity.Accom;
@@ -243,6 +244,31 @@ public class OrderService {
     public List<OrderHistDto> getOrderListByStatus(String email, OrderStatus status, Pageable pageable) {
         List<Order> orders = orderRepository.findOrdersByStatus(email, status, pageable);
         return toOrderHistDtoList(orders);
+    }
+
+    // ── 기간 + displayStatus 필터 + 페이징 ─────────────────────────────────────
+    @Transactional(readOnly = true)
+    public OrderHistPage getOrderHistPage(String email,
+                                          LocalDateTime from,
+                                          LocalDateTime to,
+                                          String statusFilter,
+                                          int page,
+                                          int size) {
+        List<OrderHistDto> allDtos = toOrderHistDtoList(
+                orderRepository.findOrdersByDateRange(email, from, to));
+
+        List<OrderHistDto> filtered = (statusFilter == null || statusFilter.isBlank() || "all".equals(statusFilter))
+                ? allDtos
+                : allDtos.stream().filter(d -> statusFilter.equals(d.getDisplayStatus())).toList();
+
+        int total = filtered.size();
+        int totalPages = total == 0 ? 1 : (int) Math.ceil((double) total / size);
+        int safePage = Math.max(0, Math.min(page, totalPages - 1));
+        int start = safePage * size;
+        int end = Math.min(start + size, total);
+        List<OrderHistDto> pageContent = (start >= total) ? List.of() : filtered.subList(start, end);
+
+        return new OrderHistPage(pageContent, total, totalPages, safePage);
     }
 
     @Transactional(readOnly = true)
