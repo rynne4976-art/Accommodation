@@ -16,7 +16,6 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -45,9 +44,6 @@ public class TransportController {
     private final AccomService accomService;
     private final OrderService orderService;
     private final ObjectMapper objectMapper;
-
-    @Value("${tmap.api.key:}")
-    private String tmapApiKey;
 
     @Value("${odsay.api.key:}")
     private String odsayApiKey;
@@ -229,170 +225,16 @@ public class TransportController {
             @RequestParam("ex") double endLng,
             @RequestParam("ey") double endLat
     ) {
-        if (!"driving".equalsIgnoreCase(profile)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "자동차 경로만 지원합니다."));
-        }
-
-        if (tmapApiKey == null || tmapApiKey.isBlank()) {
-            return ResponseEntity.ok(Map.of(
-                    "available", false,
-                    "message", "TMAP API key is not configured."
-            ));
-        }
-
-        try {
-            Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("startX", String.valueOf(startLng));
-            payload.put("startY", String.valueOf(startLat));
-            payload.put("endX", String.valueOf(endLng));
-            payload.put("endY", String.valueOf(endLat));
-            payload.put("reqCoordType", "WGS84GEO");
-            payload.put("resCoordType", "WGS84GEO");
-            payload.put("searchOption", "0");
-            payload.put("trafficInfo", "Y");
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://apis.openapi.sk.com/tmap/routes?version=1&format=json"))
-                    .timeout(Duration.ofSeconds(20))
-                    .header("accept", "application/json")
-                    .header("content-type", "application/json")
-                    .header("appKey", tmapApiKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(payload)))
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                return ResponseEntity.ok(Map.of(
-                        "available", false,
-                        "message", "TMAP driving route lookup failed",
-                        "status", response.statusCode()
-                ));
-            }
-
-            JsonNode root = objectMapper.readTree(response.body());
-            JsonNode features = root.path("features");
-            if (!features.isArray() || features.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "경로를 찾지 못했습니다."));
-            }
-
-            JsonNode properties = features.get(0).path("properties");
-            Map<String, Object> route = new LinkedHashMap<>();
-            route.put("available", true);
-            route.put("distance", properties.path("totalDistance").asInt(0));
-            route.put("duration", properties.path("totalTime").asInt(0));
-            route.put("geometry", buildTmapRouteGeometry(features));
-            route.put("source", "tmap");
-            return ResponseEntity.ok(route);
-        } catch (Exception e) {
-            return ResponseEntity.ok(Map.of(
-                    "available", false,
-                    "message", "경로를 불러오지 못했습니다."
-            ));
-        }
-    }
-
-    @PostMapping(value = "/api/transport/tmap-transit-route", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public ResponseEntity<?> tmapTransitRoute(@RequestBody Map<String, Object> request) {
-        if (tmapApiKey == null || tmapApiKey.isBlank()) {
-            return ResponseEntity.ok(Map.of(
-                    "available", false,
-                    "message", "TMAP API key is not configured."
-            ));
-        }
-
-        try {
-            String startX = String.valueOf(request.get("startX"));
-            String startY = String.valueOf(request.get("startY"));
-            String endX = String.valueOf(request.get("endX"));
-            String endY = String.valueOf(request.get("endY"));
-
-            RestTemplate restTemplate = new RestTemplate();
-
-            String url = "https://apis.openapi.sk.com/transit/routes";
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("appKey", tmapApiKey);
-
-            Map<String, Object> body = new HashMap<>();
-            body.put("startX", startX);
-            body.put("startY", startY);
-            body.put("endX", endX);
-            body.put("endY", endY);
-            body.put("count", 5);
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    entity,
-                    Map.class
-            );
-
-            Map<String, Object> result = response.getBody();
-
-            if (result == null || !result.containsKey("metaData")) {
-                return ResponseEntity.ok(Map.of(
-                        "available", false,
-                        "message", "TMAP 응답 없음"
-                ));
-            }
-
-            Map<String, Object> metaData = (Map<String, Object>) result.get("metaData");
-            Map<String, Object> plan = (Map<String, Object>) metaData.get("plan");
-            List<Map<String, Object>> itineraries =
-                    plan != null ? (List<Map<String, Object>>) plan.get("itineraries") : null;
-
-            if (itineraries == null || itineraries.isEmpty()) {
-                return ResponseEntity.ok(Map.of(
-                        "available", false,
-                        "message", "경로 없음"
-                ));
-            }
-
-            Map<String, Object> best = itineraries.get(0);
-
-            int totalTime = toMinutes(best.get("totalTime"));
-            int totalWalk = toMinutes(best.get("totalWalkTime"));
-            int transferCount = toInt(best.get("transferCount"));
-            int payment = extractFare(best.get("fare"));
-
-            List<Map<String, Object>> legs = (List<Map<String, Object>>) best.get("legs");
-            List<Map<String, Object>> steps = new ArrayList<>();
-
-            if (legs != null) {
-                for (Map<String, Object> leg : legs) {
-                    String mode = String.valueOf(leg.get("mode"));
-
-                    Map<String, Object> step = new LinkedHashMap<>();
-                    step.put("type", mode);
-                    step.put("title", leg.get("route") != null ? String.valueOf(leg.get("route")) : mode);
-                    step.put("summary", buildLegSummary(leg));
-                    step.put("minutes", toMinutes(leg.get("sectionTime")));
-                    steps.add(step);
-                }
-            }
-
-            return ResponseEntity.ok(Map.of(
-                    "available", true,
-                    "totalTime", totalTime,
-                    "totalWalk", totalWalk,
-                    "transferCount", transferCount,
-                    "payment", payment,
-                    "steps", steps,
-                    "title", "추천 경로"
-            ));
-
-        } catch (Exception e) {
-            return ResponseEntity.ok(Map.of(
-                    "available", false,
-                    "message", e.getMessage() == null ? "TMAP 대중교통 조회 실패" : e.getMessage()
-            ));
-        }
+        boolean walking = "foot".equalsIgnoreCase(profile)
+                || "walk".equalsIgnoreCase(profile)
+                || "walking".equalsIgnoreCase(profile);
+        return ResponseEntity.ok(buildEstimatedRoadRoute(
+                walking ? "walk" : "driving",
+                startLng,
+                startLat,
+                endLng,
+                endLat
+        ));
     }
 
     @GetMapping(value = "/api/transport/transit-route", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -453,6 +295,7 @@ public class TransportController {
         }
     }
 
+    // ODsay 응답 파싱과 경로 매핑
     private String extractOdsayError(JsonNode root) {
         JsonNode error = root.path("error");
         if (error.isArray() && !error.isEmpty()) {
@@ -707,6 +550,7 @@ public class TransportController {
         return String.join(" / ", details);
     }
 
+    // ODsay 실패 시 거리 기반 대중교통 예상값
     private Map<String, Object> buildEstimatedTransitPayload(
             double startLng,
             double startLat,
@@ -790,6 +634,7 @@ public class TransportController {
     ) {
     }
 
+    // 숙소 검색/외부 API 공통 유틸리티
     private Map<String, Object> buildEstimatedStep(String type, String title, String summary, int minutes) {
         Map<String, Object> step = new LinkedHashMap<>();
         step.put("type", type);
@@ -798,40 +643,6 @@ public class TransportController {
         step.put("minutes", minutes);
         step.put("durationText", minutes + "분");
         return step;
-    }
-
-    private String buildLegSummary(Map<String, Object> leg) {
-        String start = extractNamedLocation(leg.get("start"), "출발");
-        String end = extractNamedLocation(leg.get("end"), "도착");
-        return start + " → " + end;
-    }
-
-    private String extractNamedLocation(Object raw, String fallback) {
-        if (raw instanceof Map<?, ?> map) {
-            Object name = map.get("name");
-            return name != null ? String.valueOf(name) : fallback;
-        }
-        return fallback;
-    }
-
-    private int extractFare(Object fareObj) {
-        if (fareObj instanceof Number n) {
-            return n.intValue();
-        }
-        if (fareObj instanceof Map<?, ?> fareMap) {
-            Object regular = fareMap.get("regular");
-            if (regular instanceof Map<?, ?> regularMap) {
-                Object totalFare = regularMap.get("totalFare");
-                return toInt(totalFare);
-            }
-        }
-        return 0;
-    }
-
-    private int toMinutes(Object value) {
-        int raw = toInt(value);
-        if (raw <= 0) return 0;
-        return raw > 1000 ? Math.max(1, Math.round(raw / 60f)) : raw;
     }
 
     private int toInt(Object value) {
@@ -914,6 +725,7 @@ public class TransportController {
         throw new IOException("요청 실패");
     }
 
+    // 주변 정류장/역과 도로 경로 보조 유틸리티
     private List<Map<String, Object>> mapTransportItems(JsonNode elements, double baseLat, double baseLng) {
         List<Map<String, Object>> items = new ArrayList<>();
         if (!elements.isArray()) return items;
@@ -945,6 +757,38 @@ public class TransportController {
 
         items.sort(Comparator.comparingInt(item -> ((Number) item.get("distance")).intValue()));
         return items;
+    }
+
+    private Map<String, Object> buildEstimatedRoadRoute(
+            String profile,
+            double startLng,
+            double startLat,
+            double endLng,
+            double endLat
+    ) {
+        double straightDistance = calculateDistanceMeters(startLat, startLng, endLat, endLng);
+        boolean walking = "walk".equalsIgnoreCase(profile)
+                || "foot".equalsIgnoreCase(profile)
+                || "walking".equalsIgnoreCase(profile);
+        double routeDistance = straightDistance * (walking ? 1.15 : 1.25);
+        int durationSeconds = walking
+                ? Math.max(60, (int) Math.round((routeDistance / 70.0) * 60.0))
+                : Math.max(180, (int) Math.round((routeDistance / 45000.0) * 3600.0));
+
+        Map<String, Object> route = new LinkedHashMap<>();
+        route.put("available", true);
+        route.put("distance", (int) Math.round(routeDistance));
+        route.put("duration", durationSeconds);
+        route.put("geometry", Map.of(
+                "type", "LineString",
+                "coordinates", List.of(
+                        List.of(startLng, startLat),
+                        List.of(endLng, endLat)
+                )
+        ));
+        route.put("source", walking ? "estimated-walk" : "estimated-driving");
+        route.put("estimated", true);
+        return route;
     }
 
     private double calculateDistanceMeters(double lat1, double lng1, double lat2, double lng2) {

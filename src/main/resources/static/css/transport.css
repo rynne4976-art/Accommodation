@@ -617,6 +617,24 @@
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
     gap:12px;
+    max-height:520px;
+    overflow-y:auto;
+    padding-right:6px;
+    overscroll-behavior:contain;
+}
+
+.transit-alt-grid::-webkit-scrollbar{
+    width:8px;
+}
+
+.transit-alt-grid::-webkit-scrollbar-track{
+    background:#eef2f7;
+    border-radius:8px;
+}
+
+.transit-alt-grid::-webkit-scrollbar-thumb{
+    background:#b7c2d4;
+    border-radius:8px;
 }
 
 .transit-alt-card{
