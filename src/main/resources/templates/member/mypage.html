@@ -176,6 +176,12 @@
 
         .order-card__id { font-weight: 700; color: #334155; }
 
+        .order-card__meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
         .status-badge {
             display: inline-block;
             padding: 3px 10px;
@@ -356,7 +362,7 @@
                 </div>
                 <div class="mypage-item">
                     <span class="mypage-item-label">휴대폰 번호</span>
-                    <strong th:text="${member.number == T(com.Accommodation.constant.SocialMemberDefaults).DEFAULT_NUMBER ? '입력된 정보 없음' : member.formattedNumber}">010-0000-0000</strong>
+                    <strong th:text="${T(com.Accommodation.constant.SocialMemberDefaults).isDefaultNumber(member.number, member.socialMember) ? '입력된 정보 없음' : member.formattedNumber}">010-0000-0000</strong>
                 </div>
                 <div class="mypage-item">
                     <span class="mypage-item-label">가입일</span>
@@ -364,7 +370,7 @@
                 </div>
                 <div class="mypage-item mypage-item-wide">
                     <span class="mypage-item-label">주소</span>
-                    <strong th:text="${member.address == T(com.Accommodation.constant.SocialMemberDefaults).DEFAULT_ADDRESS ? '입력된 정보 없음' : member.address}">서울시 강남구</strong>
+                    <strong th:text="${member.address == T(com.Accommodation.constant.SocialMemberDefaults).DEFAULT_ADDRESS ? '입력된 정보 없음' : T(com.Accommodation.util.AddressUtils).toDisplayAddress(member.address)}">서울시 강남구</strong>
                 </div>
             </div>
 
@@ -386,8 +392,6 @@
                 <input type="hidden" name="page" value="0">
 
                 <div class="filter-row">
-                    <span class="filter-label"></span>
-
                     <div class="period-btns">
                         <button type="button" class="period-btn"
                                 th:classappend="${selectedPeriod == '1w'} ? ' active'"
@@ -449,7 +453,7 @@
              onclick="goToOrderDetail(this)">
 
             <div class="order-card__top">
-                <div style="display:flex; align-items:center; gap:16px;">
+                <div class="order-card__meta">
                     <span class="order-card__id" th:text="'예약번호 ' + ${order.orderId}"></span>
                     <span th:text="${#temporals.format(order.orderDate, 'yyyy.MM.dd HH:mm')}"></span>
                 </div>

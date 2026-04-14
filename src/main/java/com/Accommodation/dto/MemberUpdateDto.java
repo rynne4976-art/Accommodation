@@ -20,7 +20,7 @@ public class MemberUpdateDto {
     @NotBlank(message = "휴대폰 번호는 필수 입력 값입니다.")
     @Pattern(
             regexp = "^(01[016789])-?(\\d{3,4})-?(\\d{4})$",
-            message = "휴대폰 번호는 010-0000-0000 또는 01000000000 형식으로 입력해주세요."
+            message = "휴대폰 번호를 정확히 입력해주세요."
     )
     private String number;
 
@@ -39,7 +39,7 @@ public class MemberUpdateDto {
 
         MemberUpdateDto dto = new MemberUpdateDto();
         dto.setName(member.getName());
-        dto.setNumber(SocialMemberDefaults.DEFAULT_NUMBER.equals(member.getNumber()) ? "" : member.getNumber());
+        dto.setNumber(SocialMemberDefaults.isDefaultNumber(member.getNumber(), member.isSocialMember()) ? "" : member.getNumber());
         dto.setPostcode(SocialMemberDefaults.DEFAULT_ADDRESS.equals(member.getAddress()) ? "" : parsedAddress.getPostcode());
         dto.setAddress(SocialMemberDefaults.DEFAULT_ADDRESS.equals(member.getAddress()) ? "" : parsedAddress.getAddress());
         dto.setDetailAddress(parsedAddress.getDetailAddress());
@@ -47,20 +47,6 @@ public class MemberUpdateDto {
     }
 
     public String getFullAddress() {
-        StringBuilder fullAddress = new StringBuilder();
-
-        if (postcode != null && !postcode.isBlank()) {
-            fullAddress.append('(').append(postcode.trim()).append(") ");
-        }
-
-        if (address != null && !address.isBlank()) {
-            fullAddress.append(address.trim());
-        }
-
-        if (detailAddress != null && !detailAddress.isBlank()) {
-            fullAddress.append(' ').append(detailAddress.trim());
-        }
-
-        return fullAddress.toString().trim();
+        return AddressUtils.formatStoredAddress(postcode, address, detailAddress);
     }
 }

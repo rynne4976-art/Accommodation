@@ -134,7 +134,7 @@ public class MemberService {
 
     private boolean hasRequiredReservationInfo(Member member) {
         return StringUtils.hasText(member.getNumber())
-                && !SocialMemberDefaults.DEFAULT_NUMBER.equals(member.getNumber())
+                && !SocialMemberDefaults.isDefaultNumber(member.getNumber(), member.isSocialMember())
                 && StringUtils.hasText(member.getAddress())
                 && !SocialMemberDefaults.DEFAULT_ADDRESS.equals(member.getAddress());
     }

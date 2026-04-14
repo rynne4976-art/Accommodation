@@ -5,6 +5,7 @@ import com.Accommodation.controller.MemberController;
 import com.Accommodation.controller.CommonViewAttributesAdvice;
 import com.Accommodation.constant.Role;
 import com.Accommodation.dto.MainAccomDto;
+import com.Accommodation.dto.OrderHistPage;
 import com.Accommodation.entity.Member;
 import com.Accommodation.service.AccomService;
 import com.Accommodation.service.CustomOAuth2UserService;
@@ -28,6 +29,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -201,8 +203,11 @@ class SecurityFlowTest {
         member.setNumber("01012345678");
         member.setAddress("서울시 강남구");
         member.setRole(Role.USER);
+        member.setRegTime(LocalDateTime.of(2026, 4, 1, 12, 0));
 
         given(memberService.getMemberByEmail("kim@test.com")).willReturn(member);
+        given(orderService.getOrderHistPage(anyString(), any(LocalDateTime.class), any(LocalDateTime.class), anyString(), any(Integer.class), any(Integer.class)))
+                .willReturn(new OrderHistPage(Collections.emptyList(), 0, 0, 0));
 
         mockMvc.perform(get("/members/mypage")
                         .with(user("kim@test.com").roles("USER")))
