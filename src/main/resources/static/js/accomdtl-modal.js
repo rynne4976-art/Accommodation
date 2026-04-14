@@ -235,11 +235,13 @@
 
     function moveToReviewSection(accomId) {
         const targetUrl = (config.reviewDetailBaseUrl || '/accom/') + accomId + '#review-info';
-        const currentUrl = window.location.pathname + window.location.hash;
-        const targetPath = '/accom/' + accomId + '#review-info';
+        const currentPath = window.location.pathname;
+        const targetPath = '/accom/' + accomId;
 
-        if (currentUrl === targetPath) {
-            window.location.reload();
+        // Same-page hash navigation does not trigger a server render,
+        // so add a throwaway query string to force the detail page to reload.
+        if (currentPath === targetPath) {
+            window.location.href = targetPath + '?reviewRefresh=' + Date.now() + '#review-info';
             return;
         }
 

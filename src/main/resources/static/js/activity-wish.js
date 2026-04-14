@@ -12,6 +12,22 @@
         window.location.href = `/members/login?redirectUrl=${encodeURIComponent(redirectUrl)}`;
     }
 
+    function toggleSectionState(hasItems) {
+        const listWrap = document.querySelector('[data-wish-list-wrap="activity"]');
+        const empty = document.querySelector('[data-wish-empty="activity"]');
+        const footer = document.querySelector('[data-wish-footer="activity"]');
+
+        if (listWrap) {
+            listWrap.hidden = !hasItems;
+        }
+        if (empty) {
+            empty.hidden = hasItems;
+        }
+        if (footer) {
+            footer.hidden = !hasItems;
+        }
+    }
+
     async function toggleWish(button) {
         const activityKey = button.getAttribute('data-activity-key');
         const wished = button.classList.contains('is-active');
@@ -66,27 +82,7 @@
                 card.remove();
 
                 const remainingCards = document.querySelectorAll('[data-activity-wish-card]');
-                const section = document.querySelector('.wish-section--activities');
-                const totalCountEl = document.querySelector('.wish-page__count');
-                const activityCountHead = section?.querySelector('.wish-section__head span');
-                const accomCount = document.querySelectorAll('[data-wish-card]').length;
-
-                if (activityCountHead) {
-                    activityCountHead.textContent = `${remainingCards.length}개`;
-                }
-
-                if (totalCountEl) {
-                    totalCountEl.textContent = `${accomCount + remainingCards.length}개`;
-                }
-
-                if (section && remainingCards.length === 0) {
-                    section.hidden = true;
-                }
-
-                const empty = document.querySelector('[data-wish-empty]');
-                if (empty && accomCount + remainingCards.length === 0) {
-                    empty.hidden = false;
-                }
+                toggleSectionState(remainingCards.length > 0);
             }
         } catch (error) {
             console.error(error);
