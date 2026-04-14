@@ -1,8 +1,15 @@
 package com.Accommodation.controller;
 
+import com.Accommodation.config.AuthenticatedMember;
+import com.Accommodation.entity.Member;
+import com.Accommodation.exception.MemberException;
+import com.Accommodation.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -15,6 +22,7 @@ import java.util.stream.Collectors;
 public class CommonViewAttributesAdvice {
 
     private final Environment environment;
+    private final ObjectProvider<MemberService> memberServiceProvider;
 
     @ModelAttribute("adminView")
     public boolean adminView(HttpServletRequest request) {
@@ -64,5 +72,41 @@ public class CommonViewAttributesAdvice {
     @ModelAttribute("kakaoLoginEnabled")
     public boolean kakaoLoginEnabled() {
         return StringUtils.hasText(environment.getProperty("spring.security.oauth2.client.registration.kakao.client-id"));
+    }
+
+    @ModelAttribute("currentMemberDisplayName")
+    public String currentMemberDisplayName() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        Object principal = authentication.getPrincipal();
+        String email = authentication.getName();
+        String fallbackName = authentication.getName();
+
+        if (principal instanceof AuthenticatedMember authenticatedMember) {
+            email = authenticatedMember.getUsername();
+            fallbackName = authenticatedMember.getName();
+        }
+
+        if (!StringUtils.hasText(email) || "anonymousUser".equals(email)) {
+            return null;
+        }
+
+        try {
+            MemberService memberService = memberServiceProvider.getIfAvailable();
+            if (memberService == null) {
+                return fallbackName;
+            }
+
+            Member member = memberService.getMemberByEmail(email);
+            if (member == null) {
+                return fallbackName;
+            }
+            return StringUtils.hasText(member.getName()) ? member.getName() : fallbackName;
+        } catch (MemberException e) {
+            return fallbackName;
+        }
     }
 }

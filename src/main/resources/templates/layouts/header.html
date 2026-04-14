@@ -32,7 +32,7 @@
 
             <div sec:authorize="isAuthenticated()" class="user-status-group">
                 <span class="user-greeting">환영합니다,
-                    <strong th:text="${#authentication.principal instanceof T(com.Accommodation.config.AuthenticatedMember) ? #authentication.principal.name : #authentication.name}">사용자</strong>님
+                    <strong th:text="${currentMemberDisplayName}">사용자</strong>님
                 </span>
                 <form th:action="@{/members/logout}" method="post" class="logout-form">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
