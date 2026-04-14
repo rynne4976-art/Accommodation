@@ -28,6 +28,23 @@
         }
     }
 
+    function updateWishPageState() {
+        const accomCount = document.querySelectorAll('[data-wish-card]').length;
+        const activityCount = document.querySelectorAll('[data-activity-wish-card]').length;
+        const totalCount = accomCount + activityCount;
+        const tabs = document.querySelector('[data-wish-tabs]');
+
+        toggleSectionState(activityCount > 0);
+
+        document.querySelectorAll('[data-total-wish-count]').forEach((node) => {
+            node.textContent = `${totalCount}개`;
+        });
+
+        if (tabs) {
+            tabs.hidden = totalCount === 0;
+        }
+    }
+
     async function toggleWish(button) {
         const activityKey = button.getAttribute('data-activity-key');
         const wished = button.classList.contains('is-active');
@@ -80,10 +97,10 @@
             const card = button.closest('[data-activity-wish-card]');
             if (card && !result.wished) {
                 card.remove();
-
-                const remainingCards = document.querySelectorAll('[data-activity-wish-card]');
-                toggleSectionState(remainingCards.length > 0);
             }
+
+            updateWishPageState();
+            document.dispatchEvent(new CustomEvent('wish:list-updated'));
         } catch (error) {
             console.error(error);
             alert('찜 처리 중 오류가 발생했습니다.');
@@ -99,4 +116,6 @@
             toggleWish(button);
         });
     });
+
+    updateWishPageState();
 })();

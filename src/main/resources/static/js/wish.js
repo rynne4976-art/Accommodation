@@ -28,6 +28,31 @@
         }
     }
 
+    function getAccomCount() {
+        return document.querySelectorAll("[data-wish-card]").length;
+    }
+
+    function getActivityCount() {
+        return document.querySelectorAll("[data-activity-wish-card]").length;
+    }
+
+    function updateTotalWishState() {
+        const accomCount = getAccomCount();
+        const activityCount = getActivityCount();
+        const totalCount = accomCount + activityCount;
+        const tabs = document.querySelector("[data-wish-tabs]");
+
+        document.querySelectorAll("[data-total-wish-count]").forEach((node) => {
+            node.textContent = `${totalCount}개`;
+        });
+
+        if (tabs) {
+            tabs.hidden = totalCount === 0;
+        }
+
+        toggleSectionState("accom", accomCount > 0);
+    }
+
     async function syncWishButtons() {
         const isWishPage = Boolean(document.querySelector("[data-wish-content]"));
         if (isWishPage) {
@@ -107,16 +132,10 @@
             const card = button.closest("[data-wish-card]");
             if (card && !result.wished) {
                 card.remove();
-                const remainingCards = document.querySelectorAll("[data-wish-card]");
-                document.querySelectorAll("[data-wish-count]").forEach((node) => {
-                    node.textContent = String(remainingCards.length);
-                });
-                toggleSectionState("accom", remainingCards.length > 0);
-            } else {
-                document.querySelectorAll("[data-wish-count]").forEach((node) => {
-                    node.textContent = String(result.wishCount ?? 0);
-                });
             }
+
+            updateTotalWishState();
+            document.dispatchEvent(new CustomEvent("wish:list-updated"));
         } catch (error) {
             console.error(error);
             alert("찜 처리 중 오류가 발생했습니다.");
@@ -132,4 +151,5 @@
     });
 
     syncWishButtons();
+    updateTotalWishState();
 })();

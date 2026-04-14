@@ -1,4 +1,22 @@
 (() => {
+    const getDefaultAdultCountByAccomType = (accomType) => {
+        if (!accomType) {
+            return "1";
+        }
+
+        const normalizedType = String(accomType).trim().toUpperCase();
+
+        if (normalizedType === "HOTEL" || normalizedType === "RESORT" || normalizedType === "PENSION") {
+            return "2";
+        }
+
+        if (normalizedType === "MOTEL" || normalizedType === "GUESTHOUSE") {
+            return "1";
+        }
+
+        return "1";
+    };
+
     const syncSharedFields = () => {
         document.querySelectorAll("[data-shared-field]").forEach((field) => {
             if (!(field instanceof HTMLInputElement)) {
@@ -105,7 +123,11 @@
         }
 
         switch (input.name) {
-            case "adultCount":
+            case "adultCount": {
+                const accomType = input.closest("form")?.dataset?.accomType;
+                input.value = getDefaultAdultCountByAccomType(accomType);
+                break;
+            }
             case "childCount":
                 input.value = "0";
                 break;
