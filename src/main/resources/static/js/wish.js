@@ -12,6 +12,22 @@
         window.location.href = `/members/login?redirectUrl=${encodeURIComponent(redirectUrl)}`;
     }
 
+    function toggleSectionState(type, hasItems) {
+        const listWrap = document.querySelector(`[data-wish-list-wrap="${type}"]`);
+        const empty = document.querySelector(`[data-wish-empty="${type}"]`);
+        const footer = document.querySelector(`[data-wish-footer="${type}"]`);
+
+        if (listWrap) {
+            listWrap.hidden = !hasItems;
+        }
+        if (empty) {
+            empty.hidden = hasItems;
+        }
+        if (footer) {
+            footer.hidden = !hasItems;
+        }
+    }
+
     async function syncWishButtons() {
         const isWishPage = Boolean(document.querySelector("[data-wish-content]"));
         if (isWishPage) {
@@ -95,13 +111,7 @@
                 document.querySelectorAll("[data-wish-count]").forEach((node) => {
                     node.textContent = String(remainingCards.length);
                 });
-
-                const content = document.querySelector("[data-wish-content]");
-                const empty = document.querySelector("[data-wish-empty]");
-                if (content && empty && remainingCards.length === 0) {
-                    content.hidden = true;
-                    empty.hidden = false;
-                }
+                toggleSectionState("accom", remainingCards.length > 0);
             } else {
                 document.querySelectorAll("[data-wish-count]").forEach((node) => {
                     node.textContent = String(result.wishCount ?? 0);

@@ -12,9 +12,13 @@ import com.Accommodation.entity.QAccomImg;
 import com.Accommodation.entity.QAccomOperationDay;
 import com.Accommodation.entity.QAccomOperationPolicy;
 import com.Accommodation.entity.QReview;
+import com.Accommodation.util.AccomSearchKeywordUtils;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -22,8 +26,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.time.LocalDate;
+import java.util.List;
 
 public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
 
@@ -33,12 +37,66 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
         this.queryFactory = new JPAQueryFactory(em);
     }
 
-    private BooleanExpression accomNameLike(String searchQuery) {
-        return (searchQuery == null || searchQuery.trim().isEmpty())
-                ? null
-                : QAccom.accom.accomName.containsIgnoreCase(searchQuery)
-                .or(QAccom.accom.location.containsIgnoreCase(searchQuery))
-                .or(QAccom.accom.accomDetail.containsIgnoreCase(searchQuery));
+    private Predicate accomNameLike(String searchQuery) {
+        AccomSearchKeywordUtils.SearchKeywords keywords = AccomSearchKeywordUtils.parse(searchQuery);
+        if (keywords.isEmpty()) {
+            return null;
+        }
+
+        QAccom accom = QAccom.accom;
+        BooleanBuilder builder = new BooleanBuilder();
+        BooleanBuilder directMatch = new BooleanBuilder();
+
+        directMatch.or(accom.accomName.containsIgnoreCase(keywords.getOriginalQuery()));
+        directMatch.or(accom.location.containsIgnoreCase(keywords.getOriginalQuery()));
+        directMatch.or(accom.accomDetail.containsIgnoreCase(keywords.getOriginalQuery()));
+        directMatch.or(noSpace(accom.accomName).contains(keywords.getCompactQuery()));
+        directMatch.or(noSpace(accom.location).contains(keywords.getCompactQuery()));
+        directMatch.or(noSpace(accom.accomDetail).contains(keywords.getCompactQuery()));
+        builder.or(directMatch);
+
+        BooleanBuilder semanticMatch = new BooleanBuilder();
+        if (!keywords.getMatchedRegions().isEmpty()) {
+            for (String region : keywords.getMatchedRegions()) {
+                BooleanBuilder regionMatch = new BooleanBuilder();
+                for (String term : AccomSearchKeywordUtils.getRegionTerms(region)) {
+                    regionMatch.or(accom.accomName.containsIgnoreCase(term));
+                    regionMatch.or(accom.location.containsIgnoreCase(term));
+                    regionMatch.or(accom.accomDetail.containsIgnoreCase(term));
+                    regionMatch.or(noSpace(accom.accomName).contains(AccomSearchKeywordUtils.compact(term)));
+                    regionMatch.or(noSpace(accom.location).contains(AccomSearchKeywordUtils.compact(term)));
+                    regionMatch.or(noSpace(accom.accomDetail).contains(AccomSearchKeywordUtils.compact(term)));
+                }
+                semanticMatch.and(regionMatch);
+            }
+        }
+
+        if (!keywords.getMatchedAccomTypes().isEmpty()) {
+            semanticMatch.and(accom.accomType.in(keywords.getMatchedAccomTypes()));
+        }
+
+        for (String token : keywords.getTextTokens()) {
+            BooleanBuilder tokenMatch = new BooleanBuilder();
+            tokenMatch.or(accom.accomName.containsIgnoreCase(token));
+            tokenMatch.or(noSpace(accom.accomName).contains(AccomSearchKeywordUtils.compact(token)));
+            if (token.length() >= 2) {
+                tokenMatch.or(accom.location.containsIgnoreCase(token));
+                tokenMatch.or(accom.accomDetail.containsIgnoreCase(token));
+                tokenMatch.or(noSpace(accom.location).contains(AccomSearchKeywordUtils.compact(token)));
+                tokenMatch.or(noSpace(accom.accomDetail).contains(AccomSearchKeywordUtils.compact(token)));
+            }
+            semanticMatch.and(tokenMatch);
+        }
+
+        if (semanticMatch.hasValue()) {
+            builder.or(semanticMatch);
+        }
+
+        return builder.hasValue() ? builder.getValue() : null;
+    }
+
+    private StringExpression noSpace(StringExpression source) {
+        return Expressions.stringTemplate("replace(coalesce({0}, ''), ' ', '')", source);
     }
 
     private BooleanExpression accomTypeEq(AccomType accomType) {

@@ -37,22 +37,27 @@
             </header>
 
             <div class="wish-page__content">
-                <div class="wish-empty" data-wish-empty th:hidden="${totalWishCount > 0}">
-                    <div class="wish-empty__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 20s-6.5-4.1-8.5-8C2 9.1 3.8 6 7.3 6c2 0 3.1 1.1 4.7 3 1.6-1.9 2.7-3 4.7-3C20.2 6 22 9.1 20.5 12c-2 3.9-8.5 8-8.5 8z"></path>
-                        </svg>
-                    </div>
-                    <h2>아직 찜한 숙소가 없습니다.</h2>
-                    <p>마음에 드는 숙소를 찜해두고 이곳에서 비교해보세요.</p>
-                    <a th:href="@{/main}" class="wish-empty__action">숙소 보러 가기</a>
-                </div>
-
-                <section class="wish-section" data-wish-content th:hidden="${wishCount == 0}">
+                <section class="wish-section" data-wish-section="accom" data-wish-content>
                     <div class="wish-section__head">
                         <h2>찜한 숙소</h2>
                     </div>
-                    <div class="wish-slider" th:with="cardCount=${#lists.size(wishItems)}" th:attr="data-card-count=${cardCount}">
+                    <div class="wish-empty wish-empty--section"
+                         data-wish-empty="accom"
+                         th:if="${wishCount == 0}">
+                        <div class="wish-empty__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 20s-6.5-4.1-8.5-8C2 9.1 3.8 6 7.3 6c2 0 3.1 1.1 4.7 3 1.6-1.9 2.7-3 4.7-3C20.2 6 22 9.1 20.5 12c-2 3.9-8.5 8-8.5 8z"></path>
+                            </svg>
+                        </div>
+                        <h2>아직 찜한 숙소가 없습니다.</h2>
+                        <p>마음에 드는 숙소를 찜해두고 이곳에서 비교해보세요.</p>
+                        <a th:href="@{/main}" class="wish-empty__action">숙소 보러 가기</a>
+                    </div>
+                    <div class="wish-slider"
+                         data-wish-list-wrap="accom"
+                         th:if="${wishCount > 0}"
+                         th:with="cardCount=${#lists.size(wishItems)}"
+                         th:attr="data-card-count=${cardCount}">
                         <button class="wish-slider__control wish-slider__control--prev"
                                 type="button"
                                 aria-label="이전 카드"
@@ -75,16 +80,32 @@
                             &#8250;
                         </button>
                     </div>
-                    <div class="wish-list__footer">
+                    <div class="wish-list__footer" data-wish-footer="accom" th:if="${wishCount > 0}">
                         <a th:href="@{/main}" class="wish-list__more">숙소 더 보러가기</a>
                     </div>
                 </section>
 
-                <section class="wish-section wish-section--activities" th:hidden="${activityWishCount == 0}">
+                <section class="wish-section wish-section--activities" data-wish-section="activity">
                     <div class="wish-section__head">
                         <h2>찜한 즐길거리</h2>
                     </div>
-                    <div class="wish-slider" th:with="cardCount=${#lists.size(activityWishItems)}" th:attr="data-card-count=${cardCount}">
+                    <div class="wish-empty wish-empty--section"
+                         data-wish-empty="activity"
+                         th:if="${activityWishCount == 0}">
+                        <div class="wish-empty__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 20s-6.5-4.1-8.5-8C2 9.1 3.8 6 7.3 6c2 0 3.1 1.1 4.7 3 1.6-1.9 2.7-3 4.7-3C20.2 6 22 9.1 20.5 12c-2 3.9-8.5 8-8.5 8z"></path>
+                            </svg>
+                        </div>
+                        <h2>아직 찜한 즐길거리가 없습니다.</h2>
+                        <p>마음에 드는 즐길거리를 찜해두고 이곳에서 다시 확인해보세요.</p>
+                        <a th:href="@{/activities/서울}" class="wish-empty__action">즐길거리 보러 가기</a>
+                    </div>
+                    <div class="wish-slider"
+                         data-wish-list-wrap="activity"
+                         th:if="${activityWishCount > 0}"
+                         th:with="cardCount=${#lists.size(activityWishItems)}"
+                         th:attr="data-card-count=${cardCount}">
                         <button class="wish-slider__control wish-slider__control--prev"
                                 type="button"
                                 aria-label="이전 카드"
@@ -149,14 +170,6 @@
                                        th:if="${item.tel != null and !#strings.isEmpty(item.tel)}">
                                         문의: <span th:text="${item.tel}">000-0000-0000</span>
                                     </p>
-                                    <div class="activity-row-card__actions">
-                                        <a class="activity-row-card__button activity-row-card__button--ghost"
-                                           th:href="${item.externalUrl != null and !#strings.isEmpty(item.externalUrl) ? item.externalUrl : item.detailUrl}"
-                                           target="_blank"
-                                           rel="noopener noreferrer">
-                                            즐길거리 보러가기
-                                        </a>
-                                    </div>
                                 </div>
                             </article>
                         </div>
@@ -167,6 +180,9 @@
                                 th:if="${cardCount > 4}">
                             &#8250;
                         </button>
+                    </div>
+                    <div class="wish-list__footer" data-wish-footer="activity" th:if="${activityWishCount > 0}">
+                        <a th:href="@{/activities/서울}" class="wish-list__more">즐길거리 더 보러가기</a>
                     </div>
                 </section>
             </div>
