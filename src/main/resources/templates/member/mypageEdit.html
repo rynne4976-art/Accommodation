@@ -7,6 +7,27 @@
     <link rel="stylesheet" th:href="@{/css/member-auth.css}">
     <script src="//t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
     <title>회원정보 수정</title>
+    <style>
+        .auth-form .field-error {
+            display: block;
+            min-height: 16px;
+            margin-top: 4px;
+            line-height: 1.25;
+            visibility: hidden;
+        }
+
+        .auth-form .field-error.is-visible {
+            visibility: visible;
+        }
+
+        .auth-form .field-error.is-success {
+            color: #16a34a;
+        }
+
+        .auth-form .field-error.is-error {
+            color: #ef4444;
+        }
+    </style>
 </head>
 <body>
 <div th:replace="~{layouts/header :: header}"></div>
@@ -33,9 +54,9 @@
                 <input type="password" th:field="*{currentPassword}" placeholder="현재 비밀번호를 입력하세요" autocomplete="current-password"
                        th:classappend="${#fields.hasErrors('currentPassword')} ? ' is-invalid' : ''">
                 <p class="field-error"
-                   th:if="${#fields.hasErrors('currentPassword')}"
-                   th:classappend="${#fields.hasErrors('currentPassword')} ? ' is-visible' : ''"
-                   th:errors="*{currentPassword}"></p>
+                   data-field-error="currentPassword"
+                   th:classappend="${#fields.hasErrors('currentPassword')} ? ' is-visible is-error' : ''"
+                   th:text="${#fields.hasErrors('currentPassword')} ? ${#fields.errors('currentPassword')[0]} : ''"></p>
             </div>
 
             <div class="form-group">
@@ -44,9 +65,9 @@
                        data-validate="name"
                        th:classappend="${#fields.hasErrors('name')} ? ' is-invalid' : ''">
                 <p class="field-error"
-                   th:if="${#fields.hasErrors('name')}"
-                   th:classappend="${#fields.hasErrors('name')} ? ' is-visible' : ''"
-                   th:errors="*{name}"></p>
+                   data-field-error="name"
+                   th:classappend="${#fields.hasErrors('name')} ? ' is-visible is-error' : ''"
+                   th:text="${#fields.hasErrors('name')} ? ${#fields.errors('name')[0]} : ''"></p>
             </div>
 
             <div class="form-group">
@@ -67,10 +88,9 @@
                     <input type="text" id="phoneLast" class="phone-part" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="휴대폰 마지막 4자리">
                 </div>
                 <p class="field-error"
-                   data-phone-error
-                   th:if="${#fields.hasErrors('number')}"
-                   th:classappend="${#fields.hasErrors('number')} ? ' is-visible' : ''"
-                   th:errors="*{number}"></p>
+                   data-field-error="number"
+                   th:classappend="${#fields.hasErrors('number')} ? ' is-visible is-error' : ''"
+                   th:text="${#fields.hasErrors('number')} ? ${#fields.errors('number')[0]} : ''"></p>
             </div>
 
             <div class="form-group">
@@ -82,17 +102,9 @@
                 <input type="text" th:field="*{address}" placeholder="기본 주소" readonly data-validate="address">
                 <input type="text" th:field="*{detailAddress}" placeholder="상세 주소를 입력하세요" data-validate="detailAddress">
                 <p class="field-error"
-                   th:if="${#fields.hasErrors('postcode')}"
-                   th:classappend="${#fields.hasErrors('postcode')} ? ' is-visible' : ''"
-                   th:errors="*{postcode}"></p>
-                <p class="field-error"
-                   th:if="${#fields.hasErrors('address')}"
-                   th:classappend="${#fields.hasErrors('address')} ? ' is-visible' : ''"
-                   th:errors="*{address}"></p>
-                <p class="field-error"
-                   th:if="${#fields.hasErrors('detailAddress')}"
-                   th:classappend="${#fields.hasErrors('detailAddress')} ? ' is-visible' : ''"
-                   th:errors="*{detailAddress}"></p>
+                   data-field-error="addressGroup"
+                   th:classappend="${#fields.hasErrors('postcode') or #fields.hasErrors('address') or #fields.hasErrors('detailAddress')} ? ' is-visible is-error' : ''"
+                   th:text="${#fields.hasErrors('postcode')} ? ${#fields.errors('postcode')[0]} : (${#fields.hasErrors('address')} ? ${#fields.errors('address')[0]} : (${#fields.hasErrors('detailAddress')} ? ${#fields.errors('detailAddress')[0]} : ''))"></p>
             </div>
 
             <button class="auth-submit" type="submit">수정 완료</button>
@@ -108,6 +120,45 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        let tabNavigationActive = false;
+
+        document.addEventListener('keydown', function (event) {
+            tabNavigationActive = event.key === 'Tab';
+        });
+
+        document.addEventListener('mousedown', function () {
+            tabNavigationActive = false;
+        });
+
+        document.querySelectorAll('.auth-form input:not([type="hidden"]):not([readonly])').forEach(function (inputEl) {
+            inputEl.addEventListener('focus', function () {
+                if (!tabNavigationActive) {
+                    return;
+                }
+
+                requestAnimationFrame(function () {
+                    inputEl.select();
+                });
+            });
+        });
+
+        function selectInputValue(inputEl) {
+            if (!inputEl || inputEl.readOnly || inputEl.type === 'hidden') {
+                return;
+            }
+
+            requestAnimationFrame(function () {
+                inputEl.select();
+            });
+        }
+
+        function setInputInvalid(inputEl, invalid) {
+            if (!inputEl) {
+                return;
+            }
+            inputEl.classList.toggle('is-invalid', invalid);
+        }
+
         const hiddenNumber = document.getElementById('number');
         const prefixInput = document.getElementById('phonePrefix');
         const middleInput = document.getElementById('phoneMiddle');
@@ -119,45 +170,59 @@
                 return (value || '').replace(/\D/g, '');
             }
 
-            function setFieldError(errorEl, inputEl, message) {
+            function setFieldFeedback(fieldName, message, type) {
+                const errorEl = document.querySelector('[data-field-error="' + fieldName + '"]');
                 if (!errorEl) {
                     return;
                 }
+
                 errorEl.textContent = message || '';
                 errorEl.classList.toggle('is-visible', Boolean(message));
-                if (inputEl) {
-                    inputEl.classList.toggle('is-invalid', Boolean(message));
-                }
+                errorEl.classList.toggle('is-success', type === 'success' && Boolean(message));
+                errorEl.classList.toggle('is-error', type === 'error' && Boolean(message));
             }
 
             function validatePhoneField() {
                 const digits = digitsOnly(hiddenNumber.value);
-                const phoneErrorEl = document.querySelector('[data-phone-error]');
                 const phoneFieldEl = document.querySelector('[data-phone-field]');
                 let message = '';
+                let type = '';
 
                 if (!digits) {
                     message = '휴대폰 번호는 필수 입력 값입니다.';
+                    type = 'error';
                 } else if (!/^01[016789]\d{7,8}$/.test(digits)) {
-                    message = '휴대폰 번호는 010-0000-0000 또는 01000000000 형식으로 입력해주세요.';
+                    message = '휴대폰 번호를 정확히 입력해주세요.';
+                    type = 'error';
+                } else {
+                    message = '사용할 수 있는 휴대폰 번호입니다.';
+                    type = 'success';
                 }
 
-                setFieldError(phoneErrorEl, null, message);
+                setFieldFeedback('number', message, type);
                 if (phoneFieldEl) {
-                    phoneFieldEl.classList.toggle('is-invalid', Boolean(message));
+                    phoneFieldEl.classList.toggle('is-invalid', type === 'error');
                 }
-                return !message;
+                return type !== 'error';
             }
 
             function syncHiddenNumber() {
                 const prefix = digitsOnly(prefixInput.value).slice(0, 3);
                 const middle = digitsOnly(middleInput.value).slice(0, 4);
                 const last = digitsOnly(lastInput.value).slice(0, 4);
-                hiddenNumber.value = prefix + middle + last;
+                hiddenNumber.value = middle || last ? prefix + middle + last : '';
             }
 
             function applySavedNumber(value) {
                 const digits = digitsOnly(value);
+
+                if (!digits) {
+                    prefixInput.value = '010';
+                    middleInput.value = '';
+                    lastInput.value = '';
+                    hiddenNumber.value = '';
+                    return;
+                }
 
                 if (digits.length >= 3) {
                     prefixInput.value = digits.slice(0, 3);
@@ -173,14 +238,19 @@
             }
 
             function bindNumericInput(currentInput, nextInput) {
-                currentInput.addEventListener('input', function () {
+                function syncCurrentInput() {
                     currentInput.value = digitsOnly(currentInput.value).slice(0, 4);
                     syncHiddenNumber();
+                    validatePhoneField();
 
                     if (currentInput.value.length === 4 && nextInput) {
                         nextInput.focus();
+                        selectInputValue(nextInput);
                     }
-                });
+                }
+
+                currentInput.addEventListener('input', syncCurrentInput);
+                currentInput.addEventListener('change', syncCurrentInput);
                 currentInput.addEventListener('blur', validatePhoneField);
             }
 
@@ -190,9 +260,11 @@
             });
             bindNumericInput(middleInput, lastInput);
             bindNumericInput(lastInput, null);
-            form.addEventListener('submit', function () {
+            form.addEventListener('submit', function (event) {
                 syncHiddenNumber();
-                validatePhoneField();
+                if (!validatePhoneField()) {
+                    event.preventDefault();
+                }
             });
             applySavedNumber(hiddenNumber.value);
         }
@@ -239,37 +311,84 @@
 
         function toggleInputError(inputEl, message) {
             if (!inputEl) {
-                return true;
+                return { valid: true, type: '' };
             }
-            const errorEl = inputEl.parentElement ? inputEl.parentElement.querySelector('.field-error') : null;
+            const fieldName = inputEl.dataset.validate === 'detailAddress' ? 'addressGroup' : inputEl.dataset.validate;
+            const errorEl = fieldName ? document.querySelector('[data-field-error="' + fieldName + '"]') : null;
             if (!errorEl) {
-                return true;
+                return { valid: true, type: '' };
             }
             errorEl.textContent = message || '';
             errorEl.classList.toggle('is-visible', Boolean(message));
-            inputEl.classList.toggle('is-invalid', Boolean(message));
-            return !message;
+            errorEl.classList.toggle('is-success', false);
+            errorEl.classList.toggle('is-error', Boolean(message));
+            setInputInvalid(inputEl, Boolean(message));
+            return { valid: !message, type: message ? 'error' : '' };
         }
 
         const validators = {
             name: function (inputEl) {
                 const value = (inputEl.value || '').trim();
-                return toggleInputError(inputEl, value ? '' : '이름은 필수 입력 값입니다.');
+                if (!value) {
+                    return toggleInputError(inputEl, '이름은 필수 입력 값입니다.');
+                }
+                const errorEl = document.querySelector('[data-field-error="name"]');
+                if (errorEl) {
+                    errorEl.textContent = '사용할 수 있는 이름입니다.';
+                    errorEl.classList.add('is-visible', 'is-success');
+                    errorEl.classList.remove('is-error');
+                }
+                setInputInvalid(inputEl, false);
+                return { valid: true, type: 'success' };
             },
             postcode: function (inputEl) {
                 const value = (inputEl.value || '').trim();
                 if (!value) {
                     return toggleInputError(inputEl, '우편번호는 필수 입력 값입니다.');
                 }
-                return toggleInputError(inputEl, /^\d{5}$/.test(value) ? '' : '우편번호 5자리를 확인해주세요.');
+                if (!/^\d{5}$/.test(value)) {
+                    return toggleInputError(inputEl, '우편번호 5자리를 확인해주세요.');
+                }
+                const detailValue = (document.getElementById('detailAddress').value || '').trim();
+                const errorEl = document.querySelector('[data-field-error="addressGroup"]');
+                if (errorEl) {
+                    const message = detailValue ? '사용할 수 있는 주소 정보입니다.' : '';
+                    errorEl.textContent = message;
+                    errorEl.classList.toggle('is-visible', Boolean(message));
+                    errorEl.classList.toggle('is-success', Boolean(message));
+                    errorEl.classList.remove('is-error');
+                }
+                setInputInvalid(inputEl, false);
+                setInputInvalid(document.getElementById('address'), false);
+                return { valid: true, type: 'success' };
             },
             address: function (inputEl) {
                 const value = (inputEl.value || '').trim();
-                return toggleInputError(inputEl, value ? '' : '주소 검색을 통해 기본 주소를 입력해주세요.');
+                if (!value) {
+                    return toggleInputError(inputEl, '주소 검색을 통해 기본 주소를 입력해주세요.');
+                }
+                return validators.postcode(document.getElementById('postcode'));
             },
             detailAddress: function (inputEl) {
                 const value = (inputEl.value || '').trim();
-                return toggleInputError(inputEl, value ? '' : '상세 주소를 입력해주세요.');
+                if (!value) {
+                    return toggleInputError(inputEl, '상세 주소를 입력해주세요.');
+                }
+                const postcodeValue = (document.getElementById('postcode').value || '').trim();
+                const addressValue = (document.getElementById('address').value || '').trim();
+                if (!postcodeValue || !addressValue) {
+                    return toggleInputError(inputEl, '주소 검색을 통해 기본 주소를 입력해주세요.');
+                }
+                const errorEl = document.querySelector('[data-field-error="addressGroup"]');
+                if (errorEl) {
+                    errorEl.textContent = '사용할 수 있는 주소 정보입니다.';
+                    errorEl.classList.add('is-visible', 'is-success');
+                    errorEl.classList.remove('is-error');
+                }
+                setInputInvalid(document.getElementById('postcode'), false);
+                setInputInvalid(document.getElementById('address'), false);
+                setInputInvalid(inputEl, false);
+                return { valid: true, type: 'success' };
             }
         };
 
