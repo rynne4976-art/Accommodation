@@ -386,7 +386,7 @@
                 <input type="hidden" name="page" value="0">
 
                 <div class="filter-row">
-                    <span class="filter-label">기간</span>
+                    <span class="filter-label"></span>
 
                     <div class="period-btns">
                         <button type="button" class="period-btn"
@@ -401,6 +401,9 @@
                         <button type="button" class="period-btn"
                                 th:classappend="${selectedPeriod == '12m'} ? ' active'"
                                 onclick="setPeriod('12m')">12개월</button>
+                        <button type="button" class="period-btn"
+                                th:classappend="${selectedPeriod == 'all'} ? ' active'"
+                                onclick="setPeriod('all')">전체</button>
                     </div>
 
                     <input type="hidden" id="periodInput" name="period" th:value="${selectedPeriod}">
