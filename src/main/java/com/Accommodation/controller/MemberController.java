@@ -178,6 +178,7 @@ public class MemberController {
                              Model model) {
         Member member = memberService.getMemberByEmail(userDetails.getUsername());
         model.addAttribute("memberUpdateDto", MemberUpdateDto.from(member));
+        model.addAttribute("accountEmail", member.getEmail());
         model.addAttribute("socialMember", member.isSocialMember());
         if (reservationInfoRequired != null) {
             model.addAttribute("reservationInfoRequiredMessage", "예약을 진행하려면 휴대폰 번호와 주소를 먼저 입력해주세요.");
@@ -192,6 +193,7 @@ public class MemberController {
                              Model model,
                              RedirectAttributes redirectAttributes) {
         Member member = memberService.getMemberByEmail(userDetails.getUsername());
+        model.addAttribute("accountEmail", member.getEmail());
         model.addAttribute("socialMember", member.isSocialMember());
 
         if (!member.isSocialMember() && !StringUtils.hasText(memberUpdateDto.getCurrentPassword())) {
@@ -223,6 +225,7 @@ public class MemberController {
             return "redirect:/members/mypage";
         }
         model.addAttribute("passwordChangeDto", new PasswordChangeDto());
+        model.addAttribute("accountEmail", member.getEmail());
         return "member/passwordEdit";
     }
 
@@ -233,6 +236,7 @@ public class MemberController {
                                  Model model,
                                  RedirectAttributes redirectAttributes) {
         Member member = memberService.getMemberByEmail(userDetails.getUsername());
+        model.addAttribute("accountEmail", member.getEmail());
         if (member.isSocialMember()) {
             redirectAttributes.addFlashAttribute("profileUpdatedMessage", "소셜 로그인 회원은 비밀번호를 변경할 수 없습니다.");
             return "redirect:/members/mypage";

@@ -46,8 +46,9 @@
             <p th:text="${errorMessage}"></p>
         </div>
 
-        <form class="auth-form" th:action="@{/members/mypage/edit}" th:object="${memberUpdateDto}" method="post">
+        <form class="auth-form" th:action="@{/members/mypage/edit}" th:object="${memberUpdateDto}" method="post" autocomplete="on">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="email" name="username" th:value="${accountEmail}" autocomplete="username" tabindex="-1" hidden>
 
             <div class="form-group" th:if="${!socialMember}">
                 <label>현재 비밀번호</label>
@@ -61,7 +62,7 @@
 
             <div class="form-group">
                 <label>이름</label>
-                <input type="text" th:field="*{name}" placeholder="이름을 입력하세요"
+                <input type="text" th:field="*{name}" placeholder="이름을 입력하세요" autocomplete="name"
                        data-validate="name"
                        th:classappend="${#fields.hasErrors('name')} ? ' is-invalid' : ''">
                 <p class="field-error"
@@ -74,7 +75,7 @@
                 <label>휴대폰 번호</label>
                 <input type="hidden" th:field="*{number}" id="number">
                 <div class="phone-field" data-phone-field>
-                    <select id="phonePrefix" class="phone-part phone-prefix" aria-label="휴대폰 앞자리">
+                    <select id="phonePrefix" class="phone-part phone-prefix" aria-label="휴대폰 앞자리" autocomplete="tel-country-code">
                         <option value="010">010</option>
                         <option value="011">011</option>
                         <option value="016">016</option>
@@ -83,9 +84,9 @@
                         <option value="019">019</option>
                     </select>
                     <span class="phone-separator">-</span>
-                    <input type="text" id="phoneMiddle" class="phone-part" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="휴대폰 가운데 4자리">
+                    <input type="text" id="phoneMiddle" class="phone-part" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="휴대폰 가운데 4자리" autocomplete="tel-local-prefix">
                     <span class="phone-separator">-</span>
-                    <input type="text" id="phoneLast" class="phone-part" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="휴대폰 마지막 4자리">
+                    <input type="text" id="phoneLast" class="phone-part" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="휴대폰 마지막 4자리" autocomplete="tel-local-suffix">
                 </div>
                 <p class="field-error"
                    data-field-error="number"
@@ -96,11 +97,11 @@
             <div class="form-group">
                 <label>주소</label>
                 <div class="address-search-row">
-                    <input type="text" th:field="*{postcode}" placeholder="우편번호" readonly data-validate="postcode">
+                    <input type="text" th:field="*{postcode}" placeholder="우편번호" readonly data-validate="postcode" autocomplete="postal-code">
                     <button type="button" class="address-search-button" id="addressSearchButton">주소 검색</button>
                 </div>
-                <input type="text" th:field="*{address}" placeholder="기본 주소" readonly data-validate="address">
-                <input type="text" th:field="*{detailAddress}" placeholder="상세 주소를 입력하세요" data-validate="detailAddress">
+                <input type="text" th:field="*{address}" placeholder="기본 주소" readonly data-validate="address" autocomplete="street-address">
+                <input type="text" th:field="*{detailAddress}" placeholder="상세 주소를 입력하세요" data-validate="detailAddress" autocomplete="address-line2">
                 <p class="field-error"
                    data-field-error="addressGroup"
                    th:classappend="${#fields.hasErrors('postcode') or #fields.hasErrors('address') or #fields.hasErrors('detailAddress')} ? ' is-visible is-error' : ''"

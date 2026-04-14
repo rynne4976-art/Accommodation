@@ -1,13 +1,9 @@
 package com.Accommodation.controller;
 
 import com.Accommodation.config.AuthenticatedMember;
-import com.Accommodation.entity.Member;
-import com.Accommodation.exception.MemberException;
-import com.Accommodation.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -22,7 +18,6 @@ import java.util.stream.Collectors;
 public class CommonViewAttributesAdvice {
 
     private final Environment environment;
-    private final ObjectProvider<MemberService> memberServiceProvider;
 
     @ModelAttribute("adminView")
     public boolean adminView(HttpServletRequest request) {
@@ -82,31 +77,17 @@ public class CommonViewAttributesAdvice {
         }
 
         Object principal = authentication.getPrincipal();
-        String email = authentication.getName();
-        String fallbackName = authentication.getName();
-
         if (principal instanceof AuthenticatedMember authenticatedMember) {
-            email = authenticatedMember.getUsername();
-            fallbackName = authenticatedMember.getName();
+            return StringUtils.hasText(authenticatedMember.getName())
+                    ? authenticatedMember.getName()
+                    : authenticatedMember.getUsername();
         }
 
-        if (!StringUtils.hasText(email) || "anonymousUser".equals(email)) {
+        String fallbackName = authentication.getName();
+        if (!StringUtils.hasText(fallbackName) || "anonymousUser".equals(fallbackName)) {
             return null;
         }
 
-        try {
-            MemberService memberService = memberServiceProvider.getIfAvailable();
-            if (memberService == null) {
-                return fallbackName;
-            }
-
-            Member member = memberService.getMemberByEmail(email);
-            if (member == null) {
-                return fallbackName;
-            }
-            return StringUtils.hasText(member.getName()) ? member.getName() : fallbackName;
-        } catch (MemberException e) {
-            return fallbackName;
-        }
+        return fallbackName;
     }
 }
