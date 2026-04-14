@@ -143,6 +143,10 @@ public class MemberController {
             } else if ("12m".equals(period)) {
                 effectiveFrom   = today.minusMonths(12);
                 effectivePeriod = "12m";
+            } else if ("all".equals(period)) {
+                effectiveFrom   = LocalDate.of(2000, 1, 1);
+                effectiveTo     = LocalDate.of(2099, 12, 31);
+                effectivePeriod = "all";
             } else {
                 effectiveFrom   = today.minusWeeks(1);
                 effectivePeriod = "1w";
@@ -162,8 +166,8 @@ public class MemberController {
         model.addAttribute("currentPage",    result.currentPage());
         model.addAttribute("totalCount",     result.totalCount());
         model.addAttribute("selectedPeriod", effectivePeriod);
-        model.addAttribute("fromDate",       effectiveFrom.toString());
-        model.addAttribute("toDate",         effectiveTo.toString());
+        model.addAttribute("fromDate",       "all".equals(effectivePeriod) ? "" : effectiveFrom.toString());
+        model.addAttribute("toDate",         "all".equals(effectivePeriod) ? "" : effectiveTo.toString());
         model.addAttribute("selectedStatus", status);
         return "member/mypage";
     }
