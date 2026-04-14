@@ -197,7 +197,7 @@
                         <div class="guest-row">
                             <div class="guest-input-box">
                                 <span class="guest-label">성인</span>
-                                <input type="number" id="adultCount" value="1" min="1" oninput="onGuestChange()">
+                                <input type="number" id="adultCount" th:value="${accom.accomType.name() == 'HOTEL' or accom.accomType.name() == 'RESORT' or accom.accomType.name() == 'PENSION' ? 2 : 1}" oninput="onGuestChange()">
                             </div>
                             <div class="guest-input-box">
                                 <span class="guest-label">아동</span>
@@ -1111,7 +1111,7 @@
         function applyBookingState(state) {
             if (!state || Number(state.accomId) !== Number(accomId)) return;
 
-            document.getElementById('adultCount').value = state.adultCount ?? '1';
+            document.getElementById('adultCount').value = state.state.adultCount ?? (isSmallType ? '1' : '2');
             document.getElementById('childCount').value = state.childCount ?? '0';
             document.getElementById('roomCount').value = state.roomCount ?? '1';
             selectedCheckIn = state.selectedCheckIn || null;

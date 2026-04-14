@@ -44,55 +44,74 @@ public class AccomRepositoryCustomImpl implements AccomRepositoryCustom {
         }
 
         QAccom accom = QAccom.accom;
-        BooleanBuilder builder = new BooleanBuilder();
-        BooleanBuilder directMatch = new BooleanBuilder();
+        BooleanBuilder finalBuilder = new BooleanBuilder();
 
+        // 1. 사용자가 입력한 원문 그대로 직접 검색
+        BooleanBuilder directMatch = new BooleanBuilder();
         directMatch.or(accom.accomName.containsIgnoreCase(keywords.getOriginalQuery()));
         directMatch.or(accom.location.containsIgnoreCase(keywords.getOriginalQuery()));
         directMatch.or(accom.accomDetail.containsIgnoreCase(keywords.getOriginalQuery()));
         directMatch.or(noSpace(accom.accomName).contains(keywords.getCompactQuery()));
         directMatch.or(noSpace(accom.location).contains(keywords.getCompactQuery()));
         directMatch.or(noSpace(accom.accomDetail).contains(keywords.getCompactQuery()));
-        builder.or(directMatch);
 
-        BooleanBuilder semanticMatch = new BooleanBuilder();
+        finalBuilder.or(directMatch);
+
+        // 2. 자동 분기된 지역 / 타입 / 키워드 조건 조합
+        BooleanBuilder separatedMatch = new BooleanBuilder();
+
+        // 지역 조건
         if (!keywords.getMatchedRegions().isEmpty()) {
+            BooleanBuilder regionGroup = new BooleanBuilder();
+
             for (String region : keywords.getMatchedRegions()) {
-                BooleanBuilder regionMatch = new BooleanBuilder();
+                BooleanBuilder oneRegionMatch = new BooleanBuilder();
+
                 for (String term : AccomSearchKeywordUtils.getRegionTerms(region)) {
-                    regionMatch.or(accom.accomName.containsIgnoreCase(term));
-                    regionMatch.or(accom.location.containsIgnoreCase(term));
-                    regionMatch.or(accom.accomDetail.containsIgnoreCase(term));
-                    regionMatch.or(noSpace(accom.accomName).contains(AccomSearchKeywordUtils.compact(term)));
-                    regionMatch.or(noSpace(accom.location).contains(AccomSearchKeywordUtils.compact(term)));
-                    regionMatch.or(noSpace(accom.accomDetail).contains(AccomSearchKeywordUtils.compact(term)));
+                    String compactTerm = AccomSearchKeywordUtils.compact(term);
+
+                    oneRegionMatch.or(accom.accomName.containsIgnoreCase(term));
+                    oneRegionMatch.or(accom.location.containsIgnoreCase(term));
+                    oneRegionMatch.or(noSpace(accom.accomName).contains(compactTerm));
+                    oneRegionMatch.or(noSpace(accom.location).contains(compactTerm));
                 }
-                semanticMatch.and(regionMatch);
+
+                regionGroup.and(oneRegionMatch);
             }
+
+            separatedMatch.and(regionGroup);
         }
 
+        // 숙소 타입 조건
         if (!keywords.getMatchedAccomTypes().isEmpty()) {
-            semanticMatch.and(accom.accomType.in(keywords.getMatchedAccomTypes()));
+            separatedMatch.and(accom.accomType.in(keywords.getMatchedAccomTypes()));
         }
 
-        for (String token : keywords.getTextTokens()) {
-            BooleanBuilder tokenMatch = new BooleanBuilder();
-            tokenMatch.or(accom.accomName.containsIgnoreCase(token));
-            tokenMatch.or(noSpace(accom.accomName).contains(AccomSearchKeywordUtils.compact(token)));
-            if (token.length() >= 2) {
-                tokenMatch.or(accom.location.containsIgnoreCase(token));
-                tokenMatch.or(accom.accomDetail.containsIgnoreCase(token));
-                tokenMatch.or(noSpace(accom.location).contains(AccomSearchKeywordUtils.compact(token)));
-                tokenMatch.or(noSpace(accom.accomDetail).contains(AccomSearchKeywordUtils.compact(token)));
+        // 일반 키워드 조건
+        if (!keywords.getTextTokens().isEmpty()) {
+            for (String token : keywords.getTextTokens()) {
+                BooleanBuilder tokenMatch = new BooleanBuilder();
+                String compactToken = AccomSearchKeywordUtils.compact(token);
+
+                tokenMatch.or(accom.accomName.containsIgnoreCase(token));
+                tokenMatch.or(noSpace(accom.accomName).contains(compactToken));
+
+                if (token.length() >= 2) {
+                    tokenMatch.or(accom.location.containsIgnoreCase(token));
+                    tokenMatch.or(accom.accomDetail.containsIgnoreCase(token));
+                    tokenMatch.or(noSpace(accom.location).contains(compactToken));
+                    tokenMatch.or(noSpace(accom.accomDetail).contains(compactToken));
+                }
+
+                separatedMatch.and(tokenMatch);
             }
-            semanticMatch.and(tokenMatch);
         }
 
-        if (semanticMatch.hasValue()) {
-            builder.or(semanticMatch);
+        if (separatedMatch.hasValue()) {
+            finalBuilder.or(separatedMatch);
         }
 
-        return builder.hasValue() ? builder.getValue() : null;
+        return finalBuilder.hasValue() ? finalBuilder.getValue() : null;
     }
 
     private StringExpression noSpace(StringExpression source) {

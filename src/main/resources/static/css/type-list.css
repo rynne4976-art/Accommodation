@@ -282,7 +282,7 @@
 
 .type-info-grid {
     display: grid;
-    grid-template-columns: minmax(240px, 1fr) minmax(220px, 280px);
+    grid-template-columns: minmax(240px, 1fr) minmax(320px, 420px);
     gap: 24px;
     align-items: start;
 }
@@ -1072,6 +1072,13 @@
     border-color: #111827;
 }
 
+.category-booking-modal .calendar-day.is-selected.is-today,
+.category-booking-modal .calendar-day.is-in-range.is-today {
+    background: #111827;
+    color: #fff;
+    border-color: #111827;
+}
+
 .category-booking-modal .calendar-day.is-in-range:not(.is-selected) {
     background: #e5e7eb;
     color: #111827;
@@ -1089,6 +1096,10 @@
     background: #fafaff;
 }
 
+.category-booking-modal .calendar-day.is-today:hover {
+    border-color: #4f46e5;
+}
+
 .category-booking-modal .calendar-day__num {
     font-size: 0.9rem;
     font-weight: 700;
@@ -1097,6 +1108,16 @@
 
 .category-booking-modal .calendar-day__num.is-today {
     color: #6366f1;
+}
+
+.category-booking-modal .calendar-day__num.is-today::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #6366f1;
+    margin: 2px auto 0;
 }
 
 .category-booking-modal .calendar-day.is-sunday:not(.is-selected):not(.is-soldout) .calendar-day__num {
@@ -1108,7 +1129,9 @@
 }
 
 .category-booking-modal .calendar-day.is-selected .calendar-day__num,
-.category-booking-modal .calendar-day.is-in-range .calendar-day__num {
+.category-booking-modal .calendar-day.is-in-range .calendar-day__num,
+.category-booking-modal .calendar-day.is-selected.is-today .calendar-day__num,
+.category-booking-modal .calendar-day.is-in-range.is-today .calendar-day__num {
     color: #fff;
 }
 

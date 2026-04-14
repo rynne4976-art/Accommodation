@@ -40,6 +40,7 @@
     const csrfToken = configEl.dataset.csrfToken;
     const today = new Date();
     const baseToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const defaultAdultCount = getDefaultAdultCountByAccomType(accomType);
 
     const elements = {
         accomName: document.getElementById('categoryBookingAccomName'),
@@ -124,8 +125,26 @@
         return Math.round((checkOut.getTime() - checkIn.getTime()) / 86400000);
     }
 
+    function getDefaultAdultCountByAccomType(accomType) {
+        if (!accomType) {
+            return 1;
+        }
+
+        const normalizedType = String(accomType).trim().toUpperCase();
+
+        if (normalizedType === 'HOTEL' || normalizedType === 'RESORT' || normalizedType === 'PENSION') {
+            return 2;
+        }
+
+        if (normalizedType === 'MOTEL' || normalizedType === 'GUESTHOUSE') {
+            return 1;
+        }
+
+        return 1;
+    }
+
     function getAdultCount() {
-        return Math.max(1, Number(elements.adultCount.value || 1));
+        return Math.max(1, Number(elements.adultCount.value || defaultAdultCount));
     }
 
     function getChildCount() {
@@ -154,16 +173,18 @@
     }
 
     function calcSurchargePerNight(adultCount, childCount) {
+        const totalGuests = adultCount + childCount;
         const threshold = getSurchargeThreshold();
-        const extraAdult = Math.max(0, adultCount - threshold);
-        const countedGuestsBeforeChild = Math.min(adultCount, threshold);
-        const availableChildFreeSlots = Math.max(0, threshold - countedGuestsBeforeChild);
-        const chargedChild = Math.max(0, childCount - availableChildFreeSlots);
+        if (totalGuests <= threshold) {
+            return 0;
+        }
 
-        const adultCharge = Math.floor(Number(state.pricePerNight) * 0.1) * extraAdult;
-        const childCharge = Math.floor(Number(state.pricePerNight) * 0.05) * chargedChild;
+        const excessTotal = totalGuests - threshold;
+        const excessAdults = Math.max(0, adultCount - threshold);
+        const excessChildren = excessTotal - excessAdults;
 
-        return adultCharge + childCharge;
+        return Math.floor(Number(state.pricePerNight) * 0.10 * excessAdults)
+            + Math.floor(Number(state.pricePerNight) * 0.05 * excessChildren);
     }
 
     function redirectToLogin() {
@@ -312,6 +333,7 @@
         const key = `${state.accomId}:${year}-${month}`;
         if (state.monthlyRoomsCache[key]) {
             state.dailyRooms = state.monthlyRoomsCache[key];
+            renderCalendar();
             return;
         }
 
@@ -325,6 +347,7 @@
         } catch (_) {
             state.dailyRooms = {};
         }
+        renderCalendar();
     }
 
     function initCalendarMonth() {
@@ -388,6 +411,11 @@
     function clearPreviewRange(resetValue = true) {
         elements.calendarGrid.querySelectorAll('.calendar-day.is-preview').forEach((cell) => {
             cell.classList.remove('is-preview');
+            const badge = cell.querySelector('.calendar-day__badge');
+            if (badge && badge.dataset.originalText !== undefined) {
+                badge.textContent = badge.dataset.originalText;
+                delete badge.dataset.originalText;
+            }
         });
 
         if (resetValue) {
@@ -405,6 +433,10 @@
             const cell = elements.calendarGrid.querySelector(`.calendar-day[data-date="${dateString}"]`);
             if (cell && !cell.classList.contains('is-selected') && !cell.classList.contains('is-in-range')) {
                 cell.classList.add('is-preview');
+                const badge = cell.querySelector('.calendar-day__badge');
+                if (badge) {
+                    badge.dataset.originalText = badge.textContent;
+                }
             }
         });
     }
@@ -435,8 +467,8 @@
             state.selectedCheckIn = null;
             state.selectedCheckOut = null;
             state.previewCheckOut = null;
-            updateSummary();
             renderCalendar();
+            updateSummary();
             return;
         }
 
@@ -444,16 +476,16 @@
             state.selectedCheckIn = null;
             state.selectedCheckOut = null;
             state.previewCheckOut = null;
-            updateSummary();
             renderCalendar();
+            updateSummary();
             return;
         }
 
         if (state.selectedCheckOut === dateString) {
             state.selectedCheckOut = null;
             state.previewCheckOut = null;
-            updateSummary();
             renderCalendar();
+            updateSummary();
             return;
         }
 
@@ -464,8 +496,8 @@
             state.selectedCheckIn = dateString;
             state.selectedCheckOut = null;
             state.previewCheckOut = null;
-            updateSummary();
             renderCalendar();
+            updateSummary();
             return;
         }
 
@@ -476,8 +508,8 @@
             state.selectedCheckIn = dateString;
             state.selectedCheckOut = null;
             state.previewCheckOut = null;
-            updateSummary();
             renderCalendar();
+            updateSummary();
             return;
         }
 
@@ -494,8 +526,8 @@
 
             state.selectedCheckOut = dateString;
             state.previewCheckOut = null;
-            updateSummary();
             renderCalendar();
+            updateSummary();
         }
     }
 
@@ -567,13 +599,13 @@
 
             const badge = document.createElement('div');
             badge.className = 'calendar-day__badge';
-            if (isSoldOut) {
-                badge.textContent = '마감';
-            } else if (isPastDate) {
-                badge.textContent = '지난날';
-            } else if (isClosedByCheckInTime || !isOperationDay) {
-                badge.textContent = '비운영';
-            } else if (state.selectedCheckIn === dateString) {
+                if (isSoldOut) {
+                    badge.textContent = '마감';
+                } else if (isPastDate) {
+                    badge.textContent = '지난 날짜';
+                } else if (isClosedByCheckInTime || !isOperationDay) {
+                    badge.textContent = '비운영';
+                } else if (state.selectedCheckIn === dateString) {
                 badge.textContent = '체크인';
             } else if (state.selectedCheckOut === dateString) {
                 badge.textContent = '체크아웃';
@@ -608,7 +640,7 @@
         elements.guestHint.textContent = `최대 ${effectiveMax}명까지 가능합니다.`;
         elements.guestHint.classList.remove('error');
         elements.surchargeGuide.innerHTML =
-            `<span><strong>${surchargeFromPerson}인 이상</strong>부터 성인 1인당 1박 요금의 <strong>10%</strong>, 아동 1인당 <strong>5%</strong> 추가 요금이 부과됩니다.</span>`;
+            `<span><strong>${surchargeFromPerson}명 이상</strong>부터 성인 1인당 1박 추가 요금 <strong>10%</strong>, 아동 1인당 <strong>5%</strong> 추가 요금이 부과됩니다.</span>`;
     }
 
     async function updateAvailability() {
@@ -689,6 +721,18 @@
     }
 
     function updateSummary() {
+        const beforeCheckIn = state.selectedCheckIn;
+        const beforeCheckOut = state.selectedCheckOut;
+        if (state.selectedCheckIn && isDateUnavailable(state.selectedCheckIn)) {
+            state.selectedCheckIn = null;
+            state.selectedCheckOut = null;
+            state.previewCheckOut = null;
+        }
+        if (state.selectedCheckOut && isDateUnavailable(state.selectedCheckOut)) {
+            state.selectedCheckOut = null;
+        }
+        const selectionChanged = beforeCheckIn !== state.selectedCheckIn || beforeCheckOut !== state.selectedCheckOut;
+
         elements.summaryCheckIn.textContent = state.selectedCheckIn || '선택 전';
         elements.summaryCheckOut.textContent = state.selectedCheckOut || '선택 전';
         elements.checkInDate.value = state.selectedCheckIn || '';
@@ -716,6 +760,9 @@
         }
 
         elements.totalPrice.textContent = `${formatNumber(total)}원`;
+        if (selectionChanged) {
+            renderCalendar();
+        }
         updateAvailability();
     }
 
