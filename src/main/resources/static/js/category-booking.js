@@ -40,7 +40,6 @@
     const csrfToken = configEl.dataset.csrfToken;
     const today = new Date();
     const baseToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const defaultAdultCount = getDefaultAdultCountByAccomType(accomType);
 
     const elements = {
         accomName: document.getElementById('categoryBookingAccomName'),
@@ -144,7 +143,7 @@
     }
 
     function getAdultCount() {
-        return Math.max(1, Number(elements.adultCount.value || defaultAdultCount));
+        return Math.max(1, Number(elements.adultCount.value || getDefaultAdultCountByAccomType(state.accomType)));
     }
 
     function getChildCount() {
@@ -947,7 +946,7 @@
             elements.accomName.textContent = state.accomName;
         }
         elements.roomCountText.textContent = `${formatNumber(state.roomCount)}개`;
-        elements.adultCount.value = '1';
+        elements.adultCount.value = String(getDefaultAdultCountByAccomType(state.accomType));
         elements.childCount.value = '0';
         elements.roomCount.value = '1';
         elements.cartBtn.hidden = false;
