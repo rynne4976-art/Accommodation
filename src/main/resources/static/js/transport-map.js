@@ -893,9 +893,7 @@ async function calculateAndRenderRoutes(startContext, requestSeq = ++routeReques
   lastRouteMetrics = metrics;
   renderModeDurations(metrics);
 
-  if (!selectedRouteMode || !metrics[selectedRouteMode]?.minutes) {
-    selectedRouteMode = getFirstAvailableMode(metrics) || "car";
-  }
+  selectedRouteMode = getFastestAvailableMode(metrics) || "car";
 
   renderSelectedMode();
 }
@@ -1506,8 +1504,10 @@ function renderSelectedMode() {
   drawSelectedRouteLine(selectedMetrics.geometry, selectedRouteMode);
 }
 
-function getFirstAvailableMode(metrics) {
-  return ["car", "transit"].find(mode => metrics[mode]?.minutes != null) || null;
+function getFastestAvailableMode(metrics) {
+  return ["car", "transit"]
+      .filter(mode => metrics[mode]?.minutes != null)
+      .sort((left, right) => Number(metrics[left].minutes) - Number(metrics[right].minutes))[0] || null;
 }
 
 function renderTransitDetail(mode, metrics) {
@@ -1579,11 +1579,62 @@ function buildRouteDetailSummary(mode, metrics) {
 }
 
 function renderRouteDetailExtras(mode, metrics) {
-  if (mode !== "transit") return "";
-  if (isLongDistanceTransit(metrics) && metrics.estimated) return renderLongDistanceTransitResult(metrics);
-  if (metrics.estimated) return "";
-  const alternatives = isLongDistanceTransit(metrics) ? [] : metrics.alternatives;
-  return renderTransitSteps(metrics.steps) + renderTransitAlternatives(alternatives);
+  const routeOptions = renderRouteOptionsOverview(mode);
+  if (mode !== "transit") return routeOptions;
+  if (isLongDistanceTransit(metrics) && metrics.estimated) return renderLongDistanceTransitResult(metrics) + routeOptions;
+  if (metrics.estimated) return routeOptions;
+  return renderTransitSteps(metrics.steps) + renderTransitAlternatives(metrics.alternatives) + routeOptions;
+}
+
+function renderRouteOptionsOverview(activeMode) {
+  const items = buildRouteOptionItems(activeMode);
+  if (items.length <= 1) return "";
+
+  return `
+    <div class="route-option-section">
+      <div class="route-option-section__head">
+        <strong>경로 후보</strong>
+        <span>${escapeHtml(formatCurrentLookupTime())} 조회 기준</span>
+      </div>
+      <div class="route-option-grid">
+        ${items.map(item => `
+          <article class="route-option-card${item.fastest ? " is-fastest" : ""}${item.active ? " is-active" : ""}">
+            <span class="route-option-card__label">
+              ${item.fastest ? '<span class="transit-alt-card__badge">가장 빠름</span>' : ""}
+              ${escapeHtml(item.label)}
+            </span>
+            <strong class="route-option-card__time">${escapeHtml(formatStepDuration(item.minutes))}</strong>
+            <span class="route-option-card__detail">${escapeHtml(item.detail || "")}</span>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function buildRouteOptionItems(activeMode) {
+  if (!lastRouteMetrics) return [];
+
+  return ["car", "transit"]
+      .map(mode => {
+        const metrics = lastRouteMetrics[mode];
+        if (!metrics || metrics.minutes == null) return null;
+
+        const detail = mode === "transit"
+            ? (metrics.detail || metrics.title || "")
+            : (metrics.distanceKm > 0 ? `${metrics.distanceKm.toFixed(2)}km` : "");
+
+        return {
+          mode,
+          label: MODE_META[mode]?.label || mode,
+          minutes: Number(metrics.minutes),
+          detail,
+          active: mode === activeMode
+        };
+      })
+      .filter(Boolean)
+      .sort((left, right) => left.minutes - right.minutes)
+      .map((item, index) => ({ ...item, fastest: index === 0 }));
 }
 
 function renderLongDistanceTransitResult(metrics) {
