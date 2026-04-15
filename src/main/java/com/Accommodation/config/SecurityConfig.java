@@ -107,6 +107,7 @@ public class SecurityConfig {
                             .userService(customOAuth2UserService)
                             .oidcUserService(googleOidcUserService::loadUser)
                     )
+                    .failureHandler(new OAuth2LoginFailureHandler())
                     .successHandler(roleBasedAuthenticationSuccessHandler)
             );
         }

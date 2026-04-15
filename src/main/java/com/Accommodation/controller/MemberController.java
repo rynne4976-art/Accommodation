@@ -78,6 +78,7 @@ public class MemberController {
      */
     @GetMapping("/members/login")
     public String memberLogin(@RequestParam(value = "error", required = false) String error,
+                              @RequestParam(value = "socialError", required = false) String socialError,
                               @RequestParam(value = "signupSuccess", required = false) String signupSuccess,
                               @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
                               HttpSession session,
@@ -85,6 +86,9 @@ public class MemberController {
         // 로그인 실패와 회원가입 완료 메시지를 같은 로그인 화면에서 처리합니다.
         if (error != null) {
             model.addAttribute("loginErrorMessage", "이메일 또는 비밀번호를 다시 확인해주세요.");
+        }
+        if (socialError != null) {
+            model.addAttribute("loginErrorMessage", "소셜 로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
         }
         if (signupSuccess != null) {
             model.addAttribute("signupSuccessMessage", "회원가입이 완료되었습니다. 로그인해주세요.");
