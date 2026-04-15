@@ -206,13 +206,17 @@
                 button.setAttribute('aria-expanded', String(isVisible));
             });
 
-            eventSource.addEventListener('order-cancelled', function (event) {
+            eventSource.addEventListener('notification', function (event) {
                 const notification = JSON.parse(event.data);
                 notifications.unshift(notification);
                 notifications = notifications.slice(0, 10);
                 renderList();
                 panel.classList.add('is-visible');
                 button.setAttribute('aria-expanded', 'true');
+            });
+
+            eventSource.addEventListener('heartbeat', function () {
+                // Keep the EventSource active behind reverse proxies with idle timeouts.
             });
 
             list.addEventListener('click', async function (event) {
@@ -233,7 +237,9 @@
             });
 
             eventSource.onerror = function () {
-                closeEventSource();
+                if (eventSource.readyState === EventSource.CLOSED) {
+                    closeEventSource();
+                }
             };
 
             if (logoutForm) {

@@ -7,6 +7,7 @@ import com.Accommodation.repository.MemberRepository;
 import com.Accommodation.repository.NotificationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +28,7 @@ public class NotificationService {
     private static final long DEFAULT_TIMEOUT = 60L * 60L * 1000L;
     private static final Pattern ORDER_ID_PATTERN = Pattern.compile("예약 #(\\d+)");
 
-    private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final Map<String, CopyOnWriteArrayList<SseEmitter>> emitters = new ConcurrentHashMap<>();
     private final NotificationRepository notificationRepository;
     private final MemberRepository memberRepository;
 
@@ -38,11 +40,11 @@ public class NotificationService {
 
     public SseEmitter subscribe(String email) {
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
-        emitters.put(email, emitter);
+        emitters.computeIfAbsent(email, key -> new CopyOnWriteArrayList<>()).add(emitter);
 
-        emitter.onCompletion(() -> emitters.remove(email));
-        emitter.onTimeout(() -> emitters.remove(email));
-        emitter.onError((ex) -> emitters.remove(email));
+        emitter.onCompletion(() -> removeEmitter(email, emitter));
+        emitter.onTimeout(() -> removeEmitter(email, emitter));
+        emitter.onError((ex) -> removeEmitter(email, emitter));
 
         try {
             emitter.send(SseEmitter.event()
@@ -68,20 +70,7 @@ public class NotificationService {
         notification.setTargetUrl("/orders/" + orderId);
         notification.setRead(false);
         notificationRepository.save(notification);
-
-        SseEmitter emitter = emitters.get(email);
-        if (emitter == null) {
-            return;
-        }
-
-        try {
-            emitter.send(SseEmitter.event()
-                    .name("order-cancelled")
-                    .data(new NotificationDto(notification)));
-        } catch (IOException e) {
-            emitters.remove(email);
-            log.warn("Failed to send SSE notification to {}", email, e);
-        }
+        sendRealtimeNotification(email, notification);
     }
 
     @Transactional(readOnly = true)
@@ -138,6 +127,49 @@ public class NotificationService {
         notification.setTargetUrl("/cart");
         notification.setRead(false);
         notificationRepository.save(notification);
+        sendRealtimeNotification(email, notification);
+    }
+
+    @Scheduled(fixedDelay = 25_000L)
+    public void sendHeartbeat() {
+        emitters.forEach((email, userEmitters) -> {
+            for (SseEmitter emitter : userEmitters) {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .name("heartbeat")
+                            .data("ping"));
+                } catch (IOException e) {
+                    removeEmitter(email, emitter);
+                    log.debug("Removed stale SSE emitter for {}", email, e);
+                }
+            }
+        });
+    }
+
+    private void sendRealtimeNotification(String email, Notification notification) {
+        List<SseEmitter> userEmitters = emitters.get(email);
+        if (userEmitters == null || userEmitters.isEmpty()) {
+            return;
+        }
+
+        NotificationDto notificationDto = new NotificationDto(notification);
+        for (SseEmitter emitter : userEmitters) {
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("notification")
+                        .data(notificationDto));
+            } catch (IOException e) {
+                removeEmitter(email, emitter);
+                log.warn("Failed to send SSE notification to {}", email, e);
+            }
+        }
+    }
+
+    private void removeEmitter(String email, SseEmitter emitter) {
+        emitters.computeIfPresent(email, (key, userEmitters) -> {
+            userEmitters.remove(emitter);
+            return userEmitters.isEmpty() ? null : userEmitters;
+        });
     }
 
     private String normalizeTargetUrl(Notification notification) {
