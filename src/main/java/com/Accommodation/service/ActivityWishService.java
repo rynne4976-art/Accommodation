@@ -2,15 +2,19 @@ package com.Accommodation.service;
 
 import com.Accommodation.dto.ActivityWishDto;
 import com.Accommodation.dto.RegionActivityItemDto;
+import com.Accommodation.entity.Activity;
 import com.Accommodation.entity.ActivityWish;
 import com.Accommodation.entity.Member;
+import com.Accommodation.repository.ActivityRepository;
 import com.Accommodation.repository.ActivityWishRepository;
 import com.Accommodation.repository.MemberRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +25,7 @@ import java.util.Set;
 public class ActivityWishService {
 
     private final ActivityWishRepository activityWishRepository;
+    private final ActivityRepository activityRepository;
     private final MemberRepository memberRepository;
 
     public void addWish(ActivityWishDto request, String email) {
@@ -37,8 +42,12 @@ public class ActivityWishService {
             throw new EntityNotFoundException("Member not found.");
         }
 
+        Activity activity = activityRepository.findByActivityKey(request.getActivityKey())
+                .orElseGet(() -> createActivityFromWishRequest(request));
+
         ActivityWish activityWish = new ActivityWish();
         activityWish.setMember(member);
+        activityWish.setActivity(activity);
         activityWish.setActivityKey(request.getActivityKey());
         activityWish.setTitle(request.getTitle());
         activityWish.setImageUrl(request.getImageUrl());
@@ -50,6 +59,41 @@ public class ActivityWishService {
         activityWish.setTel(request.getTel());
         activityWish.setRegionName(request.getRegionName());
         activityWishRepository.save(activityWish);
+    }
+
+    private Activity createActivityFromWishRequest(ActivityWishDto request) {
+        LocalDateTime now = LocalDateTime.now();
+        RegionActivityItemDto item = RegionActivityItemDto.builder()
+                .activityKey(request.getActivityKey())
+                .title(firstNotBlank(request.getTitle(), "즐길거리"))
+                .imageUrl(request.getImageUrl())
+                .address(request.getAddress())
+                .period(request.getPeriod())
+                .detailUrl(request.getDetailUrl())
+                .externalUrl(request.getExternalUrl())
+                .category(request.getCategory())
+                .tel(request.getTel())
+                .regionName(request.getRegionName())
+                .build();
+
+        Activity activity = new Activity();
+        activity.updateFrom(item, 0, now, now.plusDays(7));
+        activity.setSource("WISH_REQUEST");
+        return activityRepository.save(activity);
+    }
+
+    private String firstNotBlank(String... values) {
+        if (values == null) {
+            return "";
+        }
+
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                return value.trim();
+            }
+        }
+
+        return "";
     }
 
     public void removeWish(String activityKey, String email) {

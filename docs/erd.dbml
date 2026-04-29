@@ -151,6 +151,54 @@ Table wish {
   }
 }
 
+Table activity {
+  activity_id bigint [pk, increment]
+  activity_key varchar(64) [not null, unique]
+  title varchar(255) [not null]
+  image_url varchar(1000)
+  address varchar(500)
+  period varchar(120)
+  detail_url varchar(1000)
+  external_url varchar(1000)
+  category varchar(80)
+  tel varchar(80)
+  region_name varchar(80)
+  source varchar(40)
+  sort_order int [not null]
+  last_fetched_at datetime [not null]
+  expires_at datetime [not null]
+  reg_time datetime
+  update_time datetime
+
+  Indexes {
+    (region_name, expires_at)
+    (region_name, sort_order)
+  }
+}
+
+Table activity_wish {
+  activity_wish_id bigint [pk, increment]
+  member_id bigint [not null]
+  activity_id bigint
+  activity_key varchar(64) [not null]
+  title varchar(255) [not null]
+  image_url varchar(1000)
+  address varchar(500)
+  period varchar(120)
+  detail_url varchar(1000)
+  external_url varchar(1000)
+  category varchar(80)
+  tel varchar(80)
+  region_name varchar(80)
+  reg_time datetime
+  update_time datetime
+
+  Indexes {
+    (member_id, activity_key) [unique]
+    activity_id
+  }
+}
+
 Table cart_item {
   cart_item_id bigint [pk, increment]
   member_id bigint [not null]
@@ -198,6 +246,8 @@ Ref: review.accom_id > accom.id
 Ref: review_img.review_id > review.review_id
 Ref: wish.member_id > member.member_id
 Ref: wish.accom_id > accom.id
+Ref: activity_wish.member_id > member.member_id
+Ref: activity_wish.activity_id > activity.activity_id
 Ref: cart_item.member_id > member.member_id
 Ref: cart_item.accom_id > accom.id
 Ref: notification.member_id > member.member_id

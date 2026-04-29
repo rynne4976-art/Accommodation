@@ -5,17 +5,21 @@ import com.Accommodation.dto.RegionActivityItemDto;
 import com.Accommodation.dto.RegionActivityPageDto;
 import com.Accommodation.dto.RegionFeaturedCardDto;
 import com.Accommodation.dto.RegionFeaturedSectionDto;
+import com.Accommodation.entity.Activity;
+import com.Accommodation.repository.ActivityRepository;
 import com.Accommodation.util.ActivityWishKeyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -30,9 +34,11 @@ import java.util.stream.Stream;
 public class RegionActivityService {
 
     private final RestClient restClient;
+    private final ActivityRepository activityRepository;
     private final String serviceKey;
     private final String baseUrl;
     private final String mobileApp;
+    private final Duration dbCacheTtl;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final long CACHE_TTL_MILLIS = Duration.ofMinutes(10).toMillis();
@@ -58,16 +64,21 @@ public class RegionActivityService {
     );
 
     public RegionActivityService(
+            ActivityRepository activityRepository,
             @Value("${tour.api.service-key:}") String serviceKey,
             @Value("${tour.api.base-url:https://apis.data.go.kr/B551011/KorService2}") String baseUrl,
-            @Value("${tour.api.mobile-app:Accommodation}") String mobileApp
+            @Value("${tour.api.mobile-app:Accommodation}") String mobileApp,
+            @Value("${tour.api.cache-ttl-hours:24}") long cacheTtlHours
     ) {
         this.restClient = RestClient.builder().build();
+        this.activityRepository = activityRepository;
         this.serviceKey = serviceKey;
         this.baseUrl = baseUrl;
         this.mobileApp = mobileApp;
+        this.dbCacheTtl = Duration.ofHours(Math.max(1, cacheTtlHours));
     }
 
+    @Transactional
     public RegionActivityPageDto getRegionActivityPage(String regionName) {
         RegionConfig config = REGION_MAP.get(regionName);
         if (config == null) {
@@ -76,13 +87,22 @@ public class RegionActivityService {
 
         String cacheKey = config.regionName();
         long now = System.currentTimeMillis();
+        LocalDateTime fetchedAt = LocalDateTime.now();
 
         CachedRegionActivityPage cached = pageCache.get(cacheKey);
         if (cached != null && (now - cached.cachedAt()) < CACHE_TTL_MILLIS) {
             return cached.pageDto();
         }
 
-        List<RegionActivityItemDto> items = searchActivities(config.regionName(), 60);
+        List<RegionActivityItemDto> items = loadValidActivities(config.regionName(), fetchedAt);
+        if (items.isEmpty()) {
+            items = searchActivities(config.regionName(), 60);
+            if (!items.isEmpty()) {
+                saveActivities(items, fetchedAt);
+            } else {
+                items = loadSavedActivities(config.regionName());
+            }
+        }
 
         RegionActivityPageDto pageDto = new RegionActivityPageDto(
                 config.regionName(),
@@ -95,6 +115,37 @@ public class RegionActivityService {
 
         pageCache.put(cacheKey, new CachedRegionActivityPage(pageDto, now));
         return pageDto;
+    }
+
+    private List<RegionActivityItemDto> loadValidActivities(String regionName, LocalDateTime now) {
+        return activityRepository.findByRegionNameAndExpiresAtAfterOrderBySortOrderAscTitleAsc(regionName, now).stream()
+                .map(Activity::toRegionActivityItemDto)
+                .toList();
+    }
+
+    private List<RegionActivityItemDto> loadSavedActivities(String regionName) {
+        return activityRepository.findByRegionNameOrderBySortOrderAscTitleAsc(regionName).stream()
+                .map(Activity::toRegionActivityItemDto)
+                .toList();
+    }
+
+    private void saveActivities(List<RegionActivityItemDto> items, LocalDateTime fetchedAt) {
+        LocalDateTime expiresAt = fetchedAt.plus(dbCacheTtl);
+        List<Activity> activities = new ArrayList<>();
+
+        for (int i = 0; i < items.size(); i++) {
+            RegionActivityItemDto item = items.get(i);
+            if (!StringUtils.hasText(item.getActivityKey())) {
+                continue;
+            }
+
+            Activity activity = activityRepository.findByActivityKey(item.getActivityKey())
+                    .orElseGet(Activity::new);
+            activity.updateFrom(item, i, fetchedAt, expiresAt);
+            activities.add(activity);
+        }
+
+        activityRepository.saveAll(activities);
     }
 
     private RegionFeaturedSectionDto getFeaturedSection(String regionName) {
