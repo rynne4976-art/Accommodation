@@ -179,17 +179,8 @@ Table activity {
 Table activity_wish {
   activity_wish_id bigint [pk, increment]
   member_id bigint [not null]
-  activity_id bigint
+  activity_id bigint [not null]
   activity_key varchar(64) [not null]
-  title varchar(255) [not null]
-  image_url varchar(1000)
-  address varchar(500)
-  period varchar(120)
-  detail_url varchar(1000)
-  external_url varchar(1000)
-  category varchar(80)
-  tel varchar(80)
-  region_name varchar(80)
   reg_time datetime
   update_time datetime
 

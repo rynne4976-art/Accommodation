@@ -7,6 +7,8 @@ import com.Accommodation.dto.RegionFeaturedCardDto;
 import com.Accommodation.dto.RegionFeaturedSectionDto;
 import com.Accommodation.entity.Activity;
 import com.Accommodation.repository.ActivityRepository;
+import com.Accommodation.repository.ActivityWishRepository;
+import com.Accommodation.util.ActivityPeriodUtils;
 import com.Accommodation.util.ActivityWishKeyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +37,7 @@ public class RegionActivityService {
 
     private final RestClient restClient;
     private final ActivityRepository activityRepository;
+    private final ActivityWishRepository activityWishRepository;
     private final String serviceKey;
     private final String baseUrl;
     private final String mobileApp;
@@ -65,6 +68,7 @@ public class RegionActivityService {
 
     public RegionActivityService(
             ActivityRepository activityRepository,
+            ActivityWishRepository activityWishRepository,
             @Value("${tour.api.service-key:}") String serviceKey,
             @Value("${tour.api.base-url:https://apis.data.go.kr/B551011/KorService2}") String baseUrl,
             @Value("${tour.api.mobile-app:Accommodation}") String mobileApp,
@@ -72,6 +76,7 @@ public class RegionActivityService {
     ) {
         this.restClient = RestClient.builder().build();
         this.activityRepository = activityRepository;
+        this.activityWishRepository = activityWishRepository;
         this.serviceKey = serviceKey;
         this.baseUrl = baseUrl;
         this.mobileApp = mobileApp;
@@ -88,6 +93,8 @@ public class RegionActivityService {
         String cacheKey = config.regionName();
         long now = System.currentTimeMillis();
         LocalDateTime fetchedAt = LocalDateTime.now();
+
+        removeExpiredEvents(LocalDate.now());
 
         CachedRegionActivityPage cached = pageCache.get(cacheKey);
         if (cached != null && (now - cached.cachedAt()) < CACHE_TTL_MILLIS) {
@@ -120,13 +127,35 @@ public class RegionActivityService {
     private List<RegionActivityItemDto> loadValidActivities(String regionName, LocalDateTime now) {
         return activityRepository.findByRegionNameAndExpiresAtAfterOrderBySortOrderAscTitleAsc(regionName, now).stream()
                 .map(Activity::toRegionActivityItemDto)
+                .filter(item -> !ActivityPeriodUtils.isExpiredEvent(item.getCategory(), item.getPeriod(), LocalDate.now()))
                 .toList();
     }
 
     private List<RegionActivityItemDto> loadSavedActivities(String regionName) {
         return activityRepository.findByRegionNameOrderBySortOrderAscTitleAsc(regionName).stream()
                 .map(Activity::toRegionActivityItemDto)
+                .filter(item -> !ActivityPeriodUtils.isExpiredEvent(item.getCategory(), item.getPeriod(), LocalDate.now()))
                 .toList();
+    }
+
+    @Transactional
+    public int removeExpiredEvents(LocalDate today) {
+        List<Activity> expiredEvents = activityRepository.findAll().stream()
+                .filter(activity -> ActivityPeriodUtils.isExpiredEvent(
+                        activity.getCategory(),
+                        activity.getPeriod(),
+                        today
+                ))
+                .toList();
+
+        if (expiredEvents.isEmpty()) {
+            return 0;
+        }
+
+        activityWishRepository.deleteByActivityIn(expiredEvents);
+        activityRepository.deleteAll(expiredEvents);
+        pageCache.clear();
+        return expiredEvents.size();
     }
 
     private void saveActivities(List<RegionActivityItemDto> items, LocalDateTime fetchedAt) {
