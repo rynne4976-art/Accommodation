@@ -1,6 +1,8 @@
 package com.Accommodation.repository;
 
 import com.Accommodation.entity.ActivityWish;
+import com.Accommodation.entity.Activity;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,7 +16,10 @@ public interface ActivityWishRepository extends JpaRepository<ActivityWish, Long
 
     List<ActivityWish> findByMemberEmailAndActivityKeyIn(String email, List<String> activityKeys);
 
+    @EntityGraph(attributePaths = "activity")
     List<ActivityWish> findByMemberEmailOrderByRegTimeDesc(String email);
 
     long countByMemberEmail(String email);
+
+    void deleteByActivityIn(List<Activity> activities);
 }

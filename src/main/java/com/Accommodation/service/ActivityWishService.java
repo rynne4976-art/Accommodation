@@ -8,6 +8,7 @@ import com.Accommodation.entity.Member;
 import com.Accommodation.repository.ActivityRepository;
 import com.Accommodation.repository.ActivityWishRepository;
 import com.Accommodation.repository.MemberRepository;
+import com.Accommodation.util.ActivityPeriodUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -48,16 +50,7 @@ public class ActivityWishService {
         ActivityWish activityWish = new ActivityWish();
         activityWish.setMember(member);
         activityWish.setActivity(activity);
-        activityWish.setActivityKey(request.getActivityKey());
-        activityWish.setTitle(request.getTitle());
-        activityWish.setImageUrl(request.getImageUrl());
-        activityWish.setAddress(request.getAddress());
-        activityWish.setPeriod(request.getPeriod());
-        activityWish.setDetailUrl(request.getDetailUrl());
-        activityWish.setExternalUrl(request.getExternalUrl());
-        activityWish.setCategory(request.getCategory());
-        activityWish.setTel(request.getTel());
-        activityWish.setRegionName(request.getRegionName());
+        activityWish.setActivityKey(activity.getActivityKey());
         activityWishRepository.save(activityWish);
     }
 
@@ -128,12 +121,21 @@ public class ActivityWishService {
 
     @Transactional(readOnly = true)
     public int getWishCount(String email) {
-        return Math.toIntExact(activityWishRepository.countByMemberEmail(email));
+        return getWishList(email).size();
     }
 
     @Transactional(readOnly = true)
     public List<ActivityWishDto> getWishList(String email) {
+        LocalDate today = LocalDate.now();
         return activityWishRepository.findByMemberEmailOrderByRegTimeDesc(email).stream()
+                .filter(activityWish -> {
+                    Activity activity = activityWish.getActivity();
+                    return activity != null && !ActivityPeriodUtils.isExpiredEvent(
+                            activity.getCategory(),
+                            activity.getPeriod(),
+                            today
+                    );
+                })
                 .map(ActivityWishDto::new)
                 .toList();
     }

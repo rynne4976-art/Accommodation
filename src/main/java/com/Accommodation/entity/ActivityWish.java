@@ -6,9 +6,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
@@ -34,36 +34,9 @@ public class ActivityWish extends BaseTimeEntity {
     private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "activity_id")
+    @JoinColumn(name = "activity_id", nullable = false)
     private Activity activity;
 
     @Column(name = "activity_key", nullable = false, length = 64)
     private String activityKey;
-
-    @Column(nullable = false, length = 255)
-    private String title;
-
-    @Column(length = 1000)
-    private String imageUrl;
-
-    @Column(length = 500)
-    private String address;
-
-    @Column(length = 120)
-    private String period;
-
-    @Column(length = 1000)
-    private String detailUrl;
-
-    @Column(length = 1000)
-    private String externalUrl;
-
-    @Column(length = 80)
-    private String category;
-
-    @Column(length = 80)
-    private String tel;
-
-    @Column(length = 80)
-    private String regionName;
 }
