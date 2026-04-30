@@ -194,21 +194,18 @@ public class AccomController {
                            Model model) {
         Accom accom = accomService.getAccomDtl(accomId);
         saveRecentViewedAccom(accomId, request, response);
-
         ReviewFormDto reviewFormDto = new ReviewFormDto();
         reviewFormDto.setAccomId(accomId);
-
         Review myReview = null;
         if (user != null) {
             myReview = reviewService.getMyReview(accomId, user.getUsername());
         }
-
-        boolean canWriteReview = user != null && reviewService.canWriteReview(accomId, user.getUsername());
+        boolean canWriteReview = user !=
+                null && reviewService.canWriteReview(accomId, user.getUsername());
         String reviewWriteDenyMessage = reviewService.getReviewWriteDenyMessage(
                 accomId,
                 user != null ? user.getUsername() : null
         );
-
         model.addAttribute("accom", accom);
         model.addAttribute("reviewList", reviewService.getReviewList(accomId));
         model.addAttribute("reviewFormDto", reviewFormDto);
@@ -221,10 +218,8 @@ public class AccomController {
                 .stream()
                 .map(LocalDate::toString)
                 .collect(Collectors.toList());
-
         model.addAttribute("naverMapClientId", naverMapClientId);
         model.addAttribute("soldOutDays", soldOutDays);
-
         return "accom/accomDtl";
     }
 
@@ -232,42 +227,33 @@ public class AccomController {
         if (accomId == null) {
             return;
         }
-
         Set<String> orderedIdSet = new LinkedHashSet<>();
         orderedIdSet.add(String.valueOf(accomId));
-
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if (!RECENT_VIEWED_COOKIE_NAME.equals(cookie.getName())) {
                     continue;
                 }
-
                 String value = cookie.getValue();
                 if (value == null || value.isBlank()) {
                     continue;
                 }
-
                 for (String rawId : value.split("[,-]")) {
                     String trimmed = rawId.trim();
-
                     if (trimmed.isEmpty()) {
                         continue;
                     }
-
                     if (!trimmed.matches("\\d+")) {
                         continue;
                     }
-
                     orderedIdSet.add(trimmed);
                 }
             }
         }
-
         String cookieValue = orderedIdSet.stream()
                 .limit(RECENT_VIEWED_LIMIT)
                 .collect(Collectors.joining(RECENT_VIEWED_COOKIE_DELIMITER));
-
         Cookie cookie = new Cookie(RECENT_VIEWED_COOKIE_NAME, cookieValue);
         cookie.setPath("/");
         cookie.setMaxAge(60 * 60 * 24 * 30);

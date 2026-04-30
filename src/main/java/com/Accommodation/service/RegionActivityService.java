@@ -45,6 +45,7 @@ public class RegionActivityService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final long CACHE_TTL_MILLIS = Duration.ofMinutes(10).toMillis();
+    private static final int MIN_REGION_ACTIVITY_ITEMS = 15;
 
     private final Map<String, CachedRegionActivityPage> pageCache = new ConcurrentHashMap<>();
 
@@ -89,28 +90,26 @@ public class RegionActivityService {
         if (config == null) {
             config = REGION_MAP.get("서울");
         }
-
         String cacheKey = config.regionName();
         long now = System.currentTimeMillis();
         LocalDateTime fetchedAt = LocalDateTime.now();
-
         removeExpiredEvents(LocalDate.now());
-
         CachedRegionActivityPage cached = pageCache.get(cacheKey);
-        if (cached != null && (now - cached.cachedAt()) < CACHE_TTL_MILLIS) {
+        if (cached != null
+                && (now - cached.cachedAt()) < CACHE_TTL_MILLIS
+                && hasEnoughActivities(cached.pageDto().getItems())) {
             return cached.pageDto();
         }
-
         List<RegionActivityItemDto> items = loadValidActivities(config.regionName(), fetchedAt);
-        if (items.isEmpty()) {
-            items = searchActivities(config.regionName(), 60);
-            if (!items.isEmpty()) {
+        if (!hasEnoughActivities(items)) {
+            List<RegionActivityItemDto> refreshedItems = searchActivities(config.regionName(), 60);
+            if (!refreshedItems.isEmpty()) {
+                items = refreshedItems;
                 saveActivities(items, fetchedAt);
-            } else {
+            } else if (items.isEmpty()) {
                 items = loadSavedActivities(config.regionName());
             }
         }
-
         RegionActivityPageDto pageDto = new RegionActivityPageDto(
                 config.regionName(),
                 config.imagePath(),
@@ -119,9 +118,12 @@ public class RegionActivityService {
                 getFeaturedSection(config.regionName()),
                 items
         );
-
         pageCache.put(cacheKey, new CachedRegionActivityPage(pageDto, now));
         return pageDto;
+    }
+
+    private boolean hasEnoughActivities(List<RegionActivityItemDto> items) {
+        return items != null && items.size() >= MIN_REGION_ACTIVITY_ITEMS;
     }
 
     private List<RegionActivityItemDto> loadValidActivities(String regionName, LocalDateTime now) {

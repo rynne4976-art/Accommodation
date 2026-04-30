@@ -38,13 +38,16 @@ public class ReviewService {
     private static final String REVIEW_LOGIN_REQUIRED_MESSAGE = "리뷰 작성은 회원만 가능합니다.";
     private static final String REVIEW_USAGE_REQUIRED_MESSAGE = "해당 숙박 업소 이용 이력이 있는 회원만 리뷰 작성 가능합니다.";
 
-    public void saveReview(ReviewFormDto reviewFormDto, String email) throws Exception {
+    public void saveReview(ReviewFormDto reviewFormDto, String email)
+            throws Exception {
         Member member = getMemberOrThrow(email);
 
         Accom accom = accomRepository.findById(reviewFormDto.getAccomId())
-                .orElseThrow(() -> new EntityNotFoundException("숙소 정보를 찾을 수 없습니다."));
+                .orElseThrow(() ->
+                        new EntityNotFoundException("숙소 정보를 찾을 수 없습니다."));
 
-        boolean exists = reviewRepository.existsByMemberIdAndAccomId(member.getId(), accom.getId());
+        boolean exists = reviewRepository
+                .existsByMemberIdAndAccomId(member.getId(), accom.getId());
         if (exists) {
             throw new IllegalStateException("이미 해당 숙소에 리뷰를 작성했습니다.");
         }
