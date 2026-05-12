@@ -248,7 +248,7 @@ README용 ERD는 전체 구조를 한 장에 모두 담기보다, 흐름별 핵�
 
 전체 ERD 원본은 [docs/erd.dbml](docs/erd.dbml)에서, README용 ERD 이미지 제작 기준은 [docs/erd-layout-guide.md](docs/erd-layout-guide.md)에서 확인할 수 있습니다.
 
-### 1. 예약 관련 ERD
+### 1) 예약 관련 ERD
 
 <p align="center">
   <img src="docs/images/erd-reservation.png" alt="예약 관련 ERD">
@@ -256,7 +256,7 @@ README용 ERD는 전체 구조를 한 장에 모두 담기보다, 흐름별 핵�
 
 회원이 주문을 생성하고, 주문 항목과 숙박 일자를 기준으로 예약 정보가 관리됩니다.
 
-### 2. 회원 활동 관련 ERD
+### 2) 회원 활동 관련 ERD
 
 <p align="center">
   <img src="docs/images/erd-member-activity.png" alt="회원 활동 관련 ERD">
@@ -264,7 +264,7 @@ README용 ERD는 전체 구조를 한 장에 모두 담기보다, 흐름별 핵�
 
 회원의 찜, 장바구니, 리뷰, 알림 기능을 중심으로 구성했습니다.
 
-### 3. 숙소 상세 정보 관련 ERD
+### 3) 숙소 상세 정보 관련 ERD
 
 <p align="center">
   <img src="docs/images/erd-accom-detail.png" alt="숙소 상세 정보 관련 ERD">
